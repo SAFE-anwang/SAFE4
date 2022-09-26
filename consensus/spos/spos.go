@@ -52,7 +52,8 @@ const (
 
 	wiggleTime = 500 * time.Millisecond // Random delay (per signer) to allow concurrent signers
 
-	superNodeSPosCount = 9       //Total number of bookkeepers
+	//superNodeSPosCount = 9       //Total number of bookkeepers
+	superNodeSPosCount = 1
 	pushForwardHeight  = 18	     //Push forward the block height
 )
 
@@ -674,7 +675,7 @@ func (s *Spos) SealHash(header *types.Header) common.Hash {
 	return SealHash(header)
 }
 
-// Close implements consensus.Engine. It's a noop for clique as there are no background threads.
+// Close implements consensus.Engine. It's a noop for spos as there are no background threads.
 func (s *Spos) Close() error {
 	return s.ethone.Close()
 }

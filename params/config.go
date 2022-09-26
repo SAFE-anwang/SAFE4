@@ -33,7 +33,7 @@ var (
 	RinkebyGenesisHash = common.HexToHash("0x6341fd3daf94b748c72ced5a5b26028f2474f5f00d824504e4fa37a75767e177")
 	GoerliGenesisHash  = common.HexToHash("0xbf7e331f7f7c1dd2e05159666b3bf8bc7a8a3a9eb1d518969eab529dd9b88c1a")
 	KilnGenesisHash    = common.HexToHash("0x51c7fe41be669f69c45c33a56982cbde405313342d9e2b00d7c91a7b284dd4f8")
-	SafeGenesisHash    = common.HexToHash("xxxx")
+	SafeGenesisHash    = common.HexToHash("0x8eb69c5a9e0fe2497f69fd02eaab07ce7b70991a3a8c4b0deed9da302c5d2cf1")
 )
 
 // TrustedCheckpoints associates each known checkpoint with the genesis hash of
@@ -254,7 +254,7 @@ var (
 
 		Spos: &SposConfig{
 			Period: 30,
-			Epoch:  2000,
+			Epoch:  200000,
 		},
 	}
 
@@ -281,6 +281,7 @@ var (
 
 	SafeSposOfficialSuperNodeConfig = &SposOfficialSuperNodeConfig{
 		Signers: []common.Address{
+			/*
 			common.HexToAddress("0x4769bcaD07e3b938B7f43EB7D278Bc7Cb9efFb38"),
 			common.HexToAddress("0x78d1aD571A1A09D60D9BBf25894b44e4C8859595"),
 			common.HexToAddress("0x286834935f4A8Cfb4FF4C77D5770C2775aE2b0E7"),
@@ -330,8 +331,12 @@ var (
 			common.HexToAddress("0x0DF8fa387C602AE62559cC4aFa4972A7045d6707"),
 			common.HexToAddress("0xb86e2B0Ab5A4B1373e40c51A7C712c70Ba2f9f8E"),
 			common.HexToAddress("0x0DF8fa387C602AE62559cC4aFa4972A7045d6707"),
+			 */
+			//common.HexToAddress("0x044f9C93b57eFAA547F8461d4FA864eb40558cD0"),
+			common.HexToAddress("0xD83076fB57D1fdae23293Cad74999A75D06B7A3A"),
+			//common.HexToAddress("0x8b96C90B86CFDBdc971bb54C263a6d021e7f4894"),
 		},
-		StartCommonSuperHeight: 1000,
+		StartCommonSuperHeight: 100000,
 	}
 
 	// AllEthashProtocolChanges contains every protocol change (EIPs) introduced

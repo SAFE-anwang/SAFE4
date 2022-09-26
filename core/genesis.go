@@ -508,11 +508,11 @@ func DefaultSafeGenesisBlock() *Genesis {
 	return &Genesis{
 		Config:     params.SafeChainConfig,
 		Nonce:      0,
-		ExtraData:  hexutil.MustDecode("xxxxxx"), //49 signatures of super bookkeepers
+		//ExtraData:  hexutil.MustDecode("xxxxxx"), //49 signatures of super bookkeepers
 		GasLimit:   10485760,
 		Difficulty: big.NewInt(0),
 		Timestamp:  1660183213,
-		Alloc:      decodePrealloc(mainnetAllocData), //mainnetAllocData is SAFE reserved account
+		//Alloc:      decodePrealloc(mainnetAllocData), //mainnetAllocData is SAFE reserved account
 	}
 }
 

@@ -18,6 +18,7 @@
 package ethconfig
 
 import (
+	"github.com/ethereum/go-ethereum/consensus/spos"
 	"math/big"
 	"os"
 	"os/user"
@@ -218,6 +219,8 @@ func CreateConsensusEngine(stack *node.Node, chainConfig *params.ChainConfig, co
 	var engine consensus.Engine
 	if chainConfig.Clique != nil {
 		engine = clique.New(chainConfig.Clique, db)
+	}else if chainConfig.Spos != nil {
+		engine = spos.New(chainConfig.Spos, db)
 	} else {
 		switch config.PowMode {
 		case ethash.ModeFake:

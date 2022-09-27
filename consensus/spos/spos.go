@@ -153,8 +153,6 @@ func ecrecover(header *types.Header, sigcache *lru.ARCCache) (common.Address, er
 // Spos is the SAFE-proof-of-stake consensus engine proposed to support the
 // Ethereum testnet following the Ropsten attacks.
 type Spos struct {
-	ethone consensus.Engine
-
 	config *params.SposConfig   // Consensus engine configuration parameters
 	db     ethdb.Database       // Database to store and retrieve snapshot checkpoints
 
@@ -677,13 +675,18 @@ func (s *Spos) SealHash(header *types.Header) common.Hash {
 
 // Close implements consensus.Engine. It's a noop for spos as there are no background threads.
 func (s *Spos) Close() error {
-	return s.ethone.Close()
+	return nil
 }
 
 // APIs implements consensus.Engine, returning the user facing RPC API to allow
 // controlling the signer voting.
 func (s *Spos) APIs(chain consensus.ChainHeaderReader) []rpc.API {
-	return s.ethone.APIs(chain)
+	return []rpc.API{{
+		Namespace: "spos",
+		Version:   "1.0",
+		Service:   &API{chain: chain, spos: s},
+		Public:    false,
+	}}
 }
 
 // SealHash returns the hash of a block prior to it being sealed.

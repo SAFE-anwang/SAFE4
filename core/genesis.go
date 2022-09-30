@@ -503,7 +503,7 @@ func DefaultSepoliaGenesisBlock() *Genesis {
 	}
 }
 
-// DefaultSepoliaGenesisBlock returns the Sepolia network genesis block.
+// DefaultSafeGenesisBlock returns the safe network genesis block.
 func DefaultSafeGenesisBlock() *Genesis {
 	return &Genesis{
 		Config:     params.SafeChainConfig,

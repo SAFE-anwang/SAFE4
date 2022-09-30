@@ -64,13 +64,18 @@ var (
 	extraVanity = 32                     // Fixed number of extra-data prefix bytes reserved for signer vanity
 	extraSeal   = crypto.SignatureLength // Fixed number of extra-data suffix bytes reserved for signer seal
 
-	BlockReward          = big.NewInt(1e+18)
+	BlockReward = big.NewInt(1e+18)
 
 	uncleHash = types.CalcUncleHash(nil) // Always Keccak256(RLP([])) as uncles are meaningless outside of PoW.
 
 	diffInTurn = big.NewInt(2) // Block difficulty for in-turn signatures
 	diffNoTurn = big.NewInt(1) // Block difficulty for out-of-turn signatures
 )
+
+var SposLock   sync.RWMutex
+var Signerlist []common.Address
+var StartNewLoopTime uint64
+var PushForwardTime uint64
 
 // Various error messages to mark blocks invalid. These should be private to
 // prevent engine specific errors from being referenced in the remainder of the
@@ -166,8 +171,6 @@ type Spos struct {
 
 	// The fields below are for testing only
 	fakeDiff bool // Skip difficulty verifications
-
-	snap *Snapshot
 }
 
 // New creates a Spos SAFE-proof-of-stack consensus engine with the initial
@@ -313,14 +316,8 @@ func (s *Spos) verifyCascadingFields(chain consensus.ChainHeaderReader, header *
 		return err
 	}
 
-	// Retrieve the snapshot needed to verify this header and cache it
-	snap, err := s.snapshot(chain, number-1, header.ParentHash, parents)
-	if err != nil {
-		return err
-	}
-
 	// All basic checks passed, verify the seal and return
-	return s.verifySeal(snap, header, parents)
+	return s.verifySeal(header, parents)
 }
 
 // snapshot retrieves the authorization snapshot at a given point in time.
@@ -342,44 +339,29 @@ func (s *Spos) snapshot(chain consensus.ChainHeaderReader, number uint64, hash c
 
 		// If we're at the genesis, snapshot the initial state.
 		if number == 0 || number % s.config.Epoch == 0{
-			/*checkpoint := chain.GetHeaderByNumber(number)
-			if checkpoint != nil {
-				// get checkpoint data
-				hash := checkpoint.Hash()
-
-				validatorBytes := checkpoint.Extra[extraVanity : len(checkpoint.Extra)-extraSeal]
-				// get validators from headers
-				validators, err := ParseValidators(validatorBytes)
-				if err != nil {
-					return nil, err
-				}
-
-				// new snap shot
-				snap = newSnapshot(s.config, s.signatures, number, hash, validators)
-				if err := snap.store(s.db); err != nil {
-					return nil, err
-				}
-				log.Info("Stored checkpoint snapshot to disk", "number", number, "hash", hash)
-				break
-			}
-			 */
-
 			checkpoint := chain.GetHeaderByNumber(number)
 			if checkpoint != nil {
 				hash := checkpoint.Hash()
 
-				signers := make([]common.Address, (len(checkpoint.Extra)-extraVanity-extraSeal)/common.AddressLength)
-				for i := 0; i < len(signers); i++ {
-					copy(signers[i][:], checkpoint.Extra[extraVanity+i*common.AddressLength:])
+				var signers   []common.Address
+
+				if number == 0 {
+					signers = params.SafeSposOfficialSuperNodeConfig.Signers
+				}else{
+					signers = make([]common.Address, (len(checkpoint.Extra)-extraVanity-extraSeal)/common.AddressLength)
+					for i := 0; i < len(signers); i++ {
+						copy(signers[i][:], checkpoint.Extra[extraVanity+i*common.AddressLength:])
+					}
 				}
+
 				snap = newSnapshot(s.config, s.signatures, number, hash, signers)
+
 				if err := snap.store(s.db); err != nil {
 					return nil, err
 				}
 				log.Info("Stored checkpoint snapshot to disk", "number", number, "hash", hash)
 				break
 			}
-
 		}
 
 		// No snapshot for this header, gather the header and move backward
@@ -434,7 +416,7 @@ func (s *Spos) VerifyUncles(chain consensus.ChainReader, block *types.Block) err
 // consensus protocol requirements. The method accepts an optional list of parent
 // headers that aren't yet part of the local blockchain to generate the snapshots
 // from.
-func (s *Spos) verifySeal(snap *Snapshot, header *types.Header, parents []*types.Header) error {
+func (s *Spos) verifySeal( header *types.Header, parents []*types.Header) error {
 	// Verifying the genesis block is not supported
 	number := header.Number.Uint64()
 	if number == 0 {
@@ -445,27 +427,26 @@ func (s *Spos) verifySeal(snap *Snapshot, header *types.Header, parents []*types
 	if err != nil {
 		return err
 	}
-	if _, ok := snap.Signers[signer]; !ok {
-		return errUnauthorizedSigner
-	}
 
 	nlocalTime := uint64(time.Now().Unix())
 	if header.Time - nlocalTime  > uint64(60 *time.Second) {
 		return errAllowTime
 	}
 
-	nmnSize := len(s.snap.Signerlist)
+	SposLock.RLock()
+	defer SposLock.RUnlock()
+	nmnSize := len(Signerlist)
 	if nmnSize == 0 {
 		return errBillinglist
 	}
 
-	ninterval := (header.Time - s.snap.StartNewLoopTime - s.snap.PushForwardTime) / s.config.Period - 1
+	ninterval := (header.Time - StartNewLoopTime - PushForwardTime) / s.config.Period - 1
 	nindex := ninterval / uint64(nmnSize)
 	if nindex < 0 {
 		return errIndexError
 	}
 
-	blocksigner := s.snap.Signerlist[nindex]
+	blocksigner := Signerlist[nindex]
 	if blocksigner != signer {
 		return errSignatory
 	}
@@ -490,35 +471,44 @@ func (s *Spos) Prepare(chain consensus.ChainHeaderReader, header *types.Header) 
 
 	//Select 9 bookkeepers
 	if number == 0 || number % superNodeSPosCount == 0 {
-		s.snap = snap
-
 		if number > pushForwardHeight && number - pushForwardHeight > 0 {
 			forwardHeight :=  number - pushForwardHeight
 			forwardblock := chain.GetHeaderByNumber(forwardHeight)
-			s.snap.PushForwardTime = pushForwardHeight * s.config.Period
-			s.snap.StartNewLoopTime = forwardblock.Time
+
+			SposLock.Lock()
+			PushForwardTime = pushForwardHeight * s.config.Period
+			StartNewLoopTime = forwardblock.Time
+			SposLock.Unlock()
 		}else{
 			parentblock := chain.GetHeaderByHash(header.ParentHash)
-			s.snap.PushForwardTime = 0
-			s.snap.StartNewLoopTime = parentblock.Time
+
+			SposLock.Lock()
+			PushForwardTime = 0
+			StartNewLoopTime = parentblock.Time
+			SposLock.Unlock()
 		}
 
 		if number < params.SafeSposOfficialSuperNodeConfig.StartCommonSuperHeight {
-			s.snap.Signers = make(map[common.Address]struct{})
+			snap.Signers = make(map[common.Address]struct{})
 
 			for _, signer := range params.SafeSposOfficialSuperNodeConfig.Signers {
-				s.snap.Signers[signer] = struct{}{}
+				snap.Signers[signer] = struct{}{}
 			}
 		}
 
 		resultSuperNode := []common.Address{}
-		resultSuperNode = sortSupernode(s.snap, header)
-		if len(s.snap.Signerlist) > 0 {
-			s.snap.Signerlist = []common.Address{}
+		resultSuperNode = sortSupernode(snap, header)
+
+		SposLock.Lock()
+		if len(Signerlist) > 0 {
+			Signerlist = []common.Address{}
 		}
+		SposLock.Unlock()
 
 		for i := 0; i < superNodeSPosCount; i++{
-			s.snap.Signerlist = append(s.snap.Signerlist, resultSuperNode[i])
+			SposLock.Lock()
+			Signerlist = append(Signerlist, resultSuperNode[i])
+			SposLock.Unlock()
 		}
 	}
 
@@ -536,7 +526,7 @@ func (s *Spos) Prepare(chain consensus.ChainHeaderReader, header *types.Header) 
 	header.Extra = header.Extra[:extraVanity]
 
 	if number % s.config.Epoch == 0 {
-		for _, signer := range s.snap.signers() {
+		for _, signer := range snap.signers() {
 			header.Extra = append(header.Extra, signer[:]...)
 		}
 	}
@@ -548,12 +538,16 @@ func (s *Spos) Prepare(chain consensus.ChainHeaderReader, header *types.Header) 
 	nCurTime := uint64(time.Now().Unix())
 	var nTimeInterval uint64 = 0
 	nSposTargetSpacing := s.config.Period
-	nTimeInterval = nCurTime - s.snap.PushForwardTime - s.snap.StartNewLoopTime
+
+	SposLock.RLock()
+	defer SposLock.RUnlock()
+	nTimeInterval = nCurTime - PushForwardTime - StartNewLoopTime
 	if nTimeInterval < 0 {
 		return errIndexError
 	}
+
 	nTargetSpacingInterval := nTimeInterval / nSposTargetSpacing
-	header.Time = s.snap.StartNewLoopTime + s.snap.PushForwardTime + (nTargetSpacingInterval + 1) * nSposTargetSpacing
+	header.Time = StartNewLoopTime + PushForwardTime + (nTargetSpacingInterval + 1) * nSposTargetSpacing
 
 	return nil
 }
@@ -762,11 +756,15 @@ func sortSupernode(snap *Snapshot, header *types.Header) []common.Address {
 	scoreSupernode := make(map[string]common.Address,len(snap.Signers))
 	afterscoreSupernode := make(map[string]common.Address,len(snap.Signers))
 
+	SposLock.RLock()
+	tempPushForwardTime := PushForwardTime
+	SposLock.RUnlock()
+
 	for signer,_ := range snap.Signers {
 		hasher := sha3.NewLegacyKeccak256()
 		enc := []interface{}{
 			signer.Hash(),
-			snap.PushForwardTime,
+			tempPushForwardTime,
 		}
 
 		if err := rlp.Encode(hasher, enc); err != nil {

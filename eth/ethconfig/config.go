@@ -221,6 +221,7 @@ func CreateConsensusEngine(stack *node.Node, chainConfig *params.ChainConfig, co
 		engine = clique.New(chainConfig.Clique, db)
 	}else if chainConfig.Spos != nil {
 		engine = spos.New(chainConfig.Spos, db)
+		return engine
 	} else {
 		switch config.PowMode {
 		case ethash.ModeFake:

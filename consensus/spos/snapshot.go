@@ -63,10 +63,6 @@ type Snapshot struct {
 	Votes   []*Vote                     `json:"votes"`   // List of votes cast in chronological order
 	Tally   map[common.Address]Tally    `json:"tally"`   // Current vote tally to avoid recalculating
 	 */
-
-	Signerlist []common.Address
-	StartNewLoopTime uint64
-	PushForwardTime uint64
 }
 
 // signersAscending implements the sort interface to allow sorting a list of addresses
@@ -88,7 +84,6 @@ func newSnapshot(config *params.SposConfig, sigcache *lru.ARCCache, number uint6
 		Signers:  make(map[common.Address]struct{}),
 		//Recents:  make(map[uint64]common.Address),
 		//Tally:    make(map[common.Address]Tally),
-		Signerlist: signers,
 	}
 	for _, signer := range signers {
 		snap.Signers[signer] = struct{}{}
@@ -132,9 +127,6 @@ func (s *Snapshot) copy() *Snapshot {
 		//Recents:  make(map[uint64]common.Address),
 		//Votes:    make([]*Vote, len(s.Votes)),
 		//Tally:    make(map[common.Address]Tally),
-		Signerlist: s.Signerlist,
-		StartNewLoopTime:s.StartNewLoopTime,
-		PushForwardTime:s.PushForwardTime,
 	}
 	for signer := range s.Signers {
 		cpy.Signers[signer] = struct{}{}
@@ -364,13 +356,16 @@ func (s *Snapshot) inturnblock(signer common.Address) bool {
 	nCurTime := uint64(time.Now().Unix())
 	var nTimeInterval uint64 = 0
 	nSposTargetSpacing := s.config.Period
-	nTimeInterval = nCurTime - s.PushForwardTime - s.StartNewLoopTime
+
+	SposLock.RLock()
+	defer SposLock.RUnlock()
+	nTimeInterval = nCurTime - PushForwardTime - StartNewLoopTime
 	if nTimeInterval < 0 {
 		return false
 	}
 	nTargetSpacingInterval := nTimeInterval / nSposTargetSpacing
-	nNextIndex := nTargetSpacingInterval % uint64(len(s.Signerlist))
-	IndexSigner := s.Signerlist[nNextIndex]
+	nNextIndex := nTargetSpacingInterval % uint64(len(Signerlist))
+	IndexSigner := Signerlist[nNextIndex]
 	if IndexSigner != signer {
 		return false
 	}

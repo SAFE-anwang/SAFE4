@@ -195,7 +195,10 @@ func New(config *params.SposConfig, db ethdb.Database) *Spos {
 // Author implements consensus.Engine, returning the Ethereum address recovered
 // from the signature in the header's extra-data section.
 func (s *Spos) Author(header *types.Header) (common.Address, error) {
-	return ecrecover(header, s.signatures)
+	signer,err := ecrecover(header, s.signatures)
+	s.signer = signer
+
+	return signer, err
 }
 
 // VerifyHeader checks whether a header conforms to the consensus rules.
@@ -458,7 +461,7 @@ func (s *Spos) verifySeal( header *types.Header, parents []*types.Header) error 
 // header for running the transactions on top.
 func (s *Spos) Prepare(chain consensus.ChainHeaderReader, header *types.Header) error {
 	// If the block isn't a checkpoint, cast a random vote (good enough for now)
-	header.Coinbase = common.Address{}
+	header.Coinbase = s.signer
 	header.Nonce = types.BlockNonce{}
 
 	number := header.Number.Uint64()

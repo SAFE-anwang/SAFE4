@@ -195,10 +195,7 @@ func New(config *params.SposConfig, db ethdb.Database) *Spos {
 // Author implements consensus.Engine, returning the Ethereum address recovered
 // from the signature in the header's extra-data section.
 func (s *Spos) Author(header *types.Header) (common.Address, error) {
-	signer,err := ecrecover(header, s.signatures)
-	s.signer = signer
-
-	return signer, err
+	return ecrecover(header, s.signatures)
 }
 
 // VerifyHeader checks whether a header conforms to the consensus rules.

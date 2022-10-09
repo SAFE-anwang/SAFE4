@@ -471,7 +471,7 @@ func (s *Spos) Prepare(chain consensus.ChainHeaderReader, header *types.Header) 
 
 	//Select 9 bookkeepers
 	if number == 0 || number % superNodeSPosCount == 0 {
-		if number > pushForwardHeight && number - pushForwardHeight > 0 {
+		if number > pushForwardHeight {
 			forwardHeight :=  number - pushForwardHeight
 			forwardblock := chain.GetHeaderByNumber(forwardHeight)
 
@@ -552,16 +552,14 @@ func (s *Spos) Prepare(chain consensus.ChainHeaderReader, header *types.Header) 
 	return nil
 }
 
-// Finalize implements consensus.Engine, ensuring no uncles are set, nor block
-// rewards given.
+// Finalize implements consensus.Engine, ensuring no uncles are set
 func (s *Spos) Finalize(chain consensus.ChainHeaderReader, header *types.Header, state *state.StateDB, txs []*types.Transaction, uncles []*types.Header) {
 	accumulateRewards(chain.Config(), state, header)
 	header.Root = state.IntermediateRoot(chain.Config().IsEIP158(header.Number))
 	header.UncleHash = types.CalcUncleHash(nil)
 }
 
-// FinalizeAndAssemble implements consensus.Engine, ensuring no uncles are set,
-// nor block rewards given, and returns the final block.
+// FinalizeAndAssemble implements consensus.Engine, ensuring no uncles are set, and returns the final block.
 func (s *Spos) FinalizeAndAssemble(chain consensus.ChainHeaderReader, header *types.Header, state *state.StateDB, txs []*types.Transaction, uncles []*types.Header, receipts []*types.Receipt) (*types.Block, error) {
 	// Finalize block
 	s.Finalize(chain, header, state, txs, uncles)
@@ -651,7 +649,6 @@ func (s *Spos) CalcDifficulty(chain consensus.ChainHeaderReader, time uint64, pa
 	s.lock.RLock()
 	signer := s.signer
 	s.lock.RUnlock()
-	//return calcDifficulty(snap, signer)
 	return calcSposDifficulty(snap,  signer)
 }
 

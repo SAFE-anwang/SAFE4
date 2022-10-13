@@ -26,6 +26,7 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/p2p"
 	"github.com/ethereum/go-ethereum/rlp"
+	"github.com/ethereum/go-ethereum/masternode"
 )
 
 const (
@@ -54,6 +55,8 @@ const (
 	// dropping broadcasts. Similarly to block propagations, there's no point to queue
 	// above some healthy uncle limit, so use that.
 	maxQueuedBlockAnns = 4
+
+	maxKnownMasterNodePings = 1024
 )
 
 // max is a helper function which returns the larger of the two given integers.
@@ -90,6 +93,8 @@ type Peer struct {
 
 	term chan struct{} // Termination channel to stop the broadcasters
 	lock sync.RWMutex  // Mutex protecting the internal fields
+
+	knownMasterNodePings *knownCache
 }
 
 // NewPeer create a wrapper for a network connection and negotiated  protocol
@@ -111,6 +116,7 @@ func NewPeer(version uint, p *p2p.Peer, rw p2p.MsgReadWriter, txpool TxPool) *Pe
 		resDispatch:     make(chan *response),
 		txpool:          txpool,
 		term:            make(chan struct{}),
+		knownMasterNodePings: newKnownCache(maxKnownMasterNodePings),
 	}
 	// Start up all the broadcasters
 	go peer.broadcastBlocks()
@@ -519,4 +525,24 @@ func (k *knownCache) Contains(hash common.Hash) bool {
 // Cardinality returns the number of elements in the set.
 func (k *knownCache) Cardinality() int {
 	return k.hashes.Cardinality()
+}
+
+
+// KnownMasterNodePing returns whether peer is known to already have a masternode ping.
+func (p *Peer) KnownMasterNodePing(hash common.Hash) bool {
+	return p.knownMasterNodePings.Contains(hash)
+}
+
+// markMasterNodePing marks a masternode ping as known for the peer, ensuring that the ping will
+// never be propagated to this particular peer.
+func (p *Peer) markMasterNodePing(hash common.Hash) {
+	// If we reached the memory allowance, drop a previously known block hash
+	p.knownMasterNodePings.Add(hash)
+}
+
+// send masternode ping message
+func (p *Peer) SendMasterNodePing(mnp *masternode.MasterNodePing) error {
+	// Mark all the block hash as known, but ensure we don't overflow our limits
+	p.knownMasterNodePings.Add(mnp.Hash())
+	return p2p.Send(p.rw, MasterNodePingMsg, mnp);
 }

@@ -25,6 +25,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/forkid"
 	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/masternode"
 	"github.com/ethereum/go-ethereum/rlp"
 )
 
@@ -65,6 +66,7 @@ const (
 	NewPooledTransactionHashesMsg = 0x08
 	GetPooledTransactionsMsg      = 0x09
 	PooledTransactionsMsg         = 0x0a
+	MasterNodePingMsg             = 0x20
 )
 
 var (
@@ -372,3 +374,7 @@ func (*GetPooledTransactionsPacket) Kind() byte   { return GetPooledTransactions
 
 func (*PooledTransactionsPacket) Name() string { return "PooledTransactions" }
 func (*PooledTransactionsPacket) Kind() byte   { return PooledTransactionsMsg }
+
+type MasterNodePingPacket []*masternode.MasterNodePing
+func (*MasterNodePingPacket) Name() string { return "MasterNodePing" }
+func (*MasterNodePingPacket) Kind() byte { return MasterNodePingMsg }

@@ -52,9 +52,9 @@ const (
 
 	wiggleTime = 500 * time.Millisecond // Random delay (per signer) to allow concurrent signers
 
-	//superNodeSPosCount = 9       //Total number of bookkeepers
+	//superNodeSPosCount = 9           //Total number of bookkeepers
 	superNodeSPosCount = 1
-	pushForwardHeight  = 18	     //Push forward the block height
+	pushForwardHeight  = 18	          //Push forward the block height
 )
 
 // Spos SAFE-proof-of-stake protocol constants.
@@ -65,6 +65,9 @@ var (
 	extraSeal   = crypto.SignatureLength // Fixed number of extra-data suffix bytes reserved for signer seal
 
 	BlockReward = big.NewInt(1e+18)
+
+	subsidyHalvingInterval = big.NewInt(1051200)  //Number of blocks per year
+	nextDecrementHeight =  big.NewInt(200)      //Half the height the next time
 
 	uncleHash = types.CalcUncleHash(nil) // Always Keccak256(RLP([])) as uncles are meaningless outside of PoW.
 
@@ -729,7 +732,8 @@ func encodeSigHeader(w io.Writer, header *types.Header) {
 
 func accumulateRewards(config *params.ChainConfig, state *state.StateDB, header *types.Header) {
 	// Accumulate the rewards for the miner
-	reward := new(big.Int).Set(BlockReward)
+	//reward := new(big.Int).Set(BlockReward)
+	reward := getBlockSubsidy(header.Number.Uint64(), false)
 	state.AddBalance(header.Coinbase, reward)
 }
 
@@ -793,4 +797,21 @@ func sortSupernode(snap *Snapshot, header *types.Header) []common.Address {
 	}
 
 	return resultSuperMasterNode
+}
+
+func getBlockSubsidy(nBlockNum uint64, fSuperblockPartOnly bool) *big.Int {
+	subsidy := BlockReward.Uint64()
+
+	// yearly decline of production by ~7.1% per year, projected ~18M coins max by year 2050+.
+	for  i := nextDecrementHeight.Uint64(); i <= nBlockNum; i += subsidyHalvingInterval.Uint64(){
+		subsidy -= subsidy / 14
+	}
+
+    superblockPart := subsidy / 10
+
+    if fSuperblockPartOnly {
+    	return new(big.Int).SetUint64(superblockPart)
+	}else{
+		return new(big.Int).SetUint64(subsidy - superblockPart)
+	}
 }

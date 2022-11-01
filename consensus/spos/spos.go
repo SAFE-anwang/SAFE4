@@ -52,9 +52,9 @@ const (
 
 	wiggleTime = 500 * time.Millisecond // Random delay (per signer) to allow concurrent signers
 
-	//superNodeSPosCount = 9           //Total number of bookkeepers
+	//superNodeSPosCount = 7           //Total number of bookkeepers
 	superNodeSPosCount = 1
-	pushForwardHeight  = 18	          //Push forward the block height
+	pushForwardHeight  = 14	          //Push forward the block height
 )
 
 // Spos SAFE-proof-of-stake protocol constants.
@@ -732,9 +732,11 @@ func encodeSigHeader(w io.Writer, header *types.Header) {
 
 func accumulateRewards(config *params.ChainConfig, state *state.StateDB, header *types.Header) {
 	// Accumulate the rewards for the miner
-	//reward := new(big.Int).Set(BlockReward)
 	reward := getBlockSubsidy(header.Number.Uint64(), false)
-	state.AddBalance(header.Coinbase, reward)
+
+	masterNodePayment := getMasternodePayment(reward)
+	minerReward := reward.Uint64() - masterNodePayment.Uint64()
+	state.AddBalance(header.Coinbase, new(big.Int).SetUint64(minerReward))
 }
 
 func sortKey (mp map[string]common.Address) map[string]common.Address{
@@ -814,4 +816,22 @@ func getBlockSubsidy(nBlockNum uint64, fSuperblockPartOnly bool) *big.Int {
 	}else{
 		return new(big.Int).SetUint64(subsidy - superblockPart)
 	}
+}
+
+func getMasternodePayment(blockReward *big.Int) *big.Int {
+	//start at 20%
+	masternodePayment := blockReward.Uint64() / 5
+
+	//The SAFE 3 height is greater than 935600, and the revenue of the master node is only about 50%
+	masternodePayment += blockReward.Uint64() / 20
+	masternodePayment += blockReward.Uint64() / 20
+	masternodePayment += blockReward.Uint64() / 20
+	masternodePayment += blockReward.Uint64() / 40
+	masternodePayment += blockReward.Uint64() / 40
+	masternodePayment += blockReward.Uint64() / 40
+	masternodePayment += blockReward.Uint64() / 40
+	masternodePayment += blockReward.Uint64() / 40
+	masternodePayment += blockReward.Uint64() / 40
+
+	return new(big.Int).SetUint64(masternodePayment)
 }

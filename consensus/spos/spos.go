@@ -733,10 +733,15 @@ func encodeSigHeader(w io.Writer, header *types.Header) {
 func accumulateRewards(config *params.ChainConfig, state *state.StateDB, header *types.Header) {
 	// Accumulate the rewards for the miner
 	reward := getBlockSubsidy(header.Number.Uint64(), false)
+	state.AddBalance(header.Coinbase, reward)
 
 	masterNodePayment := getMasternodePayment(reward)
-	minerReward := reward.Uint64() - masterNodePayment.Uint64()
-	state.AddBalance(header.Coinbase, new(big.Int).SetUint64(minerReward))
+
+	log.Info("Block reward info", "reward", reward, "masterNodePayment", masterNodePayment)
+
+	//TODO Invokes the contract to transfer money to the master node
+
+
 }
 
 func sortKey (mp map[string]common.Address) map[string]common.Address{

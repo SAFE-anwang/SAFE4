@@ -21,6 +21,9 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+
+	"github.com/ethereum/go-ethereum/ethclient"
+	SafeSys "github.com/ethereum/go-ethereum/sys_contracts"
 	"io"
 	"math/big"
 	"math/rand"
@@ -55,6 +58,7 @@ const (
 	//superNodeSPosCount = 7           //Total number of bookkeepers
 	superNodeSPosCount = 1
 	pushForwardHeight  = 14	          //Push forward the block height
+	chtAddress         = "0x9D7f74d0C41E726EC95884E0e97Fa6129e3b5E99" //Contract address
 )
 
 // Spos SAFE-proof-of-stake protocol constants.
@@ -497,6 +501,36 @@ func (s *Spos) Prepare(chain consensus.ChainHeaderReader, header *types.Header) 
 			for _, signer := range params.SafeSposOfficialSuperNodeConfig.Signers {
 				snap.Signers[signer] = struct{}{}
 			}
+		}else { //TODO Call the contract to get the super node list
+			/*conn, err := ethclient.Dial("http://127.0.0.1:8545")
+			if err != nil {
+				return err
+			}*/
+
+			conn, err := ethclient.Dial("\\\\.\\pipe\\geth.ipc")
+			if err != nil {
+				log.Error("Failed to connect to the Ethereum client: %v", err)
+				return err
+			}
+			defer conn.Close()
+
+			safeSys, err := SafeSys.NewSafeSys(common.HexToAddress(chtAddress), conn)
+			if err != nil {
+				log.Error("Failed to instantiate a SafeSys contract: %v", err)
+				return err
+			}
+			//safeSysSession := SafeSys.SafeSysSession{Contract:safeSys, }
+
+			SuperMasterNodeInfoData ,err := safeSys.GetTopSMN(nil)
+			if err != nil {
+				log.Error("Failed to GetTopSMN: %v", err)
+				return err
+			}
+
+			snap.Signers = make(map[common.Address]struct{})
+			for singer := range SuperMasterNodeInfoData {
+				snap.Signers[SuperMasterNodeInfoData[singer].Addr] = struct{}{}
+			}
 		}
 
 		resultSuperNode := []common.Address{}
@@ -739,7 +773,7 @@ func accumulateRewards(config *params.ChainConfig, state *state.StateDB, header 
 
 	log.Info("Block reward info", "reward", reward, "masterNodePayment", masterNodePayment)
 
-	//TODO Invokes the contract to transfer money to the master node
+	//TODO Invokes the contract to transfer money to the master node,value is masterNodePayment
 
 
 }

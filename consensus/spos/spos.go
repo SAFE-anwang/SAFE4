@@ -21,9 +21,10 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	SafeSys "github.com/ethereum/go-ethereum/sys_contracts"
+	//TestSq "github.com/ethereum/go-ethereum/sys_contracts/test"
 
 	"github.com/ethereum/go-ethereum/ethclient"
-	SafeSys "github.com/ethereum/go-ethereum/sys_contracts"
 	"io"
 	"math/big"
 	"math/rand"
@@ -58,7 +59,8 @@ const (
 	//superNodeSPosCount = 7           //Total number of bookkeepers
 	superNodeSPosCount = 1
 	pushForwardHeight  = 14	          //Push forward the block height
-	chtAddress         = "0x9D7f74d0C41E726EC95884E0e97Fa6129e3b5E99" //Contract address
+	chtAddress         = "0x043807066705c6EF9EB3D28D5D230b4d87EC4832" //Contract address
+	//testSqchAddress    = "0xcbb7f08505f75fc7d2650578Bc82dFBc36732144"
 )
 
 // Spos SAFE-proof-of-stake protocol constants.
@@ -502,16 +504,38 @@ func (s *Spos) Prepare(chain consensus.ChainHeaderReader, header *types.Header) 
 				snap.Signers[signer] = struct{}{}
 			}
 		}else { //TODO Call the contract to get the super node list
+			//test TestSq
 			/*conn, err := ethclient.Dial("http://127.0.0.1:8545")
-			if err != nil {
-				return err
-			}*/
-
-			conn, err := ethclient.Dial("\\\\.\\pipe\\geth.ipc")
 			if err != nil {
 				log.Error("Failed to connect to the Ethereum client: %v", err)
 				return err
 			}
+			defer conn.Close()
+
+			testSq, err:= TestSq.NewTestSq(common.HexToAddress(testSqchAddress), conn)
+			if err != nil {
+				log.Error("Failed to instantiate a TestSq contract: %v", err)
+				return err
+			}
+			testvar, err := testSq.GetCount(nil)
+			if err != nil {
+
+				return err
+			}
+			fmt.Println(testvar)
+			*/
+
+			conn, err := ethclient.Dial("http://127.0.0.1:8545")
+			if err != nil {
+				log.Error("Failed to connect to the Ethereum client: %v", err)
+				return err
+			}
+
+			/*conn, err := ethclient.Dial("\\\\.\\pipe\\geth.ipc")
+			if err != nil {
+				log.Error("Failed to connect to the Ethereum client: %v", err)
+				return err
+			}*/
 			defer conn.Close()
 
 			safeSys, err := SafeSys.NewSafeSys(common.HexToAddress(chtAddress), conn)
@@ -519,7 +543,6 @@ func (s *Spos) Prepare(chain consensus.ChainHeaderReader, header *types.Header) 
 				log.Error("Failed to instantiate a SafeSys contract: %v", err)
 				return err
 			}
-			//safeSysSession := SafeSys.SafeSysSession{Contract:safeSys, }
 
 			SuperMasterNodeInfoData ,err := safeSys.GetTopSMN(nil)
 			if err != nil {
@@ -529,6 +552,7 @@ func (s *Spos) Prepare(chain consensus.ChainHeaderReader, header *types.Header) 
 
 			snap.Signers = make(map[common.Address]struct{})
 			for singer := range SuperMasterNodeInfoData {
+				log.Info("Super MasterNode Addr Info", "SuperMasterNodeInfoData[singer].Addr", SuperMasterNodeInfoData[singer].Addr)
 				snap.Signers[SuperMasterNodeInfoData[singer].Addr] = struct{}{}
 			}
 		}

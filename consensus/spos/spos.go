@@ -623,11 +623,16 @@ func (s *Spos) Prepare(chain consensus.ChainHeaderReader, header *types.Header) 
 }
 
 // Finalize implements consensus.Engine, ensuring no uncles are set
-func (s *Spos) Finalize(chain consensus.ChainHeaderReader, header *types.Header, state *state.StateDB, txs []*types.Transaction, uncles []*types.Header){
-	accumulateRewards(chain.Config(), state, header)
+func (s *Spos) Finalize(chain consensus.ChainHeaderReader, header *types.Header, state *state.StateDB, txs []*types.Transaction, uncles []*types.Header) error{
+	err := accumulateRewards(chain.Config(), state, header)
+	if err != nil {
+		return err
+	}
 
 	header.Root = state.IntermediateRoot(chain.Config().IsEIP158(header.Number))
 	header.UncleHash = types.CalcUncleHash(nil)
+
+	return nil
 }
 
 // FinalizeAndAssemble implements consensus.Engine, ensuring no uncles are set, and returns the final block.

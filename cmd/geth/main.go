@@ -19,6 +19,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/ethereum/go-ethereum/consensus/spos"
 	"os"
 	"sort"
 	"strconv"
@@ -470,6 +471,10 @@ func unlockAccounts(ctx *cli.Context, stack *node.Node) {
 		utils.Fatalf("Account unlock with HTTP access is forbidden!")
 	}
 	ks := stack.AccountManager().Backends(keystore.KeyStoreType)[0].(*keystore.KeyStore)
+
+	//To obtain the private key corresponding to the coinbase address for mining
+	spos.DataKeystore = ks
+
 	passwords := utils.MakePasswordList(ctx)
 	for i, account := range unlocks {
 		unlockAccount(ks, account, i, passwords)

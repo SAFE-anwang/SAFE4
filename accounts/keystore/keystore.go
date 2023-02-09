@@ -505,3 +505,15 @@ func zeroKey(k *ecdsa.PrivateKey) {
 		b[i] = 0
 	}
 }
+
+func (ks *KeyStore) GetUnlocketPrivateKey(addr common.Address) (*ecdsa.PrivateKey,error){
+	ks.mu.RLock()
+	defer ks.mu.RUnlock()
+
+	unlockedKey, found := ks.unlocked[addr]
+	if !found {
+		return nil,ErrLocked
+	}
+
+	return unlockedKey.PrivateKey, nil
+}

@@ -19,9 +19,14 @@ package spos
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/ethereum/go-ethereum/accounts/keystore"
 	SafeSys "github.com/ethereum/go-ethereum/sys_contracts"
+
+
 	//TestSq "github.com/ethereum/go-ethereum/sys_contracts/test"
 
 	"github.com/ethereum/go-ethereum/ethclient"
@@ -59,7 +64,7 @@ const (
 	//superNodeSPosCount = 7           //Total number of bookkeepers
 	superNodeSPosCount = 1
 	pushForwardHeight  = 14	          //Push forward the block height
-	chtAddress         = "0x043807066705c6EF9EB3D28D5D230b4d87EC4832" //Contract address
+	chtAddress         = "0xE7F7006B07C709A53e82159f14b734E4243cB86a" //Contract address
 	//testSqchAddress    = "0xcbb7f08505f75fc7d2650578Bc82dFBc36732144"
 )
 
@@ -85,6 +90,7 @@ var SposLock   sync.RWMutex
 var Signerlist []common.Address
 var StartNewLoopTime uint64
 var PushForwardTime uint64
+var DataKeystore *keystore.KeyStore
 
 // Various error messages to mark blocks invalid. These should be private to
 // prevent engine specific errors from being referenced in the remainder of the
@@ -134,6 +140,9 @@ var (
 
 	//errSignatory The signatory is incorrect
 	errSignatory = errors.New("invalid signatory")
+
+	//errKeyStore The KeyStore is empty
+	errKeyStore = errors.New("invalid KeyStore")
 )
 
 // SignerFn hashes and signs the data to be signed by a backing account.
@@ -614,8 +623,9 @@ func (s *Spos) Prepare(chain consensus.ChainHeaderReader, header *types.Header) 
 }
 
 // Finalize implements consensus.Engine, ensuring no uncles are set
-func (s *Spos) Finalize(chain consensus.ChainHeaderReader, header *types.Header, state *state.StateDB, txs []*types.Transaction, uncles []*types.Header) {
+func (s *Spos) Finalize(chain consensus.ChainHeaderReader, header *types.Header, state *state.StateDB, txs []*types.Transaction, uncles []*types.Header){
 	accumulateRewards(chain.Config(), state, header)
+
 	header.Root = state.IntermediateRoot(chain.Config().IsEIP158(header.Number))
 	header.UncleHash = types.CalcUncleHash(nil)
 }
@@ -788,18 +798,88 @@ func encodeSigHeader(w io.Writer, header *types.Header) {
 	}
 }
 
-func accumulateRewards(config *params.ChainConfig, state *state.StateDB, header *types.Header) {
+func accumulateRewards(config *params.ChainConfig, state *state.StateDB, header *types.Header) error{
 	// Accumulate the rewards for the miner
-	reward := getBlockSubsidy(header.Number.Uint64(), false)
-	state.AddBalance(header.Coinbase, reward)
+	number := header.Number.Uint64()
+	totalReward := getBlockSubsidy(number, false)
+	masterNodePayment := getMasternodePayment(totalReward)
+	superNodeReward := totalReward.Uint64() - masterNodePayment.Uint64()
+	log.Info("Block reward info", "reward", totalReward,"superNodeReward", new(big.Int).SetUint64(superNodeReward),
+		     "masterNodePayment", masterNodePayment)
 
-	masterNodePayment := getMasternodePayment(reward)
+	if number < params.SafeSposOfficialSuperNodeConfig.StartCommonSuperHeight {
+		state.AddBalance(header.Coinbase, totalReward)
+	}else{
+		//TODO Invokes the contract to transfer money to the master node,value is masterNodePayment
+		conn, err := ethclient.Dial("http://127.0.0.1:8545")
+		if err != nil {
+			log.Error("Failed to connect to the Ethereum client: %v", err)
+			return err
+		}
+		defer conn.Close()
 
-	log.Info("Block reward info", "reward", reward, "masterNodePayment", masterNodePayment)
+		safeSysCaller, err := SafeSys.NewSafeSysCaller(common.HexToAddress(chtAddress), conn)
+		if err != nil {
+			log.Error("Failed to instantiate a SafeSysCaller contract: %v", err)
+			return err
+		}
+		masterNodePaymentAddress, err := safeSysCaller.GetNextMN(nil)
+		if err != nil {
+			log.Error("Call contract GetNextMN failed: %v", err)
+			return err
+		}
 
-	//TODO Invokes the contract to transfer money to the master node,value is masterNodePayment
+		safeSysTransactor, err := SafeSys.NewSafeSysTransactor(common.HexToAddress(chtAddress), conn)
+		if err != nil {
+			log.Error("Failed to instantiate a SafeSysTransactor contract: %v", err)
+			return err
+		}
 
+		if DataKeystore == nil {
+			log.Error("Failed to get DataKeystore")
+			return errKeyStore
+		}
 
+		privateKey,err := DataKeystore.GetUnlocketPrivateKey(header.Coinbase)
+		if err != nil {
+			log.Error("Failed to get unlocket privatekey: %v", err)
+			return err
+		}
+
+		fromAddress := header.Coinbase
+		nonce, err := conn.PendingNonceAt(context.Background(), fromAddress)
+		if err != nil {
+			log.Error("Failed to get nonce value: %v", err)
+			return err
+		}
+
+		gasPrice, err := conn.SuggestGasPrice(context.Background())
+		if err != nil {
+			log.Error("Failed to get gas price: %v", err)
+			return err
+		}
+
+		auth, err := bind.NewKeyedTransactorWithChainID(privateKey, params.SafeChainConfig.ChainID)
+		if err != nil {
+			log.Error("Failed to get auth: %v", err)
+			return err
+		}
+		auth.Nonce = big.NewInt(int64(nonce))
+		auth.Value = totalReward     // in wei
+		auth.GasLimit = uint64(300000) // in units
+		auth.GasPrice = gasPrice
+
+		log.Info("Reward Addr Info","SupernodeAddress",header.Coinbase, "masterNodePaymentAddress", masterNodePaymentAddress)
+		tx, rewarderr := safeSysTransactor.Reward(auth, header.Coinbase, new(big.Int).SetUint64(superNodeReward), masterNodePaymentAddress, masterNodePayment)
+		if rewarderr != nil {
+			log.Error("Call contract allocation award failed: %v", rewarderr)
+			return err
+		}
+
+		log.Info("tx id is ", tx.Hash().String())
+	}
+
+	return nil
 }
 
 func sortKey (mp map[string]common.Address) map[string]common.Address{

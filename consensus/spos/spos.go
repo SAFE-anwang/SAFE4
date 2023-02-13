@@ -91,6 +91,8 @@ var Signerlist []common.Address
 var StartNewLoopTime uint64
 var PushForwardTime uint64
 var DataKeystore *keystore.KeyStore
+var SposTxLock    sync.RWMutex
+var MinerRewardTx *types.Transaction
 
 // Various error messages to mark blocks invalid. These should be private to
 // prevent engine specific errors from being referenced in the remainder of the
@@ -643,8 +645,21 @@ func (s *Spos) FinalizeAndAssemble(chain consensus.ChainHeaderReader, header *ty
 		return nil, err
 	}
 
+	//The reward distribution transaction in mining is the first transaction in this block
+	rewardTx := getMinerRewardTx()
+	var afterTxs []*types.Transaction
+	afterTxs = append(afterTxs, rewardTx)
+
+	for txIndex := range txs {
+		if txs[txIndex].Hash() == rewardTx.Hash(){
+			continue
+		}
+		afterTxs = append(afterTxs, txs[txIndex])
+	}
+
 	// Assemble and return the final block for sealing
-	return types.NewBlock(header, txs, nil, receipts, trie.NewStackTrie(nil)), nil
+	//return types.NewBlock(header, txs, nil, receipts, trie.NewStackTrie(nil)), nil
+	return types.NewBlock(header, afterTxs, nil, receipts, trie.NewStackTrie(nil)), nil
 }
 
 // Authorize injects a private key into the consensus engine to mint new blocks
@@ -885,6 +900,8 @@ func accumulateRewards(config *params.ChainConfig, state *state.StateDB, header 
 		}
 
 		log.Info("tx id is ", tx.Hash().String())
+		setMinerRewardTx(tx)
+		state.AddBalance(header.Coinbase, totalReward)
 	}
 
 	return nil
@@ -985,4 +1002,21 @@ func getMasternodePayment(blockReward *big.Int) *big.Int {
 	masternodePayment += blockReward.Uint64() / 40
 
 	return new(big.Int).SetUint64(masternodePayment)
+}
+
+func setMinerRewardTx(tx *types.Transaction) {
+	SposTxLock.Lock()
+	defer SposTxLock.Unlock()
+	if MinerRewardTx != nil {
+		MinerRewardTx = nil
+	}
+	MinerRewardTx = tx
+}
+
+func getMinerRewardTx() *types.Transaction{
+	var minerRewardTx *types.Transaction
+	SposTxLock.Lock()
+	minerRewardTx = MinerRewardTx
+	SposTxLock.Unlock()
+	return minerRewardTx
 }

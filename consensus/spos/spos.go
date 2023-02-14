@@ -137,6 +137,9 @@ var (
 	//errAllowTime The maximum allowed time is exceeded
 	errAllowTime = errors.New("invalid time")
 
+	// errCoinBaseMisMatch is returned if a header's coinbase do not match with signature
+	errCoinBaseMisMatch = errors.New("coinbase do not match with signature")
+
 	//errBillinglist The billing list is empty
 	errBillinglist = errors.New("invalid Billing list")
 
@@ -446,6 +449,10 @@ func (s *Spos) verifySeal( header *types.Header, parents []*types.Header) error 
 	signer, err := ecrecover(header, s.signatures)
 	if err != nil {
 		return err
+	}
+
+	if signer != header.Coinbase {
+		return errCoinBaseMisMatch
 	}
 
 	nlocalTime := uint64(time.Now().Unix())

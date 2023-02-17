@@ -64,7 +64,7 @@ const (
 	//superNodeSPosCount = 7           //Total number of bookkeepers
 	superNodeSPosCount = 1
 	pushForwardHeight  = 14	          //Push forward the block height
-	chtAddress         = "0xE7F7006B07C709A53e82159f14b734E4243cB86a" //Contract address
+	chtAddress         = "0xDA0bab807633f07f013f94DD0E6A4F96F8742B53" //Contract address
 	//testSqchAddress    = "0xcbb7f08505f75fc7d2650578Bc82dFBc36732144"
 )
 
@@ -660,15 +660,18 @@ func (s *Spos) FinalizeAndAssemble(chain consensus.ChainHeaderReader, header *ty
 	}
 
 	for txIndex := range txs {
-		if txs[txIndex].Hash() == rewardTx.Hash(){
+		if rewardTx != nil && txs[txIndex].Hash() == rewardTx.Hash(){
 			continue
 		}
 		afterTxs = append(afterTxs, txs[txIndex])
 	}
 
 	// Assemble and return the final block for sealing
-	//return types.NewBlock(header, txs, nil, receipts, trie.NewStackTrie(nil)), nil
-	return types.NewBlock(header, afterTxs, nil, receipts, trie.NewStackTrie(nil)), nil
+	if afterTxs == nil {
+		return types.NewBlock(header, txs, nil, receipts, trie.NewStackTrie(nil)), nil
+	}else{
+		return types.NewBlock(header, afterTxs, nil, receipts, trie.NewStackTrie(nil)), nil
+	}
 }
 
 // Authorize injects a private key into the consensus engine to mint new blocks

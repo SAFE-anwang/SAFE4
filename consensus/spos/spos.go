@@ -653,9 +653,11 @@ func (s *Spos) FinalizeAndAssemble(chain consensus.ChainHeaderReader, header *ty
 	}
 
 	//The reward distribution transaction in mining is the first transaction in this block
-	rewardTx := getMinerRewardTx()
 	var afterTxs []*types.Transaction
-	afterTxs = append(afterTxs, rewardTx)
+	rewardTx := getMinerRewardTx()
+	if rewardTx != nil {
+		afterTxs = append(afterTxs, rewardTx)
+	}
 
 	for txIndex := range txs {
 		if txs[txIndex].Hash() == rewardTx.Hash(){

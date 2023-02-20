@@ -19,6 +19,7 @@ package miner
 import (
 	"errors"
 	"fmt"
+	"github.com/ethereum/go-ethereum/consensus/spos"
 	"math/big"
 	"sync"
 	"sync/atomic"
@@ -1158,6 +1159,11 @@ func (w *worker) commit(env *environment, interval func(), update bool, start ti
 		if err != nil {
 			return err
 		}
+
+		if _, ok := w.engine.(*spos.Spos); ok {
+			env.receipts = spos.GetReceipts()
+		}
+
 		// If we're post merge, just ignore
 		if !w.isTTDReached(block.Header()) {
 			select {

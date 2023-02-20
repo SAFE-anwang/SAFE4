@@ -64,7 +64,7 @@ const (
 	//superNodeSPosCount = 7           //Total number of bookkeepers
 	superNodeSPosCount = 1
 	pushForwardHeight  = 14	          //Push forward the block height
-	chtAddress         = "0xDA0bab807633f07f013f94DD0E6A4F96F8742B53" //Contract address
+	chtAddress         = "0xa869C29Cf9B1f0F915E71Ec20605dd603DE16Bf2" //Contract address
 	//testSqchAddress    = "0xcbb7f08505f75fc7d2650578Bc82dFBc36732144"
 )
 
@@ -93,6 +93,9 @@ var PushForwardTime uint64
 var DataKeystore *keystore.KeyStore
 var SposTxLock    sync.RWMutex
 var MinerRewardTx *types.Transaction
+var ReceiptsLock  sync.RWMutex
+var Receipts []*types.Receipt
+
 
 // Various error messages to mark blocks invalid. These should be private to
 // prevent engine specific errors from being referenced in the remainder of the
@@ -653,25 +656,37 @@ func (s *Spos) FinalizeAndAssemble(chain consensus.ChainHeaderReader, header *ty
 	}
 
 	//The reward distribution transaction in mining is the first transaction in this block
-	var afterTxs []*types.Transaction
 	rewardTx := getMinerRewardTx()
 	if rewardTx != nil {
-		afterTxs = append(afterTxs, rewardTx)
+		tempTransaction := new(types.Transaction)
+		txs = append(txs, tempTransaction)
+		copy(txs[1:], txs[0:])
+		txs[0] = rewardTx
+
+		usedGas := rewardTx.Gas()
+		receipt := types.NewReceipt(header.Root.Bytes(), false, usedGas)
+		receipt.TxHash = rewardTx.Hash()
+		receipt.GasUsed = header.GasUsed
+
+		// Set the receipt logs and create a bloom for filtering
+		nonce := state.GetNonce(header.Coinbase)
+		receipt.Logs = state.GetLogs(rewardTx.Hash(), header.Hash())
+		receipt.Bloom = types.CreateBloom(types.Receipts{receipt})
+		receipt.BlockHash = header.Hash()
+		receipt.BlockNumber = header.Number
+		receipt.TransactionIndex = uint(state.TxIndex())
+		state.SetNonce(header.Coinbase, nonce+1)
+
+		tempreceipts := new(types.Receipt)
+		receipts = append(receipts, tempreceipts)
+		copy(receipts[1:], receipts[0:])
+		receipts[0] = receipt
 	}
 
-	for txIndex := range txs {
-		if rewardTx != nil && txs[txIndex].Hash() == rewardTx.Hash(){
-			continue
-		}
-		afterTxs = append(afterTxs, txs[txIndex])
-	}
-
+	SetReceipts(receipts)
 	// Assemble and return the final block for sealing
-	if afterTxs == nil {
-		return types.NewBlock(header, txs, nil, receipts, trie.NewStackTrie(nil)), nil
-	}else{
-		return types.NewBlock(header, afterTxs, nil, receipts, trie.NewStackTrie(nil)), nil
-	}
+	return types.NewBlock(header, txs, nil, receipts, trie.NewStackTrie(nil)), nil
+
 }
 
 // Authorize injects a private key into the consensus engine to mint new blocks
@@ -1031,4 +1046,21 @@ func getMinerRewardTx() *types.Transaction{
 	minerRewardTx = MinerRewardTx
 	SposTxLock.Unlock()
 	return minerRewardTx
+}
+
+func SetReceipts(receipts []*types.Receipt){
+	ReceiptsLock.Lock()
+	defer ReceiptsLock.Unlock()
+	Receipts = make([]*types.Receipt, len(receipts))
+	copy(Receipts, receipts)
+}
+
+func GetReceipts() []*types.Receipt{
+	var receipts []*types.Receipt
+
+	ReceiptsLock.Lock()
+	receipts = make([]*types.Receipt, len(Receipts))
+	copy(receipts, Receipts)
+	ReceiptsLock.Unlock()
+	return receipts
 }

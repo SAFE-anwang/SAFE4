@@ -666,7 +666,9 @@ func (s *Spos) FinalizeAndAssemble(chain consensus.ChainHeaderReader, header *ty
 		usedGas := rewardTx.Gas()
 		receipt := types.NewReceipt(header.Root.Bytes(), false, usedGas)
 		receipt.TxHash = rewardTx.Hash()
-		receipt.GasUsed = header.GasUsed
+		receipt.GasUsed = usedGas
+
+		header.GasUsed += usedGas
 
 		// Set the receipt logs and create a bloom for filtering
 		nonce := state.GetNonce(header.Coinbase)

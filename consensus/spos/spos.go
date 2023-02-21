@@ -64,7 +64,7 @@ const (
 	//superNodeSPosCount = 7           //Total number of bookkeepers
 	superNodeSPosCount = 1
 	pushForwardHeight  = 14	          //Push forward the block height
-	chtAddress         = "0xa869C29Cf9B1f0F915E71Ec20605dd603DE16Bf2" //Contract address
+	chtAddress         = "0x043807066705c6EF9EB3D28D5D230b4d87EC4832" //Contract address
 	//testSqchAddress    = "0xcbb7f08505f75fc7d2650578Bc82dFBc36732144"
 )
 
@@ -658,10 +658,14 @@ func (s *Spos) FinalizeAndAssemble(chain consensus.ChainHeaderReader, header *ty
 	//The reward distribution transaction in mining is the first transaction in this block
 	rewardTx := getMinerRewardTx()
 	if rewardTx != nil {
-		tempTransaction := new(types.Transaction)
+		/*tempTransaction := new(types.Transaction)
 		txs = append(txs, tempTransaction)
 		copy(txs[1:], txs[0:])
 		txs[0] = rewardTx
+		 */
+
+		state.Prepare(rewardTx.Hash(), len(txs))
+		txs = append(txs, rewardTx)
 
 		usedGas := rewardTx.Gas()
 		receipt := types.NewReceipt(header.Root.Bytes(), false, usedGas)
@@ -677,18 +681,21 @@ func (s *Spos) FinalizeAndAssemble(chain consensus.ChainHeaderReader, header *ty
 		receipt.BlockHash = header.Hash()
 		receipt.BlockNumber = header.Number
 		receipt.TransactionIndex = uint(state.TxIndex())
-		state.SetNonce(header.Coinbase, nonce+1)
+		state.SetNonce(header.Coinbase, nonce + 1)
 
-		tempreceipts := new(types.Receipt)
+		receipts = append(receipts, receipt)
+		/*tempreceipts := new(types.Receipt)
 		receipts = append(receipts, tempreceipts)
 		copy(receipts[1:], receipts[0:])
 		receipts[0] = receipt
+		 */
 	}
 
 	SetReceipts(receipts)
+	header.Root = state.IntermediateRoot(chain.Config().IsEIP158(header.Number))
+	header.UncleHash = types.CalcUncleHash(nil)
 	// Assemble and return the final block for sealing
 	return types.NewBlock(header, txs, nil, receipts, trie.NewStackTrie(nil)), nil
-
 }
 
 // Authorize injects a private key into the consensus engine to mint new blocks

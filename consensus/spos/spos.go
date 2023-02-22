@@ -97,6 +97,7 @@ var ReceiptsLock  sync.RWMutex
 var Receipts []*types.Receipt
 
 
+
 // Various error messages to mark blocks invalid. These should be private to
 // prevent engine specific errors from being referenced in the remainder of the
 // codebase, inherently breaking if the engine is swapped out. Please put common
@@ -1072,7 +1073,7 @@ func distributeReward(header *types.Header) (*types.Transaction, error) {
 		return nil, err
 	}
 
-	log.Info("tx id is ", distributeRewardTx.Hash().String())
+	log.Info( "Reward Tx info", "block number", number, "txhash", distributeRewardTx.Hash().String())
 
 	return distributeRewardTx, nil
 }

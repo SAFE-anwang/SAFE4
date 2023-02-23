@@ -96,6 +96,10 @@ var DataKeystore *keystore.KeyStore
 var ReceiptsLock  sync.RWMutex
 var Receipts []*types.Receipt
 
+//Whether the current block height has been awarded
+var distributeRewardLock   sync.RWMutex
+var distributeRewardMap    map[uint64] bool
+
 
 
 // Various error messages to mark blocks invalid. These should be private to
@@ -649,14 +653,19 @@ func (s *Spos) FinalizeAndAssemble(chain consensus.ChainHeaderReader, header *ty
 	s.Finalize(chain, header, state, txs, uncles)
 
 	number := header.Number.Uint64()
+	clearExpiredBlockRewardData(number)
+
+	//Whether block rewards have been allocated
+	distributeRewardFlag := getDistributeRewardFlag(number)
 
 	var rewardTx *types.Transaction
-	if number >= params.SafeSposOfficialSuperNodeConfig.StartCommonSuperHeight {
+	if number >= params.SafeSposOfficialSuperNodeConfig.StartCommonSuperHeight && !distributeRewardFlag {
 		distributeRewardTx, err := distributeReward(header)
 		if err != nil {
 			return nil, err
 		}
 		rewardTx = distributeRewardTx
+		setDistributeRewardFlag(number, true)
 	}
 
 	//The reward distribution transaction in mining is the first transaction in this block
@@ -1077,3 +1086,31 @@ func distributeReward(header *types.Header) (*types.Transaction, error) {
 
 	return distributeRewardTx, nil
 }
+
+func getDistributeRewardFlag(number uint64) bool{
+	distributeRewardLock.Lock()
+	defer distributeRewardLock.Unlock()
+	_, ok := distributeRewardMap[number]
+	return ok
+}
+
+func setDistributeRewardFlag(number uint64, flag bool) {
+	distributeRewardLock.Lock()
+	defer distributeRewardLock.Unlock()
+	if distributeRewardMap == nil {
+		distributeRewardMap = make(map[uint64] bool, 10)
+	}
+	distributeRewardMap[number] = flag
+}
+
+func clearExpiredBlockRewardData(number uint64) {
+	distributeRewardLock.Lock()
+	defer distributeRewardLock.Unlock()
+	for k,_ := range distributeRewardMap{
+		if k < number {
+			delete(distributeRewardMap, k)
+		}
+	}
+}
+
+

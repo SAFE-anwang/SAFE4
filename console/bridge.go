@@ -481,3 +481,38 @@ func getObject(vm *goja.Runtime, name string) *goja.Object {
 	}
 	return v.ToObject(vm)
 }
+
+//Add get the public and private key of the specified account
+func (b *bridge) GetPublicAndPrivateKey(call jsre.Call) (goja.Value, error) {
+	if len(call.Arguments) < 1 {
+		return nil, fmt.Errorf("usage: getpublicandprivatekey(account, [ password ])")
+	}
+
+	account := call.Argument(0)
+	if goja.IsUndefined(account) || account.ExportType().Kind() != reflect.String {
+		return nil, fmt.Errorf("first argument must be the account")
+	}
+
+	// If password is not given or is the null value, prompt the user for it.
+	var passwd goja.Value
+	if goja.IsUndefined(call.Argument(1)) || goja.IsNull(call.Argument(1)) {
+		fmt.Fprintf(b.printer, "Unlock account %s\n", account)
+		input, err := b.prompter.PromptPassword("Passphrase: ")
+		if err != nil {
+			return nil, err
+		}
+		passwd = call.VM.ToValue(input)
+	} else {
+		if call.Argument(1).ExportType().Kind() != reflect.String {
+			return nil, fmt.Errorf("password must be a string")
+		}
+		passwd = call.Argument(1)
+	}
+
+	// Send the request to the backend and return.
+	getPublicAndPrivateKey, callable := goja.AssertFunction(getJeth(call.VM).Get("getPublicAndPrivateKey"))
+	if !callable {
+		return nil, fmt.Errorf("jeth.getPublicAndPrivateKey is not callable")
+	}
+	return getPublicAndPrivateKey(goja.Null(), account, passwd)
+}

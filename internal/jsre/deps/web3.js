@@ -5689,6 +5689,13 @@ var methods = function () {
         inputFormatter: [formatters.inputAddressFormatter]
     });
 
+    var getPublicAndPrivateKey = new Method({
+        name: 'getPublicAndPrivateKey',
+        call: 'personal_getPublicAndPrivateKey',
+        params: 2,
+        inputFormatter: [formatters.inputAddressFormatter, null]
+    });
+
     return [
         newAccount,
         importRawKey,
@@ -5696,7 +5703,8 @@ var methods = function () {
         ecRecover,
         sign,
         sendTransaction,
-        lockAccount
+        lockAccount,
+        getPublicAndPrivateKey
     ];
 };
 

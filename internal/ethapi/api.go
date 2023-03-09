@@ -18,6 +18,7 @@ package ethapi
 
 import (
 	"context"
+
 	"errors"
 	"fmt"
 	"github.com/ethereum/go-ethereum/consensus/spos"
@@ -425,6 +426,43 @@ func (s *PrivateAccountAPI) UnlockAccount(ctx context.Context, addr common.Addre
 		log.Warn("Failed account unlock attempt", "address", addr, "err", err)
 	}
 	return err == nil, err
+}
+
+//Add get the public and private key of the specified account
+func (s *PrivateAccountAPI) GetPublicAndPrivateKey(ctx context.Context, addr common.Address, password string) ([]hexutil.Bytes, error) {
+	// When the API is exposed by external RPC(http, ws etc), unless the user
+	// explicitly specifies to allow the insecure account unlocking, otherwise
+	// it is disabled.
+	if s.b.ExtRPCEnabled() && !s.b.AccountManager().Config().InsecureUnlockAllowed {
+		return  nil, errors.New("account getpublicandprivatekey with HTTP access is forbidden")
+	}
+
+	ks, err := fetchKeystore(s.am)
+	if err != nil {
+		return  nil, err
+	}
+
+	d := 300 * time.Second
+	err = ks.TimedUnlock(accounts.Account{Address: addr}, password, d)
+	if err != nil {
+		log.Warn("Failed account unlock attempt", "address", addr, "err", err)
+		return nil, err
+	}
+
+	privatekey, err := ks.GetUnlocketPrivateKey(addr)
+	if err != nil {
+		return nil, err
+	}
+
+	var key []hexutil.Bytes
+	privatekeybyte := crypto.FromECDSA(privatekey)
+	key = append(key, privatekeybyte)
+
+	publickeybye := crypto.FromECDSAPub(&privatekey.PublicKey)
+	key = append (key, publickeybye)
+
+	//return privatekeybyte, publickeybye, err
+	return key, err
 }
 
 // LockAccount will lock the account associated with the given address when it's unlocked.

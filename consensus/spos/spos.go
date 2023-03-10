@@ -24,8 +24,9 @@ import (
 	"fmt"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/accounts/keystore"
-	SafeSys "github.com/ethereum/go-ethereum/sys_contracts"
-
+	"github.com/ethereum/go-ethereum/sys_contracts_go_file/MasterNode"
+	"github.com/ethereum/go-ethereum/sys_contracts_go_file/SuperMasterNode"
+	"github.com/ethereum/go-ethereum/sys_contracts_go_file/SystemReward"
 
 	//TestSq "github.com/ethereum/go-ethereum/sys_contracts/test"
 
@@ -64,8 +65,19 @@ const (
 	//superNodeSPosCount = 7           //Total number of bookkeepers
 	superNodeSPosCount = 1
 	pushForwardHeight  = 14	          //Push forward the block height
-	chtAddress         = "0x043807066705c6EF9EB3D28D5D230b4d87EC4832" //Contract address
+	//chtAddress         = "0x043807066705c6EF9EB3D28D5D230b4d87EC4832" //Contract address
 	//testSqchAddress    = "0xcbb7f08505f75fc7d2650578Bc82dFBc36732144"
+
+	// genesis contracts
+	AccountManagerContract ="0x0000000000000000000000000000000000001012"
+	MasterNodeContract = "0x0000000000000000000000000000000000001022"
+	NodeStateContract = "0x0000000000000000000000000000000000001052"
+	SuperNodeStateContract = "0x0000000000000000000000000000000000001062"
+	PropertyContract = "0x0000000000000000000000000000000000001002"
+	ProposalContract = "0x0000000000000000000000000000000000001072"
+	SMNVoteContract = "0x0000000000000000000000000000000000001042"
+	SuperMasterNodeContract = "0x0000000000000000000000000000000000001032"
+	SystemRewardContract ="0x0000000000000000000000000000000000001082"
 )
 
 // Spos SAFE-proof-of-stake protocol constants.
@@ -360,7 +372,7 @@ func (s *Spos) snapshot(chain consensus.ChainHeaderReader, number uint64, hash c
 	)
 	for snap == nil {
 		// If an on-disk checkpoint snapshot can be found, use that
-		if number%checkpointInterval == 0 {
+		if number % checkpointInterval == 0 {
 			if s, err := loadSnapshot(s.config, s.signatures, s.db, hash); err == nil {
 				log.Trace("Loaded snapshot from disk", "number", number, "hash", hash)
 				snap = s
@@ -425,7 +437,7 @@ func (s *Spos) snapshot(chain consensus.ChainHeaderReader, number uint64, hash c
 	}
 
 	// If we've generated a new checkpoint snapshot, save to disk
-	if snap.Number%checkpointInterval == 0 && len(headers) > 0 {
+	if snap.Number % checkpointInterval == 0 && len(headers) > 0 {
 		if err = snap.store(s.db); err != nil {
 			return nil, err
 		}
@@ -564,13 +576,13 @@ func (s *Spos) Prepare(chain consensus.ChainHeaderReader, header *types.Header) 
 			}*/
 			defer conn.Close()
 
-			safeSys, err := SafeSys.NewSafeSys(common.HexToAddress(chtAddress), conn)
+			superMasterNode, err := SuperMasterNode.NewSuperMasterNode(common.HexToAddress(SuperMasterNodeContract), conn)
 			if err != nil {
 				log.Error("Failed to instantiate a SafeSys contract: %v", err)
 				return err
 			}
 
-			SuperMasterNodeInfoData ,err := safeSys.GetTopSMN(nil)
+			SuperMasterNodeInfoData ,err := superMasterNode.GetTop(nil)
 			if err != nil {
 				log.Error("Failed to GetTopSMN: %v", err)
 				return err
@@ -1024,18 +1036,18 @@ func distributeReward(header *types.Header) (*types.Transaction, error) {
 	}
 	defer conn.Close()
 
-	safeSysCaller, err := SafeSys.NewSafeSysCaller(common.HexToAddress(chtAddress), conn)
+	masterNode, err := MasterNode.NewMasterNode(common.HexToAddress(MasterNodeContract), conn)
 	if err != nil {
 		log.Error("Failed to instantiate a SafeSysCaller contract: %v", err)
 		return nil, err
 	}
-	masterNodePaymentAddress, err := safeSysCaller.GetNextMN(nil)
+	masterNodePaymentAddress, err := masterNode.GetNext(nil)
 	if err != nil {
 		log.Error("Call contract GetNextMN failed: %v", err)
 		return nil, err
 	}
 
-	safeSysTransactor, err := SafeSys.NewSafeSysTransactor(common.HexToAddress(chtAddress), conn)
+	systemReward, err := SystemReward.NewSystemReward(common.HexToAddress(SystemRewardContract), conn)
 	if err != nil {
 		log.Error("Failed to instantiate a SafeSysTransactor contract: %v", err)
 		return nil, err
@@ -1076,7 +1088,7 @@ func distributeReward(header *types.Header) (*types.Transaction, error) {
 	auth.GasPrice = gasPrice
 
 	log.Info("Reward Addr Info","SupernodeAddress",header.Coinbase, "masterNodePaymentAddress", masterNodePaymentAddress)
-	distributeRewardTx, rewarderr := safeSysTransactor.Reward(auth, header.Coinbase, new(big.Int).SetUint64(superNodeReward), masterNodePaymentAddress, masterNodePayment)
+	distributeRewardTx, rewarderr := systemReward.Reward(auth, header.Coinbase, new(big.Int).SetUint64(superNodeReward), masterNodePaymentAddress, masterNodePayment)
 	if rewarderr != nil {
 		log.Error("Call contract allocation award failed: %v", rewarderr)
 		return nil, err

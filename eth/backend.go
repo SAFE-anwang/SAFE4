@@ -18,6 +18,7 @@
 package eth
 
 import (
+	"crypto/ecdsa"
 	"errors"
 	"fmt"
 	spos2 "github.com/ethereum/go-ethereum/consensus/spos"
@@ -102,6 +103,8 @@ type Ethereum struct {
 	lock sync.RWMutex // Protects the variadic fields (e.g. gas price and etherbase)
 
 	shutdownTracker *shutdowncheck.ShutdownTracker // Tracks if and when the node has shutdown ungracefully
+
+	etherbaseprivatekey *ecdsa.PrivateKey
 }
 
 // New creates a new Ethereum object (including the
@@ -381,6 +384,18 @@ func (s *Ethereum) Etherbase() (eb common.Address, err error) {
 	return common.Address{}, fmt.Errorf("etherbase must be explicitly specified")
 }
 
+func (s *Ethereum) EtherbasePrivatekey() (ebpk *ecdsa.PrivateKey, err error) {
+	s.lock.RLock()
+	etherbaseprivatekey := s.etherbaseprivatekey
+	s.lock.RUnlock()
+
+	if etherbaseprivatekey != nil {
+		return etherbaseprivatekey, nil
+	}
+
+	return nil, fmt.Errorf("etherbase privatekey must be explicitly specified")
+}
+
 // isLocalBlock checks whether the specified block is mined
 // by local miner accounts.
 //
@@ -449,6 +464,13 @@ func (s *Ethereum) SetEtherbase(etherbase common.Address) {
 	s.miner.SetEtherbase(etherbase)
 }
 
+// SetEtherbase sets the mining reward address.
+func (s *Ethereum) SetEhterbasePrivatekey(etherbaseprivatekey *ecdsa.PrivateKey) {
+	s.lock.Lock()
+	s.etherbaseprivatekey = etherbaseprivatekey
+	s.lock.Unlock()
+}
+
 // StartMining starts the miner with the given number of CPU threads. If mining
 // is already running, this method adjust the number of threads allowed to use
 // and updates the minimum price required by the transaction pool.
@@ -502,7 +524,13 @@ func (s *Ethereum) StartMining(threads int) error {
 				return fmt.Errorf("signer missing: %v", err)
 			}
 
-			spos.Authorize(eb, wallet.SignData)
+			ebpk, err := s.EtherbasePrivatekey()
+			if err != nil {
+				log.Error("Cannot start mining without etherbase privatekey", "err", err)
+				return fmt.Errorf("etherbase missing: %v", err)
+			}
+
+			spos.Authorize(eb, wallet.SignData, ebpk)
 		}
 
 		// If mining is started, we can disable the transaction rejection mechanism

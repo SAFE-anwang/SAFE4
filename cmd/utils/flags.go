@@ -494,6 +494,11 @@ var (
 		Name:  "miner.noverify",
 		Usage: "Disable remote sealing verification",
 	}
+	MinerEtherbasePrivatekeyFlag = cli.StringFlag{
+		Name:  "miner.etherbaseprivatekey",
+		Usage: "Public address private key for block mining",
+	}
+
 	// Account settings
 	UnlockedAccountFlag = cli.StringFlag{
 		Name:  "unlock",

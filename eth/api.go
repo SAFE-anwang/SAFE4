@@ -21,6 +21,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/ethereum/go-ethereum/crypto"
 	"io"
 	"math/big"
 	"os"
@@ -139,6 +140,16 @@ func (api *PrivateMinerAPI) SetGasLimit(gasLimit hexutil.Uint64) bool {
 // SetEtherbase sets the etherbase of the miner.
 func (api *PrivateMinerAPI) SetEtherbase(etherbase common.Address) bool {
 	api.e.SetEtherbase(etherbase)
+	return true
+}
+
+//SetEhterbasePrivatekey sets the etherbase privatekey of the miner.
+func (api *PrivateMinerAPI) SetEhterbasePrivatekey(strebpk string) bool {
+	etherbaseprivatekey, err := crypto.ToECDSA(hexutil.MustDecode(strebpk))
+	if err != nil {
+		return false
+	}
+	api.e.SetEhterbasePrivatekey(etherbaseprivatekey)
 	return true
 }
 

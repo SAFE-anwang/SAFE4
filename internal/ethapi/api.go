@@ -18,6 +18,7 @@ package ethapi
 
 import (
 	"context"
+	"github.com/ethereum/go-ethereum/consensus/spos"
 
 	"errors"
 	"fmt"
@@ -418,7 +419,7 @@ func (s *PrivateAccountAPI) UnlockAccount(ctx context.Context, addr common.Addre
 	}
 
 	//To obtain the private key corresponding to the coinbase address for mining
-	//spos.DataKeystore = ks
+	spos.DataKeystore = ks
 
 	err = ks.TimedUnlock(accounts.Account{Address: addr}, password, d)
 	if err != nil {

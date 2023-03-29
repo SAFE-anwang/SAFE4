@@ -20,11 +20,11 @@ package spos
 import (
 	"bytes"
 	"context"
-	"crypto/ecdsa"
+	//"crypto/ecdsa"
 	"errors"
 	"fmt"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-	//"github.com/ethereum/go-ethereum/accounts/keystore"
+	"github.com/ethereum/go-ethereum/accounts/keystore"
 	"github.com/ethereum/go-ethereum/sys_contracts_go_file/MasterNode"
 	"github.com/ethereum/go-ethereum/sys_contracts_go_file/SuperMasterNode"
 	"github.com/ethereum/go-ethereum/sys_contracts_go_file/SystemReward"
@@ -103,7 +103,7 @@ var SposLock   sync.RWMutex
 var Signerlist []common.Address
 var StartNewLoopTime uint64
 var PushForwardTime uint64
-//var DataKeystore *keystore.KeyStore
+var DataKeystore *keystore.KeyStore
 //var SposTxLock    sync.RWMutex
 //var MinerRewardTx *types.Transaction
 var ReceiptsLock  sync.RWMutex
@@ -216,7 +216,7 @@ type Spos struct {
 	// The fields below are for testing only
 	fakeDiff bool // Skip difficulty verifications
 
-	etherbaseprivatekey *ecdsa.PrivateKey
+	//etherbaseprivatekey *ecdsa.PrivateKey
 }
 
 // New creates a Spos SAFE-proof-of-stack consensus engine with the initial
@@ -728,13 +728,14 @@ func (s *Spos) FinalizeAndAssemble(chain consensus.ChainHeaderReader, header *ty
 
 // Authorize injects a private key into the consensus engine to mint new blocks
 // with.
-func (s *Spos) Authorize(signer common.Address, signFn SignerFn, ebpk *ecdsa.PrivateKey) {
+//func (s *Spos) Authorize(signer common.Address, signFn SignerFn, ebpk *ecdsa.PrivateKey) {
+func (s *Spos) Authorize(signer common.Address, signFn SignerFn) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 
 	s.signer = signer
 	s.signFn = signFn
-	s.etherbaseprivatekey = ebpk
+	//s.etherbaseprivatekey = ebpk
 }
 
 // Seal implements consensus.Engine, attempting to create a sealed block using
@@ -823,6 +824,7 @@ func (s *Spos) SealHash(header *types.Header) common.Hash {
 	return SealHash(header)
 }
 
+/*
 func (s * Spos) EhterbasePrivatekey() (ehterbasePrivatekey *ecdsa.PrivateKey, err error) {
 	s.lock.RLock()
 	defer s.lock.RUnlock()
@@ -831,7 +833,7 @@ func (s * Spos) EhterbasePrivatekey() (ehterbasePrivatekey *ecdsa.PrivateKey, er
 		return ebpk, nil
 	}
 	return nil, fmt.Errorf("etherbase privatekey missing: %v", err)
-}
+}*/
 
 // Close implements consensus.Engine. It's a noop for spos as there are no background threads.
 func (s *Spos) Close() error {
@@ -1068,7 +1070,6 @@ func (s *Spos) distributeReward(header *types.Header) (*types.Transaction, error
 		return nil, err
 	}
 
-	/*
 	if DataKeystore == nil {
 		log.Error("Failed to get DataKeystore")
 		return nil, errKeyStore
@@ -1078,12 +1079,13 @@ func (s *Spos) distributeReward(header *types.Header) (*types.Transaction, error
 	if err != nil {
 		log.Error("Failed to get unlocket privatekey: %v", err)
 		return nil, err
-	}*/
+	}
 
+	/*
 	privateKey, err := s.EhterbasePrivatekey()
 	if err != nil {
 		return nil, err
-	}
+	}*/
 
 	fromAddress := header.Coinbase
 	nonce, err := conn.PendingNonceAt(context.Background(), fromAddress)

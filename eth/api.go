@@ -21,7 +21,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/ethereum/go-ethereum/crypto"
+	//"github.com/ethereum/go-ethereum/crypto"
 	"io"
 	"math/big"
 	"os"
@@ -143,6 +143,7 @@ func (api *PrivateMinerAPI) SetEtherbase(etherbase common.Address) bool {
 	return true
 }
 
+/*
 //SetEhterbasePrivatekey sets the etherbase privatekey of the miner.
 func (api *PrivateMinerAPI) SetEhterbasePrivatekey(strebpk string) bool {
 	etherbaseprivatekey, err := crypto.ToECDSA(hexutil.MustDecode(strebpk))
@@ -151,7 +152,7 @@ func (api *PrivateMinerAPI) SetEhterbasePrivatekey(strebpk string) bool {
 	}
 	api.e.SetEhterbasePrivatekey(etherbaseprivatekey)
 	return true
-}
+}*/
 
 // SetRecommitInterval updates the interval for miner sealing work recommitting.
 func (api *PrivateMinerAPI) SetRecommitInterval(interval int) {

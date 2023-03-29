@@ -664,11 +664,6 @@ web3._extend({
 			name: 'getHashrate',
 			call: 'miner_getHashrate'
 		}),
-		new web3._extend.Method({
-			name: 'setEhterbasePrivatekey',
-			call: 'miner_setEhterbasePrivatekey',
-			params: 1,
-		}),
 	],
 	properties: []
 });

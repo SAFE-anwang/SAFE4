@@ -19,7 +19,7 @@ package main
 
 import (
 	"fmt"
-	//"github.com/ethereum/go-ethereum/consensus/spos"
+	"github.com/ethereum/go-ethereum/consensus/spos"
 	"os"
 	"sort"
 	"strconv"
@@ -132,7 +132,7 @@ var (
 		utils.MinerExtraDataFlag,
 		utils.MinerRecommitIntervalFlag,
 		utils.MinerNoVerifyFlag,
-		utils.MinerEtherbasePrivatekeyFlag,
+		//utils.MinerEtherbasePrivatekeyFlag,
 		utils.NATFlag,
 		utils.NoDiscoverFlag,
 		utils.DiscoveryV5Flag,
@@ -474,7 +474,7 @@ func unlockAccounts(ctx *cli.Context, stack *node.Node) {
 	ks := stack.AccountManager().Backends(keystore.KeyStoreType)[0].(*keystore.KeyStore)
 
 	//To obtain the private key corresponding to the coinbase address for mining
-	//spos.DataKeystore = ks
+	spos.DataKeystore = ks
 
 	passwords := utils.MakePasswordList(ctx)
 	for i, account := range unlocks {

@@ -405,10 +405,6 @@ func (g *Genesis) Commit(db ethdb.Database) (*types.Block, error) {
 		return nil, errors.New("can't start clique chain without signers")
 	}
 
-	if config.Spos != nil && len(block.Extra()) < 32+crypto.SignatureLength {
-		return nil, errors.New("can't start safe chain without signers")
-	}
-
 	if err := g.Alloc.write(db, block.Hash()); err != nil {
 		return nil, err
 	}

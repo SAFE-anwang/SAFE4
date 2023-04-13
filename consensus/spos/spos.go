@@ -490,7 +490,7 @@ func (s *Spos) verifySeal( header *types.Header, parents []*types.Header) error 
 	}
 
 	ninterval := (header.Time - StartNewLoopTime - PushForwardTime) / s.config.Period - 1
-	nindex := ninterval / uint64(nmnSize)
+	nindex := ninterval % uint64(nmnSize)
 	if nindex < 0 {
 		return errIndexError
 	}

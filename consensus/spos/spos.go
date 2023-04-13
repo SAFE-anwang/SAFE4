@@ -281,7 +281,7 @@ func (s *Spos) verifyHeader(chain consensus.ChainHeaderReader, header *types.Hea
 	number := header.Number.Uint64()
 
 	// Don't waste time checking blocks from the future
-	if header.Time - uint64(time.Now().Unix()) > uint64(60 * time.Second) {
+	if header.Time > uint64(time.Now().Unix()){
 		return consensus.ErrFutureBlock
 	}
 
@@ -340,7 +340,7 @@ func (s *Spos) verifyCascadingFields(chain consensus.ChainHeaderReader, header *
 	if parent == nil || parent.Number.Uint64() != number-1 || parent.Hash() != header.ParentHash {
 		return consensus.ErrUnknownAncestor
 	}
-	if header.Time - uint64(time.Now().Unix()) > uint64(60 * time.Second) {
+	if header.Time > uint64(time.Now().Unix()) {
 		return errInvalidTimestamp
 	}
 
@@ -478,8 +478,7 @@ func (s *Spos) verifySeal( header *types.Header, parents []*types.Header) error 
 		return errCoinBaseMisMatch
 	}
 
-	nlocalTime := uint64(time.Now().Unix())
-	if header.Time - nlocalTime  > uint64(60 *time.Second) {
+	if header.Time > uint64(time.Now().Unix()) {
 		return errAllowTime
 	}
 

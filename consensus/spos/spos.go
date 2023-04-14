@@ -28,9 +28,6 @@ import (
 	"github.com/ethereum/go-ethereum/sys_contracts_go_file/MasterNode"
 	"github.com/ethereum/go-ethereum/sys_contracts_go_file/SuperMasterNode"
 	"github.com/ethereum/go-ethereum/sys_contracts_go_file/SystemReward"
-
-	//TestSq "github.com/ethereum/go-ethereum/sys_contracts/test"
-
 	"github.com/ethereum/go-ethereum/ethclient"
 	"io"
 	"math/big"
@@ -67,7 +64,6 @@ const (
 	superNodeSPosCount = 1
 	pushForwardHeight  = 14	          //Push forward the block height
 	//chtAddress         = "0x043807066705c6EF9EB3D28D5D230b4d87EC4832" //Contract address
-	//testSqchAddress    = "0xcbb7f08505f75fc7d2650578Bc82dFBc36732144"
 
 	// genesis contracts
 	AccountManagerContract ="0x0000000000000000000000000000000000001012"
@@ -518,7 +514,7 @@ func (s *Spos) Prepare(chain consensus.ChainHeaderReader, header *types.Header) 
 	}
 	s.lock.RLock()
 
-	//Select 9 bookkeepers
+	//Select 7 bookkeepers
 	if number == 0 || number % superNodeSPosCount == 0 {
 		if number > pushForwardHeight {
 			forwardHeight :=  number - pushForwardHeight
@@ -544,38 +540,12 @@ func (s *Spos) Prepare(chain consensus.ChainHeaderReader, header *types.Header) 
 				snap.Signers[signer] = struct{}{}
 			}
 		}else { //TODO Call the contract to get the super node list
-			//test TestSq
-			/*conn, err := ethclient.Dial("http://127.0.0.1:8545")
-			if err != nil {
-				log.Error("Failed to connect to the Ethereum client: %v", err)
-				return err
-			}
-			defer conn.Close()
-
-			testSq, err:= TestSq.NewTestSq(common.HexToAddress(testSqchAddress), conn)
-			if err != nil {
-				log.Error("Failed to instantiate a TestSq contract: %v", err)
-				return err
-			}
-			testvar, err := testSq.GetCount(nil)
-			if err != nil {
-
-				return err
-			}
-			fmt.Println(testvar)
-			*/
-
 			conn, err := ethclient.Dial("http://127.0.0.1:8545")
 			if err != nil {
 				log.Error("Failed to connect to the Ethereum client: %v", err)
 				return err
 			}
 
-			/*conn, err := ethclient.Dial("\\\\.\\pipe\\geth.ipc")
-			if err != nil {
-				log.Error("Failed to connect to the Ethereum client: %v", err)
-				return err
-			}*/
 			defer conn.Close()
 
 			superMasterNode, err := SuperMasterNode.NewSuperMasterNode(common.HexToAddress(SuperMasterNodeContract), conn)
@@ -925,14 +895,14 @@ func sortSupernode(snap *Snapshot, header *types.Header) []common.Address {
 	afterscoreSupernode := make(map[string]common.Address,len(snap.Signers))
 
 	SposLock.RLock()
-	tempPushForwardTime := PushForwardTime
+	tempPushForwardBlockTime := StartNewLoopTime
 	SposLock.RUnlock()
 
 	for signer,_ := range snap.Signers {
 		hasher := sha3.NewLegacyKeccak256()
 		enc := []interface{}{
 			signer.Hash(),
-			tempPushForwardTime,
+			tempPushForwardBlockTime,
 		}
 
 		if err := rlp.Encode(hasher, enc); err != nil {

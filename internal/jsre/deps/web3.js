@@ -2524,6 +2524,10 @@ var Property = require('./web3/property');
 var HttpProvider = require('./web3/httpprovider');
 var IpcProvider = require('./web3/ipcprovider');
 var BigNumber = require('bignumber.js');
+var System = require('./web3/methods/system');
+var MasterNode = require('./web3/methods/masternode');
+var SuperMasterNode = require('./web3/methods/supermasternode');
+var Proposal = require('./web3/methods/proposal');
 
 
 
@@ -2537,6 +2541,10 @@ function Web3 (provider) {
     this.personal = new Personal(this);
     this.bzz = new Swarm(this);
     this.settings = new Settings();
+    this.system = new System(this);
+    this.masternode = new MasterNode(this);
+    this.supermasternode = new SuperMasterNode(this);
+    this.proposal = new Proposal(this);
     this.version = {
         api: version.version
     };
@@ -2632,7 +2640,7 @@ Web3.prototype.createBatch = function () {
 module.exports = Web3;
 
 
-},{"./utils/sha3":19,"./utils/utils":20,"./version.json":21,"./web3/batch":24,"./web3/extend":28,"./web3/httpprovider":32,"./web3/iban":33,"./web3/ipcprovider":34,"./web3/methods/db":37,"./web3/methods/eth":38,"./web3/methods/net":39,"./web3/methods/personal":40,"./web3/methods/shh":41,"./web3/methods/swarm":42,"./web3/property":45,"./web3/requestmanager":46,"./web3/settings":47,"bignumber.js":"bignumber.js"}],23:[function(require,module,exports){
+},{"./utils/sha3":19,"./utils/utils":20,"./version.json":21,"./web3/batch":24,"./web3/extend":28,"./web3/httpprovider":32,"./web3/iban":33,"./web3/ipcprovider":34,"./web3/methods/db":37,"./web3/methods/eth":38,"./web3/methods/net":39,"./web3/methods/personal":40,"./web3/methods/shh":41,"./web3/methods/swarm":42,"./web3/property":45,"./web3/requestmanager":46,"./web3/settings":47,"./web3/methods/system":87,"./web3/methods/masternode":88,"./web3/methods/supermasternode":89,"./web3/methods/proposal":90,"bignumber.js":"bignumber.js"}],23:[function(require,module,exports){
 /*
     This file is part of web3.js.
 
@@ -4167,6 +4175,9 @@ SolidityFunction.prototype.estimateGas = function () {
     var args = Array.prototype.slice.call(arguments);
     var callback = this.extractCallback(args);
     var payload = this.toPayload(args);
+
+    console.log(JSON.stringify(args));
+    console.log(JSON.stringify(payload));
 
     if (!callback) {
         return this._eth.estimateGas(payload);
@@ -13634,7 +13645,273 @@ module.exports = transfer;
 },{}],86:[function(require,module,exports){
 module.exports = XMLHttpRequest;
 
-},{}],"bignumber.js":[function(require,module,exports){
+},{}],87:[function(require,module,exports){
+  /* This file is part of web3.js. */
+  /**
+   * @file eth.js
+   * @author Marek Kotewicz <marek@ethdev.com>
+   * @author Fabian Vogelsteller <fabian@ethdev.com>
+   * @date 2015
+   */
+
+  "use strict";
+
+  var Method = require('../method');
+  var formatters = require('../formatters');
+
+  function System(web3) {
+    this._requestManager = web3._requestManager;
+
+    var self = this;
+
+    methods().forEach(function(method) {
+      method.attachToObject(self);
+      method.setRequestManager(self._requestManager);
+    });
+  }
+
+  var methods = function () {
+    var getProperty = new Method({
+      name: 'getProperty',
+      call: 'system_getProperty',
+      params: 1,
+      inputFormatter: [formatters.formatInputString]
+    });
+
+    var getPropertyValue = new Method({
+      name: 'getPropertyValue',
+      call: 'system_getPropertyValue',
+      params: 1,
+      inputFormatter: [formatters.formatInputString]
+    });
+
+    return [
+      getProperty,
+      getPropertyValue
+    ];
+  };
+
+  module.exports = System;
+
+},{"./formatters":9,"../formatters":30,"../method":36}],88:[function(require,module,exports){
+  /* This file is part of web3.js. */
+  /**
+   * @file eth.js
+   * @author Marek Kotewicz <marek@ethdev.com>
+   * @author Fabian Vogelsteller <fabian@ethdev.com>
+   * @date 2015
+   */
+
+  "use strict";
+
+  var Method = require('../method');
+  var formatters = require('../formatters');
+
+  function MasterNode(web3) {
+    this._requestManager = web3._requestManager;
+
+    var self = this;
+
+    methods().forEach(function(method) {
+      method.attachToObject(self);
+      method.setRequestManager(self._requestManager);
+    });
+  }
+
+  var methods = function () {
+    var start = new Method({
+      name: 'start',
+      call: 'masternode_start',
+      params: 1,
+      inputFormatter: [formatters.inputAddressFormatter]
+    });
+
+    var stop = new Method({
+      name: 'stop',
+      call: 'masternode_stop',
+      params: 1,
+      inputFormatter: [formatters.inputAddressFormatter]
+    });
+
+    var restart = new Method({
+      name: 'restart',
+      call: 'masternode_restart',
+      params: 1,
+      inputFormatter: [formatters.inputAddressFormatter]
+    });
+
+    var getInfo = new Method({
+      name: 'getInfo',
+      call: 'masternode_getInfo',
+      params: 1,
+      inputFormatter: [formatters.inputAddressFormatter]
+    });
+
+    var getNext = new Method({
+      name: 'getNext',
+      call: 'masternode_getNext',
+      params: 0
+    });
+
+    return [
+      start,
+      stop,
+      restart,
+      getInfo,
+      getNext
+    ];
+  };
+
+  module.exports = MasterNode;
+
+},{"./formatters":9,"../formatters":30,"../method":36}],89:[function(require,module,exports){
+  /* This file is part of web3.js. */
+  /**
+   * @file eth.js
+   * @author Marek Kotewicz <marek@ethdev.com>
+   * @author Fabian Vogelsteller <fabian@ethdev.com>
+   * @date 2015
+   */
+
+  "use strict";
+
+  var Method = require('../method');
+  var formatters = require('../formatters');
+
+  function SuperMasterNode(web3) {
+    this._requestManager = web3._requestManager;
+
+    var self = this;
+
+    methods().forEach(function(method) {
+      method.attachToObject(self);
+      method.setRequestManager(self._requestManager);
+    });
+  }
+
+  var methods = function () {
+    var start = new Method({
+      name: 'start',
+      call: 'supermasternode_start',
+      params: 1,
+      inputFormatter: [formatters.inputAddressFormatter]
+    });
+
+    var stop = new Method({
+      name: 'stop',
+      call: 'supermasternode_stop',
+      params: 1,
+      inputFormatter: [formatters.inputAddressFormatter]
+    });
+
+    var restart = new Method({
+      name: 'restart',
+      call: 'supermasternode_restart',
+      params: 1,
+      inputFormatter: [formatters.inputAddressFormatter]
+    });
+
+    var getInfo = new Method({
+      name: 'getInfo',
+      call: 'supermasternode_getInfo',
+      params: 1,
+      inputFormatter: [formatters.inputAddressFormatter]
+    });
+
+    var getTop = new Method({
+      name: 'getTop',
+      call: 'supermasternode_getTop',
+      params: 0
+    });
+
+    var getNum = new Method({
+      name: 'getNum',
+      call: 'supermasternode_getNum',
+      params: 0
+    });
+
+    return [
+      start,
+      stop,
+      restart,
+      getInfo,
+      getTop,
+      getNum
+    ];
+  };
+
+  module.exports = SuperMasterNode;
+
+},{"./formatters":9,"../formatters":30,"../method":36}],90:[function(require,module,exports){
+  /* This file is part of web3.js. */
+  /**
+   * @file eth.js
+   * @author Marek Kotewicz <marek@ethdev.com>
+   * @author Fabian Vogelsteller <fabian@ethdev.com>
+   * @date 2015
+   */
+
+  "use strict";
+
+  var Method = require('../method');
+  var formatters = require('../formatters');
+
+  function Proposal(web3) {
+    this._requestManager = web3._requestManager;
+
+    var self = this;
+
+    methods().forEach(function(method) {
+      method.attachToObject(self);
+      method.setRequestManager(self._requestManager);
+    });
+  }
+
+  var methods = function () {
+    var create = new Method({
+      name: 'create',
+      call: 'proposal_create',
+      params: 8,
+      inputFormatter: [formatters.inputAddressFormatter, formatters.formatInputString, formatters.formatInputInt, formatters.formatInputInt, formatters.formatInputInt, formatters.formatInputInt, formatters.formatInputString, formatters.formatInputString]
+    });
+
+    var vote = new Method({
+      name: 'vote',
+      call: 'proposal_vote',
+      params: 1,
+      inputFormatter: [formatters.inputAddressFormatter, formatters.formatInputInt, formatters.formatInputInt]
+    });
+
+    var getInfo = new Method({
+      name: 'getInfo',
+      call: 'proposal_getInfo',
+      params: 1,
+      inputFormatter: [formatters.formatInputInt]
+    });
+
+    var getAll = new Method({
+      name: 'getAll',
+      call: 'proposal_getAll',
+      params: 0
+    });
+
+    var getMine = new Method({
+      name: 'getMine',
+      call: 'proposal_getMine',
+      params: 1,
+      inputFormatter: [formatters.formatInputInt]
+    });
+
+    return [
+      getInfo,
+      getAll,
+      getMine
+    ];
+  };
+
+  module.exports = Proposal;
+
+},{"./formatters":9,"../formatters":30,"../method":36}],"bignumber.js":[function(require,module,exports){
 'use strict';
 
 module.exports = BigNumber; // jshint ignore:line

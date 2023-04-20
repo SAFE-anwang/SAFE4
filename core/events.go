@@ -41,3 +41,17 @@ type ChainSideEvent struct {
 }
 
 type ChainHeadEvent struct{ Block *types.Block }
+
+const NODE_START = 1
+const NODE_STOP = 2
+const NODE_RESTART =3
+
+type NewMasterNodeEvent struct {
+	MasterNodeInfo *types.MasterNodeInfo
+	Operator int
+}
+
+type NewSuperMasterNodeEvent struct {
+	SuperMasterNodeInfo *types.SuperMasterNodeInfo
+	Operator int
+}

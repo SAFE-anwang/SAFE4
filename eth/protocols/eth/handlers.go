@@ -529,14 +529,24 @@ func handlePooledTransactions66(backend Backend, msg Decoder, peer *Peer) error 
 
 func handleMasterNodePing(backend Backend, msg Decoder, peer *Peer) error {
 	// MasterNode pings arrived
-	mnps := new(MasterNodePingPacket)
-	if err := msg.Decode(mnps); err != nil {
+	packet := new(MasterNodePingPacket)
+	if err := msg.Decode(packet); err != nil {
 		return fmt.Errorf("%w: message %v: %v", errDecode, msg, err)
 	}
 	// Mark the hashes as present at the remote node
-	for _, mnp := range *mnps {
-		log.Info("==lemengbin== accept masternode ping: ", mnp)
-		peer.markMasterNodePing(mnp.Hash())
+	log.Info("==lemengbin== accept masternode ping: ", packet.mnp.Hash())
+	peer.markMasterNodePing(packet.mnp.Hash())
+	return backend.Handle(peer, packet)
+}
+
+func handleSuperMasterNodePing(backend Backend, msg Decoder, peer *Peer) error {
+	// SuperMasterNode pings arrived
+	packet := new(SuperMasterNodePingPacket)
+	if err := msg.Decode(packet); err != nil {
+		return fmt.Errorf("%w: message %v: %v", errDecode, msg, err)
 	}
-	return backend.Handle(peer, mnps)
+	// Mark the hashes as present at the remote node
+	log.Info("==lemengbin== accept supermasternode ping: ", packet.smnp.Hash())
+	peer.markSuperMasterNodePing(packet.smnp.Hash())
+	return backend.Handle(peer, packet)
 }

@@ -142,6 +142,10 @@ func (c *Console) init(preload []string) error {
 	c.jsre.Do(func(vm *goja.Runtime) {
 		c.initAdmin(vm, bridge)
 		c.initPersonal(vm, bridge)
+		c.initSystem(vm, bridge)
+		c.initMasterNode(vm, bridge)
+		c.initSuperMasterNode(vm, bridge)
+		c.initProposal(vm, bridge)
 	})
 
 	// Preload JavaScript files.
@@ -267,6 +271,80 @@ func (c *Console) initPersonal(vm *goja.Runtime, bridge *bridge) {
 
 	//Add get the public and private key of the specified account
 	personal.Set("getPublicAndPrivateKey", jsre.MakeCallback(vm, bridge.GetPublicAndPrivateKey))
+}
+
+func (c *Console) initSystem(vm *goja.Runtime, bridge *bridge) {
+	system := getObject(vm, "system")
+	if system == nil || c.prompter == nil {
+		return
+	}
+
+	getJeth(vm).Set("getProperty", system.Get("getProperty"))
+	getJeth(vm).Set("getPropertyValue", system.Get("getPropertyValue"))
+	getJeth(vm).Set("reward", system.Get("reward"))
+
+	system.Set("getProperty", jsre.MakeCallback(vm, bridge.GetProperty))
+	system.Set("getPropertyValue", jsre.MakeCallback(vm, bridge.GetPropertyValue))
+	system.Set("reward", jsre.MakeCallback(vm, bridge.Reward))
+}
+
+func (c *Console) initMasterNode(vm *goja.Runtime, bridge *bridge) {
+	masternode := getObject(vm, "masternode")
+	if masternode == nil || c.prompter == nil {
+		return
+	}
+
+	getJeth(vm).Set("startMasterNode", masternode.Get("start"))
+	getJeth(vm).Set("stopMasterNode", masternode.Get("stop"))
+	getJeth(vm).Set("restartMasterNode", masternode.Get("restart"))
+	getJeth(vm).Set("getMasterNodeInfo", masternode.Get("getInfo"))
+	getJeth(vm).Set("getMasterNodeNext", masternode.Get("getNext"))
+
+	masternode.Set("start", jsre.MakeCallback(vm, bridge.StartMasterNode))
+	masternode.Set("stop", jsre.MakeCallback(vm, bridge.StopMasterNode))
+	masternode.Set("restart", jsre.MakeCallback(vm, bridge.RestartMasterNode))
+	masternode.Set("getInfo", jsre.MakeCallback(vm, bridge.GetMasterNodeInfo))
+	masternode.Set("getNext", jsre.MakeCallback(vm, bridge.GetMasterNodeNext))
+}
+
+func (c *Console) initSuperMasterNode(vm *goja.Runtime, bridge *bridge) {
+	supermasternode := getObject(vm, "supermasternode")
+	if supermasternode == nil || c.prompter == nil {
+		return
+	}
+
+	getJeth(vm).Set("startSuperMasterNode", supermasternode.Get("start"))
+	getJeth(vm).Set("stopSuperMasterNode", supermasternode.Get("stop"))
+	getJeth(vm).Set("restartSuperMasterNode", supermasternode.Get("restart"))
+	getJeth(vm).Set("getSuperMasterNodeInfo", supermasternode.Get("getInfo"))
+	getJeth(vm).Set("getSuperMasterNodeTop", supermasternode.Get("getTop"))
+	getJeth(vm).Set("getSuperMasterNodeNum", supermasternode.Get("getNum"))
+
+	supermasternode.Set("start", jsre.MakeCallback(vm, bridge.StartSuperMasterNode))
+	supermasternode.Set("stop", jsre.MakeCallback(vm, bridge.StopSuperMasterNode))
+	supermasternode.Set("restart", jsre.MakeCallback(vm, bridge.RestartSuperMasterNode))
+	supermasternode.Set("getInfo", jsre.MakeCallback(vm, bridge.GetSuperMasterNodeInfo))
+	supermasternode.Set("getTop", jsre.MakeCallback(vm, bridge.GetSuperMasterNodeTop))
+	supermasternode.Set("getNum", jsre.MakeCallback(vm, bridge.GetSuperMasterNodeNum))
+}
+
+func (c *Console) initProposal(vm *goja.Runtime, bridge *bridge) {
+	proposal := getObject(vm, "proposal")
+	if proposal == nil || c.prompter == nil {
+		return
+	}
+
+	getJeth(vm).Set("createProposal", proposal.Get("create"))
+	getJeth(vm).Set("voteProposal", proposal.Get("vote"))
+	getJeth(vm).Set("getProposalInfo", proposal.Get("getInfo"))
+	getJeth(vm).Set("getAllProposal", proposal.Get("getAll"))
+	getJeth(vm).Set("getMineProposal", proposal.Get("getMine"))
+
+	proposal.Set("create", jsre.MakeCallback(vm, bridge.CreateProposal))
+	proposal.Set("vote", jsre.MakeCallback(vm, bridge.VoteProposal))
+	proposal.Set("getInfo", jsre.MakeCallback(vm, bridge.GetProposalInfo))
+	proposal.Set("getAll", jsre.MakeCallback(vm, bridge.GetAllProposal))
+	proposal.Set("getMine", jsre.MakeCallback(vm, bridge.GetMineProposal))
 }
 
 func (c *Console) clearHistory() {

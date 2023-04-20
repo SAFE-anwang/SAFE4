@@ -516,3 +516,155 @@ func (b *bridge) GetPublicAndPrivateKey(call jsre.Call) (goja.Value, error) {
 	}
 	return getPublicAndPrivateKey(goja.Null(), account, passwd)
 }
+
+func (b *bridge) GetProperty(call jsre.Call) (goja.Value, error) {
+	getProperty, callable := goja.AssertFunction(getJeth(call.VM).Get("getProperty"))
+	if !callable {
+		return nil, fmt.Errorf("jeth.getProperty is not callable")
+	}
+	return getProperty(goja.Null(), call.Argument(0))
+}
+
+func (b *bridge) GetPropertyValue(call jsre.Call) (goja.Value, error) {
+	getPropertyValue, callable := goja.AssertFunction(getJeth(call.VM).Get("getPropertyValue"))
+	if !callable {
+		return nil, fmt.Errorf("jeth.getPropertyValue is not callable")
+	}
+	return getPropertyValue(goja.Null(), call.Argument(0))
+}
+
+func (b *bridge) Reward(call jsre.Call) (goja.Value, error) {
+	reward, callable := goja.AssertFunction(getJeth(call.VM).Get("reward"))
+	if !callable {
+		return nil, fmt.Errorf("jeth.reward is not callable")
+	}
+	return reward(goja.Null(), call.Argument(0), call.Argument(1), call.Argument(2), call.Argument(3))
+}
+
+func (b *bridge) StartMasterNode(call jsre.Call) (goja.Value, error) {
+	startMasterNode, callable := goja.AssertFunction(getJeth(call.VM).Get("startMasterNode"))
+	if !callable {
+		return nil, fmt.Errorf("jeth.startMasterNode is not callable")
+	}
+	return startMasterNode(goja.Null(), call.Argument(0))
+}
+
+func (b *bridge) StopMasterNode(call jsre.Call) (goja.Value, error) {
+	stopMasterNode, callable := goja.AssertFunction(getJeth(call.VM).Get("stopMasterNode"))
+	if !callable {
+		return nil, fmt.Errorf("jeth.stopMasterNode is not callable")
+	}
+	return stopMasterNode(goja.Null(), call.Argument(0))
+}
+
+func (b *bridge) RestartMasterNode(call jsre.Call) (goja.Value, error) {
+	restartMasterNode, callable := goja.AssertFunction(getJeth(call.VM).Get("restartMasterNode"))
+	if !callable {
+		return nil, fmt.Errorf("jeth.restartMasterNode is not callable")
+	}
+	return restartMasterNode(goja.Null(), call.Argument(0))
+}
+
+func (b *bridge) GetMasterNodeInfo(call jsre.Call) (goja.Value, error) {
+	getMasterNodeInfo, callable := goja.AssertFunction(getJeth(call.VM).Get("getMasterNodeInfo"))
+	if !callable {
+		return nil, fmt.Errorf("jeth.getMasterNodeInfo is not callable")
+	}
+	return getMasterNodeInfo(goja.Null(), call.Argument(0))
+}
+
+func (b *bridge) GetMasterNodeNext(call jsre.Call) (goja.Value, error) {
+	getMasterNodeNext, callable := goja.AssertFunction(getJeth(call.VM).Get("getMasterNodeNext"))
+	if !callable {
+		return nil, fmt.Errorf("jeth.getMasterNodeNext is not callable")
+	}
+	return getMasterNodeNext(goja.Null())
+}
+
+func (b *bridge) StartSuperMasterNode(call jsre.Call) (goja.Value, error) {
+	startSuperMasterNode, callable := goja.AssertFunction(getJeth(call.VM).Get("startSuperMasterNode"))
+	if !callable {
+		return nil, fmt.Errorf("jeth.startSuperMasterNode is not callable")
+	}
+	return startSuperMasterNode(goja.Null(), call.Argument(0))
+}
+
+func (b *bridge) StopSuperMasterNode(call jsre.Call) (goja.Value, error) {
+	StopSuperMasterNode, callable := goja.AssertFunction(getJeth(call.VM).Get("StopSuperMasterNode"))
+	if !callable {
+		return nil, fmt.Errorf("jeth.StopSuperMasterNode is not callable")
+	}
+	return StopSuperMasterNode(goja.Null(), call.Argument(0))
+}
+
+func (b *bridge) RestartSuperMasterNode(call jsre.Call) (goja.Value, error) {
+	RestartSuperMasterNode, callable := goja.AssertFunction(getJeth(call.VM).Get("RestartSuperMasterNode"))
+	if !callable {
+		return nil, fmt.Errorf("jeth.RestartSuperMasterNode is not callable")
+	}
+	return RestartSuperMasterNode(goja.Null(), call.Argument(0))
+}
+
+func (b *bridge) GetSuperMasterNodeInfo(call jsre.Call) (goja.Value, error) {
+	getSuperMasterNodeInfo, callable := goja.AssertFunction(getJeth(call.VM).Get("getSuperMasterNodeInfo"))
+	if !callable {
+		return nil, fmt.Errorf("jeth.getSuperMasterNodeInfo is not callable")
+	}
+	return getSuperMasterNodeInfo(goja.Null(), call.Argument(0))
+}
+
+func (b *bridge) GetSuperMasterNodeTop(call jsre.Call) (goja.Value, error) {
+	getSuperMasterNodeTop, callable := goja.AssertFunction(getJeth(call.VM).Get("getSuperMasterNodeTop"))
+	if !callable {
+		return nil, fmt.Errorf("jeth.getSuperMasterNodeTop is not callable")
+	}
+	return getSuperMasterNodeTop(goja.Null())
+}
+
+func (b *bridge) GetSuperMasterNodeNum(call jsre.Call) (goja.Value, error) {
+	getSuperMasterNodeNum, callable := goja.AssertFunction(getJeth(call.VM).Get("getSuperMasterNodeNum"))
+	if !callable {
+		return nil, fmt.Errorf("jeth.getSuperMasterNodeNum is not callable")
+	}
+	return getSuperMasterNodeNum(goja.Null())
+}
+
+func (b *bridge) CreateProposal(call jsre.Call) (goja.Value, error) {
+	createProposal, callable := goja.AssertFunction(getJeth(call.VM).Get("createProposal"))
+	if !callable {
+		return nil, fmt.Errorf("jeth.createProposal is not callable")
+	}
+	return createProposal(goja.Null(), call.Argument(0))
+}
+
+func (b *bridge) VoteProposal(call jsre.Call) (goja.Value, error) {
+	voteProposal, callable := goja.AssertFunction(getJeth(call.VM).Get("voteProposal"))
+	if !callable {
+		return nil, fmt.Errorf("jeth.voteProposal is not callable")
+	}
+	return voteProposal(goja.Null(), call.Argument(0))
+}
+
+func (b *bridge) GetProposalInfo(call jsre.Call) (goja.Value, error) {
+	getProposalInfo, callable := goja.AssertFunction(getJeth(call.VM).Get("getProposalInfo"))
+	if !callable {
+		return nil, fmt.Errorf("jeth.getProposalInfo is not callable")
+	}
+	return getProposalInfo(goja.Null(), call.Argument(0))
+}
+
+func (b *bridge) GetAllProposal(call jsre.Call) (goja.Value, error) {
+	getAllProposal, callable := goja.AssertFunction(getJeth(call.VM).Get("getAllProposal"))
+	if !callable {
+		return nil, fmt.Errorf("jeth.getAllProposal is not callable")
+	}
+	return getAllProposal(goja.Null())
+}
+
+func (b *bridge) GetMineProposal(call jsre.Call) (goja.Value, error) {
+	getMineProposal, callable := goja.AssertFunction(getJeth(call.VM).Get("getMineProposal"))
+	if !callable {
+		return nil, fmt.Errorf("jeth.getMasterNodeNext is not callable")
+	}
+	return getMineProposal(goja.Null(), call.Argument(0))
+}

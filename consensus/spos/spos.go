@@ -23,27 +23,26 @@ import (
 	//"crypto/ecdsa"
 	"errors"
 	"fmt"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-	"github.com/ethereum/go-ethereum/accounts/keystore"
-	"github.com/ethereum/go-ethereum/sys_contracts_go_file/MasterNode"
-	"github.com/ethereum/go-ethereum/sys_contracts_go_file/SuperMasterNode"
-	"github.com/ethereum/go-ethereum/sys_contracts_go_file/SystemReward"
-	"github.com/ethereum/go-ethereum/ethclient"
 	"io"
 	"math/big"
 	"math/rand"
 	"sort"
+	"strings"
 	"sync"
 	"time"
 
 	"github.com/ethereum/go-ethereum/accounts"
+	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/consensus"
 	"github.com/ethereum/go-ethereum/consensus/misc"
 	"github.com/ethereum/go-ethereum/core/state"
+	"github.com/ethereum/go-ethereum/core/systemcontracts"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethdb"
+	"github.com/ethereum/go-ethereum/internal/ethapi"
 	"github.com/ethereum/go-ethereum/log"
 	"github.com/ethereum/go-ethereum/params"
 	"github.com/ethereum/go-ethereum/rlp"
@@ -99,7 +98,6 @@ var SposLock   sync.RWMutex
 var Signerlist []common.Address
 var StartNewLoopTime uint64
 var PushForwardTime uint64
-var DataKeystore *keystore.KeyStore
 //var SposTxLock    sync.RWMutex
 //var MinerRewardTx *types.Transaction
 var ReceiptsLock  sync.RWMutex
@@ -169,6 +167,7 @@ var (
 
 // SignerFn hashes and signs the data to be signed by a backing account.
 type SignerFn func(signer accounts.Account, mimeType string, message []byte) ([]byte, error)
+type SignerTxFn func(signer accounts.Account, tx *types.Transaction, chainID *big.Int) (*types.Transaction, error)
 
 // ecrecover extracts the Ethereum account address from a signed header.
 func ecrecover(header *types.Header, sigcache *lru.ARCCache) (common.Address, error) {
@@ -198,6 +197,7 @@ func ecrecover(header *types.Header, sigcache *lru.ARCCache) (common.Address, er
 // Spos is the SAFE-proof-of-stake consensus engine proposed to support the
 // Ethereum testnet following the Ropsten attacks.
 type Spos struct {
+	chainConfig *params.ChainConfig
 	config *params.SposConfig   // Consensus engine configuration parameters
 	db     ethdb.Database       // Database to store and retrieve snapshot checkpoints
 
@@ -207,30 +207,35 @@ type Spos struct {
 
 	signer common.Address // Ethereum address of the signing key
 	signFn SignerFn       // Signer function to authorize hashes with
+	signTxFn SignerTxFn
 	lock   sync.RWMutex   // Protects the signer and proposals fields
 
 	// The fields below are for testing only
 	fakeDiff bool // Skip difficulty verifications
 
 	//etherbaseprivatekey *ecdsa.PrivateKey
+
+	blockChainAPI *ethapi.PublicBlockChainAPI
 }
 
 // New creates a Spos SAFE-proof-of-stack consensus engine with the initial
 // signers set to the ones provided by the user.
-func New(config *params.SposConfig, db ethdb.Database) *Spos {
+func New(config *params.ChainConfig, db ethdb.Database, blockChainAPI *ethapi.PublicBlockChainAPI) *Spos {
 	// Set any missing consensus parameters to their defaults
-	conf := *config
-	if conf.Epoch == 0 {
+	conf := config.Spos
+	if conf != nil && conf.Epoch == 0 {
 		conf.Epoch = epochLength
 	}
 	// Allocate the snapshot caches and create the engine
 	signatures, _ := lru.NewARC(inmemorySignatures)
 
 	return &Spos{
-		config:     &conf,
+		chainConfig: config,
+		config:     conf,
 		db:         db,
 		signatures: signatures,
 		proposals:  make(map[common.Address]bool),
+		blockChainAPI: blockChainAPI,
 	}
 }
 
@@ -540,30 +545,16 @@ func (s *Spos) Prepare(chain consensus.ChainHeaderReader, header *types.Header) 
 				snap.Signers[signer] = struct{}{}
 			}
 		}else { //TODO Call the contract to get the super node list
-			conn, err := ethclient.Dial("http://127.0.0.1:8545")
+			superMasterNodeInfos, err := s.getTopSuperMasterNode(number - 1)
 			if err != nil {
-				log.Error("Failed to connect to the Ethereum client: %v", err)
-				return err
-			}
-
-			defer conn.Close()
-
-			superMasterNode, err := SuperMasterNode.NewSuperMasterNode(common.HexToAddress(SuperMasterNodeContract), conn)
-			if err != nil {
-				log.Error("Failed to instantiate a SafeSys contract: %v", err)
-				return err
-			}
-
-			SuperMasterNodeInfoData ,err := superMasterNode.GetTop(nil)
-			if err != nil {
-				log.Error("Failed to GetTopSMN: %v", err)
+				log.Error("Failed to GetTopSMN", "error", err)
 				return err
 			}
 
 			snap.Signers = make(map[common.Address]struct{})
-			for singer := range SuperMasterNodeInfoData {
-				log.Info("Super MasterNode Addr Info", "SuperMasterNodeInfoData[singer].Addr", SuperMasterNodeInfoData[singer].Addr)
-				snap.Signers[SuperMasterNodeInfoData[singer].Addr] = struct{}{}
+			for i := range superMasterNodeInfos {
+				log.Info("Super MasterNode Addr Info", "superMasterNodeInfos[i].Addr", superMasterNodeInfos[i].Addr)
+				snap.Signers[superMasterNodeInfos[i].Addr] = struct{}{}
 			}
 		}
 
@@ -644,7 +635,7 @@ func (s *Spos) FinalizeAndAssemble(chain consensus.ChainHeaderReader, header *ty
 
 	var rewardTx *types.Transaction
 	if number >= params.SafeSposOfficialSuperNodeConfig.StartCommonSuperHeight && !distributeRewardFlag {
-		distributeRewardTx, err := s.distributeReward(header)
+		distributeRewardTx, err := s.distributeReward(header, state)
 		if err != nil {
 			return nil, err
 		}
@@ -698,12 +689,13 @@ func (s *Spos) FinalizeAndAssemble(chain consensus.ChainHeaderReader, header *ty
 // Authorize injects a private key into the consensus engine to mint new blocks
 // with.
 //func (s *Spos) Authorize(signer common.Address, signFn SignerFn, ebpk *ecdsa.PrivateKey) {
-func (s *Spos) Authorize(signer common.Address, signFn SignerFn) {
+func (s *Spos) Authorize(signer common.Address, signFn SignerFn, signTxFn SignerTxFn) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 
 	s.signer = signer
 	s.signFn = signFn
+	s.signTxFn = signTxFn
 	//s.etherbaseprivatekey = ebpk
 }
 
@@ -1006,89 +998,132 @@ func GetReceipts() []*types.Receipt{
 	return receipts
 }
 
-func (s *Spos) distributeReward(header *types.Header) (*types.Transaction, error) {
+func (s *Spos) distributeReward(header *types.Header, state *state.StateDB) (*types.Transaction, error) {
 	number := header.Number.Uint64()
 	totalReward := getBlockSubsidy(number, false)
 	masterNodePayment := getMasternodePayment(totalReward)
-	superNodeReward := totalReward.Uint64() - masterNodePayment.Uint64()
-	log.Info("Block reward info", "reward", totalReward,"superNodeReward", new(big.Int).SetUint64(superNodeReward),
+	superNodeReward := new(big.Int).Sub(totalReward, masterNodePayment)
+	log.Info("Block reward info", "reward", totalReward,"superNodeReward", superNodeReward,
 		     "masterNodePayment", masterNodePayment)
 
-	//TODO Invokes the contract to transfer money to the master node,value is masterNodePayment
-	conn, err := ethclient.Dial("http://127.0.0.1:8545")
-	if err != nil {
-		log.Error("Failed to connect to the Ethereum client: %v", err)
-		return nil, err
-	}
-	defer conn.Close()
-
-	masterNode, err := MasterNode.NewMasterNode(common.HexToAddress(MasterNodeContract), conn)
-	if err != nil {
-		log.Error("Failed to instantiate a SafeSysCaller contract: %v", err)
-		return nil, err
-	}
-	masterNodePaymentAddress, err := masterNode.GetNext(nil)
-	if err != nil {
-		log.Error("Call contract GetNextMN failed: %v", err)
-		return nil, err
-	}
-
-	systemReward, err := SystemReward.NewSystemReward(common.HexToAddress(SystemRewardContract), conn)
-	if err != nil {
-		log.Error("Failed to instantiate a SafeSysTransactor contract: %v", err)
-		return nil, err
-	}
-
-	if DataKeystore == nil {
-		log.Error("Failed to get DataKeystore")
-		return nil, errKeyStore
-	}
-
-	privateKey, err := DataKeystore.GetUnlocketPrivateKey(header.Coinbase)
-	if err != nil {
-		log.Error("Failed to get unlocket privatekey: %v", err)
-		return nil, err
-	}
-
-	/*
-	privateKey, err := s.EhterbasePrivatekey()
+	mnAddr, err := s.getNextMasterNode(number - 1)
 	if err != nil {
 		return nil, err
-	}*/
+	}
+	return s.Reward(number - 1, state, header.Coinbase, superNodeReward, *mnAddr, masterNodePayment)
+}
+func (s *Spos) getNextMasterNode(height uint64) (*common.Address, error) {
+	log.Info("lemengbin", "height", height, "latest", rpc.LatestBlockNumber)
+	blockNrOrHash := rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(height))
+	method := "getNext"
 
-	fromAddress := header.Coinbase
-	nonce, err := conn.PendingNonceAt(context.Background(), fromAddress)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	vABI, err := abi.JSON(strings.NewReader(systemcontracts.MasterNodeABI))
 	if err != nil {
-		log.Error("Failed to get nonce value: %v", err)
-		return nil, err
+		return nil, nil
 	}
 
-	gasPrice, err := conn.SuggestGasPrice(context.Background())
+	data, err := vABI.Pack(method)
 	if err != nil {
-		log.Error("Failed to get gas price: %v", err)
 		return nil, err
 	}
-
-	auth, err := bind.NewKeyedTransactorWithChainID(privateKey, params.SafeChainConfig.ChainID)
+	msgData := (hexutil.Bytes)(data)
+	args := ethapi.TransactionArgs{
+		To: &systemcontracts.MasterNodeContractAddr,
+		Data: &msgData,
+	}
+	result, err := s.blockChainAPI.Call(ctx, args, blockNrOrHash, nil)
 	if err != nil {
-		log.Error("Failed to get auth: %v", err)
-		return nil, err
-	}
-	auth.Nonce = big.NewInt(int64(nonce))
-	auth.Value = totalReward     // in wei
-	auth.GasLimit = uint64(300000) // in units
-	auth.GasPrice = gasPrice
-
-	log.Info("Reward Addr Info","SupernodeAddress",header.Coinbase, "masterNodePaymentAddress", masterNodePaymentAddress)
-	distributeRewardTx, rewarderr := systemReward.Reward(auth, header.Coinbase, new(big.Int).SetUint64(superNodeReward), masterNodePaymentAddress, masterNodePayment)
-	if rewarderr != nil {
-		log.Error("Call contract allocation award failed: %v", rewarderr)
 		return nil, err
 	}
 
-	log.Info( "Reward Tx info", "block number", number, "txhash", distributeRewardTx.Hash().String())
+	addr := new(common.Address)
+	if err := vABI.UnpackIntoInterface(&addr, method, result); err != nil {
+		return nil, err
+	}
+	return addr, nil
+}
 
-	return distributeRewardTx, nil
+func (s *Spos) getTopSuperMasterNode(height uint64) ([]types.SuperMasterNodeInfo, error) {
+	log.Info("lemengbin", "height", height, "latest", rpc.LatestBlockNumber)
+	blockNrOrHash := rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(height))
+	method := "getTop"
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	vABI, err := abi.JSON(strings.NewReader(systemcontracts.SuperMasterNodeABI))
+	if err != nil {
+		return nil, err
+	}
+
+	data, err := vABI.Pack(method)
+	if err != nil {
+		return nil, err
+	}
+	msgData := (hexutil.Bytes)(data)
+	args := ethapi.TransactionArgs{
+		To: &systemcontracts.SuperMasterNodeContractAddr,
+		Data: &msgData,
+	}
+	result, err := s.blockChainAPI.Call(ctx, args, blockNrOrHash, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var (
+		ret0 = new([]types.SuperMasterNodeInfo)
+	)
+	out := ret0
+	if err := vABI.UnpackIntoInterface(out, method, result); err != nil {
+		return nil, err
+	}
+
+	addrs :=make([]types.SuperMasterNodeInfo, len(*ret0))
+	for i, addr := range *ret0 {
+		addrs[i] = addr
+	}
+	return addrs, nil
+}
+
+func (s *Spos) Reward(height uint64, state *state.StateDB, smnAddr common.Address, smnCount *big.Int, mnAddr common.Address, mnCount *big.Int) (*types.Transaction, error){
+	log.Info("lemengbin", "height", height, "latest", rpc.LatestBlockNumber)
+	vABI, err := abi.JSON(strings.NewReader(systemcontracts.SystemRewardABI))
+	if err != nil {
+		return nil, err
+	}
+
+	method := "reward"
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	data, err := vABI.Pack(method, smnAddr, smnCount, mnAddr, mnCount)
+	if err != nil {
+		return nil, err
+	}
+
+	value := new(big.Int)
+	value.Add(smnCount, mnCount)
+	msgData := (hexutil.Bytes)(data)
+	args := ethapi.TransactionArgs{
+		From:  &smnAddr,
+		To:    &systemcontracts.SystemRewardContractAddr,
+		Data:  &msgData,
+		Value: (*hexutil.Big)(value),
+	}
+	blockNrOrHash := rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(height))
+	gas, err := s.blockChainAPI.EstimateGas(ctx, args, &blockNrOrHash)
+	args.Gas = &gas
+	nonce := state.GetNonce(smnAddr)
+
+	rawTx :=types.NewTransaction(nonce, *args.To, value, uint64(*args.Gas), args.GasPrice.ToInt(), msgData)
+	tx, err := s.signTxFn(accounts.Account{Address: smnAddr}, rawTx, s.chainConfig.ChainID)
+	if err != nil {
+		return nil, err
+	}
+	return tx, err
 }
 
 func getDistributeRewardFlag(number uint64) bool{
@@ -1116,5 +1151,3 @@ func clearExpiredBlockRewardData(number uint64) {
 		}
 	}
 }
-
-

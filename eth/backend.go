@@ -354,6 +354,26 @@ func (s *Ethereum) APIs() []rpc.API {
 			Version:   "1.0",
 			Service:   s.netRPCService,
 			Public:    true,
+		}, {
+			Namespace: "system",
+			Version:   "1.0",
+			Service:   NewPublicSystemAPI(s),
+			Public:    true,
+		},{
+			Namespace: "masternode",
+			Version:   "1.0",
+			Service:   NewPublicMasterNodeAPI(s),
+			Public:    true,
+		}, {
+			Namespace: "supermasternode",
+			Version:   "1.0",
+			Service:   NewPublicSuperMasterNodeAPI(s),
+			Public:    true,
+		}, {
+			Namespace: "proposal",
+			Version:   "1.0",
+			Service:   NewPublicProposalAPI(s),
+			Public:    true,
 		},
 	}...)
 }

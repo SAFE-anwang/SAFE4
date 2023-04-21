@@ -520,7 +520,7 @@ func (s *Spos) Prepare(chain consensus.ChainHeaderReader, header *types.Header) 
 	s.lock.RLock()
 
 	//Select 7 bookkeepers
-	if number == 0 || number % superNodeSPosCount == 0 {
+	if number - 1 == 0 || number % superNodeSPosCount == 0 {
 		if number > pushForwardHeight {
 			forwardHeight :=  number - pushForwardHeight
 			forwardblock := chain.GetHeaderByNumber(forwardHeight)

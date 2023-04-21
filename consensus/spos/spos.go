@@ -60,7 +60,7 @@ const (
 	wiggleTime = 500 * time.Millisecond // Random delay (per signer) to allow concurrent signers
 
 	//superNodeSPosCount = 7           //Total number of bookkeepers
-	superNodeSPosCount = 1
+	superNodeSPosCount = 2
 	pushForwardHeight  = 14	          //Push forward the block height
 	//chtAddress         = "0x043807066705c6EF9EB3D28D5D230b4d87EC4832" //Contract address
 

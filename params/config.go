@@ -334,7 +334,7 @@ var (
 			 */
 			//common.HexToAddress("0x044f9C93b57eFAA547F8461d4FA864eb40558cD0"),
 			common.HexToAddress("0xD83076fB57D1fdae23293Cad74999A75D06B7A3A"),
-			common.HexToAddress("0x8b96C90B86CFDBdc971bb54C263a6d021e7f4894"),
+			//common.HexToAddress("0x8b96C90B86CFDBdc971bb54C263a6d021e7f4894"),
 		},
 		StartCommonSuperHeight: 25,
 	}

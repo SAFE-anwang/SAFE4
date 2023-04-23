@@ -54,13 +54,14 @@ import (
 
 const (
 	inmemorySignatures = 4096     // Number of recent block signatures to keep in memory
+	inmemorySnapshots  = 128  // Number of recent vote snapshots to keep in memory
 	checkpointInterval = 1024     // Number of blocks after which to save the snapshot to the database
 	validatorBytesLength = common.AddressLength
 
 	wiggleTime = 500 * time.Millisecond // Random delay (per signer) to allow concurrent signers
 
 	//superNodeSPosCount = 7           //Total number of bookkeepers
-	superNodeSPosCount = 2
+	superNodeSPosCount = 1
 	pushForwardHeight  = 14	          //Push forward the block height
 	//chtAddress         = "0x043807066705c6EF9EB3D28D5D230b4d87EC4832" //Contract address
 
@@ -95,9 +96,7 @@ var (
 )
 
 var SposLock   sync.RWMutex
-var Signerlist []common.Address
 var StartNewLoopTime uint64
-var PushForwardTime uint64
 //var SposTxLock    sync.RWMutex
 //var MinerRewardTx *types.Transaction
 var ReceiptsLock  sync.RWMutex
@@ -146,23 +145,33 @@ var (
 	// errUnauthorizedSigner is returned if a header is signed by a non-authorized entity.
 	errUnauthorizedSigner = errors.New("unauthorized signer")
 
-	//errIndexError is returned if Index error
-	errIndexError = errors.New("Index error")
-
-	//errAllowTime The maximum allowed time is exceeded
-	errAllowTime = errors.New("invalid time")
-
 	// errCoinBaseMisMatch is returned if a header's coinbase do not match with signature
 	errCoinBaseMisMatch = errors.New("coinbase do not match with signature")
 
-	//errBillinglist The billing list is empty
-	errBillinglist = errors.New("invalid Billing list")
+	// their extra-data fields.
+	errExtraSigners = errors.New("non-checkpoint block contains extra signer list")
 
-	//errSignatory The signatory is incorrect
-	errSignatory = errors.New("invalid signatory")
+	// invalid list of signers (i.e. non divisible by 20 bytes).
+	errInvalidCheckpointSigners = errors.New("invalid signer list on checkpoint block")
 
-	//errKeyStore The KeyStore is empty
-	errKeyStore = errors.New("invalid KeyStore")
+	// errMismatchingCheckpointSigners is returned if a checkpoint block contains a
+	// list of signers different than the one the local node calculated.
+	errMismatchingCheckpointSigners = errors.New("mismatching signer list on checkpoint block")
+
+	// errUnauthorizedValidator is returned if a header is signed by a non-authorized entity.
+	errUnauthorizedValidator = errors.New("unauthorized validator")
+
+	// errRecentlySigned is returned if a header is signed by an authorized entity
+	// that already signed a header recently, thus is temporarily not allowed to.
+	errRecentlySigned = errors.New("recently signed")
+
+	// errWrongDifficulty is returned if the difficulty of a block doesn't match the
+	// turn of the signer.
+	errWrongDifficulty = errors.New("wrong difficulty")
+
+	// errBlockHashInconsistent is returned if an authorization list is attempted to
+	// insert an inconsistent block.
+	errBlockHashInconsistent = errors.New("the block hash is inconsistent")
 )
 
 // SignerFn hashes and signs the data to be signed by a backing account.
@@ -201,7 +210,8 @@ type Spos struct {
 	config *params.SposConfig   // Consensus engine configuration parameters
 	db     ethdb.Database       // Database to store and retrieve snapshot checkpoints
 
-	signatures *lru.ARCCache // Signatures of recent blocks to speed up mining
+	recents     *lru.ARCCache // Snapshots for recent block to speed up reorgs
+	signatures  *lru.ARCCache // Signatures of recent blocks to speed up mining
 
 	proposals map[common.Address]bool // Current list of proposals we are pushing
 
@@ -227,12 +237,14 @@ func New(config *params.ChainConfig, db ethdb.Database, blockChainAPI *ethapi.Pu
 		conf.Epoch = epochLength
 	}
 	// Allocate the snapshot caches and create the engine
+	recents, _ := lru.NewARC(inmemorySnapshots)
 	signatures, _ := lru.NewARC(inmemorySignatures)
 
 	return &Spos{
 		chainConfig: config,
 		config:     conf,
 		db:         db,
+		recents:    recents,
 		signatures: signatures,
 		proposals:  make(map[common.Address]bool),
 		blockChainAPI: blockChainAPI,
@@ -290,8 +302,22 @@ func (s *Spos) verifyHeader(chain consensus.ChainHeaderReader, header *types.Hea
 	if len(header.Extra) < extraVanity {
 		return errMissingVanity
 	}
+
 	if len(header.Extra) < extraVanity+extraSeal {
 		return errMissingSignature
+	}
+
+	// Checkpoint blocks need to enforce zero beneficiary
+	isEpoch := (number % s.config.Epoch) == 0
+
+	// Ensure that the extra-data contains a signer list on checkpoint, but none otherwise
+	signersBytes := len(header.Extra) - extraVanity - extraSeal
+	if !isEpoch && signersBytes != 0 {
+		return errExtraSigners
+	}
+
+	if isEpoch && signersBytes%common.AddressLength != 0 {
+		return errInvalidCheckpointSigners
 	}
 
 	// Ensure that the mix digest is zero as we don't have fork protection currently
@@ -307,10 +333,6 @@ func (s *Spos) verifyHeader(chain consensus.ChainHeaderReader, header *types.Hea
 		if header.Difficulty == nil || (header.Difficulty.Cmp(diffInTurn) != 0 && header.Difficulty.Cmp(diffNoTurn) != 0) {
 			return errInvalidDifficulty
 		}
-	}
-	// Verify that the gas limit is <= 2^63-1
-	if header.GasLimit > params.MaxGasLimit {
-		return fmt.Errorf("invalid gasLimit: have %v, max %v", header.GasLimit, params.MaxGasLimit)
 	}
 
 	// If all checks passed, validate any special fields for hard forks
@@ -338,11 +360,35 @@ func (s *Spos) verifyCascadingFields(chain consensus.ChainHeaderReader, header *
 	} else {
 		parent = chain.GetHeader(header.ParentHash, number-1)
 	}
+
 	if parent == nil || parent.Number.Uint64() != number-1 || parent.Hash() != header.ParentHash {
 		return consensus.ErrUnknownAncestor
 	}
-	if header.Time > uint64(time.Now().Unix()) {
+	if parent.Time + s.config.Period > header.Time {
 		return errInvalidTimestamp
+	}
+
+	// Retrieve the snapshot needed to verify this header and cache it
+	snap, err := s.snapshot(chain, number-1, header.ParentHash, parents)
+	if err != nil {
+		return err
+	}
+	// If the block is a checkpoint block, verify the signer list
+	if number%s.config.Epoch == 0 {
+		signers := make([]byte, len(snap.Signers)*common.AddressLength)
+		for i, signer := range snap.signers() {
+			copy(signers[i*common.AddressLength:], signer[:])
+		}
+		extraSuffix := len(header.Extra) - extraSeal
+		if !bytes.Equal(header.Extra[extraVanity:extraSuffix], signers) {
+			return errMismatchingCheckpointSigners
+		}
+	}
+
+	// Verify that the gas limit is <= 2^63-1
+	capacity := uint64(0x7fffffffffffffff)
+	if header.GasLimit > capacity {
+		return fmt.Errorf("invalid gasLimit: have %v, max %v", header.GasLimit, capacity)
 	}
 
 	// Verify that the gasUsed is <= gasLimit
@@ -350,21 +396,8 @@ func (s *Spos) verifyCascadingFields(chain consensus.ChainHeaderReader, header *
 		return fmt.Errorf("invalid gasUsed: have %d, gasLimit %d", header.GasUsed, header.GasLimit)
 	}
 
-	if !chain.Config().IsLondon(header.Number) {
-		// Verify BaseFee not present before EIP-1559 fork.
-		if header.BaseFee != nil {
-			return fmt.Errorf("invalid baseFee before fork: have %d, want <nil>", header.BaseFee)
-		}
-		if err := misc.VerifyGaslimit(parent.GasLimit, header.GasLimit); err != nil {
-			return err
-		}
-	} else if err := misc.VerifyEip1559Header(chain.Config(), parent, header); err != nil {
-		// Verify the header's EIP-1559 attributes.
-		return err
-	}
-
 	// All basic checks passed, verify the seal and return
-	return s.verifySeal(header, parents)
+	return s.verifySeal(chain, header, parents)
 }
 
 // snapshot retrieves the authorization snapshot at a given point in time.
@@ -375,6 +408,12 @@ func (s *Spos) snapshot(chain consensus.ChainHeaderReader, number uint64, hash c
 		snap    *Snapshot
 	)
 	for snap == nil {
+		// If an in-memory snapshot was found, use that
+		if s, ok := s.recents.Get(hash); ok {
+			snap = s.(*Snapshot)
+			break
+		}
+
 		// If an on-disk checkpoint snapshot can be found, use that
 		if number % checkpointInterval == 0 {
 			if s, err := loadSnapshot(s.config, s.signatures, s.db, hash); err == nil {
@@ -391,7 +430,6 @@ func (s *Spos) snapshot(chain consensus.ChainHeaderReader, number uint64, hash c
 				hash := checkpoint.Hash()
 
 				var signers   []common.Address
-
 				if number == 0 {
 					signers = params.SafeSposOfficialSuperNodeConfig.Signers
 				}else{
@@ -439,6 +477,7 @@ func (s *Spos) snapshot(chain consensus.ChainHeaderReader, number uint64, hash c
 	if err != nil {
 		return nil, err
 	}
+	s.recents.Add(snap.Hash, snap)
 
 	// If we've generated a new checkpoint snapshot, save to disk
 	if snap.Number % checkpointInterval == 0 && len(headers) > 0 {
@@ -463,12 +502,18 @@ func (s *Spos) VerifyUncles(chain consensus.ChainReader, block *types.Block) err
 // consensus protocol requirements. The method accepts an optional list of parent
 // headers that aren't yet part of the local blockchain to generate the snapshots
 // from.
-func (s *Spos) verifySeal( header *types.Header, parents []*types.Header) error {
+func (s *Spos) verifySeal(chain consensus.ChainHeaderReader, header *types.Header, parents []*types.Header) error {
 	// Verifying the genesis block is not supported
 	number := header.Number.Uint64()
 	if number == 0 {
 		return errUnknownBlock
 	}
+	// Retrieve the snapshot needed to verify this header and cache it
+	snap, err := s.snapshot(chain, number-1, header.ParentHash, parents)
+	if err != nil {
+		return err
+	}
+
 	// Resolve the authorization key and check against signers
 	signer, err := ecrecover(header, s.signatures)
 	if err != nil {
@@ -479,26 +524,28 @@ func (s *Spos) verifySeal( header *types.Header, parents []*types.Header) error 
 		return errCoinBaseMisMatch
 	}
 
-	if header.Time > uint64(time.Now().Unix()) {
-		return errAllowTime
+	if _, ok := snap.Signers[signer]; !ok {
+		return errUnauthorizedValidator
 	}
 
-	SposLock.RLock()
-	defer SposLock.RUnlock()
-	nmnSize := len(Signerlist)
-	if nmnSize == 0 {
-		return errBillinglist
+	for seen, recent := range snap.Recents {
+		if recent == signer {
+			// Signer is among recents, only fail if the current block doesn't shift it out
+			if limit := uint64(len(snap.Signers)/2 + 1); seen > number-limit {
+				return errRecentlySigned
+			}
+		}
 	}
 
-	ninterval := (header.Time - StartNewLoopTime - PushForwardTime) / s.config.Period - 1
-	nindex := ninterval % uint64(nmnSize)
-	if nindex < 0 {
-		return errIndexError
-	}
-
-	blocksigner := Signerlist[nindex]
-	if blocksigner != signer {
-		return errSignatory
+	// Ensure that the difficulty corresponds to the turn-ness of the signer
+	if !s.fakeDiff {
+		inturn := snap.inturn(header.Number.Uint64(),signer)
+		if inturn && header.Difficulty.Cmp(diffInTurn) != 0 {
+			return errWrongDifficulty
+		}
+		if !inturn && header.Difficulty.Cmp(diffNoTurn) != 0 {
+			return errWrongDifficulty
+		}
 	}
 
 	return nil
@@ -517,23 +564,22 @@ func (s *Spos) Prepare(chain consensus.ChainHeaderReader, header *types.Header) 
 	if err != nil {
 		return err
 	}
-	s.lock.RLock()
 
 	//Select 7 bookkeepers
-	if number - 1 == 0 || number % superNodeSPosCount == 0 {
+	if number%s.config.Epoch != 0 {
+		s.lock.RLock()
+
 		if number > pushForwardHeight {
-			forwardHeight :=  number - pushForwardHeight
+			forwardHeight := number - pushForwardHeight
 			forwardblock := chain.GetHeaderByNumber(forwardHeight)
 
 			SposLock.Lock()
-			PushForwardTime = pushForwardHeight * s.config.Period
 			StartNewLoopTime = forwardblock.Time
 			SposLock.Unlock()
 		}else{
 			parentblock := chain.GetHeaderByHash(header.ParentHash)
 
 			SposLock.Lock()
-			PushForwardTime = 0
 			StartNewLoopTime = parentblock.Time
 			SposLock.Unlock()
 		}
@@ -562,24 +608,17 @@ func (s *Spos) Prepare(chain consensus.ChainHeaderReader, header *types.Header) 
 		resultSuperNode = sortSupernode(snap, header)
 
 		SposLock.Lock()
-		if len(Signerlist) > 0 {
-			Signerlist = []common.Address{}
-		}
-		SposLock.Unlock()
-
+		snap.Signers = make(map[common.Address]struct{})
 		for i := 0; i < superNodeSPosCount; i++{
-			SposLock.Lock()
-			Signerlist = append(Signerlist, resultSuperNode[i])
-			SposLock.Unlock()
+			snap.Signers[resultSuperNode[i]] = struct{}{}
 		}
+
+		SposLock.Unlock()
+		s.lock.RUnlock()
 	}
 
-	// Copy signer protected by mutex to avoid race condition
-	signer := s.signer
-	s.lock.RUnlock()
-
 	// Set the correct difficulty
-	header.Difficulty = calcSposDifficulty(snap, signer)
+	header.Difficulty = calcDifficulty(snap,s.signer)
 
 	// Ensure the extra data has all its components
 	if len(header.Extra) < extraVanity {
@@ -597,19 +636,15 @@ func (s *Spos) Prepare(chain consensus.ChainHeaderReader, header *types.Header) 
 	// Mix digest is reserved for now, set to empty
 	header.MixDigest = common.Hash{}
 
-	nCurTime := uint64(time.Now().Unix())
-	var nTimeInterval uint64 = 0
-	nSposTargetSpacing := s.config.Period
-
-	SposLock.RLock()
-	defer SposLock.RUnlock()
-	nTimeInterval = nCurTime - PushForwardTime - StartNewLoopTime
-	if nTimeInterval < 0 {
-		return errIndexError
+	// Ensure the timestamp has the correct delay
+	parent := chain.GetHeader(header.ParentHash, number-1)
+	if parent == nil {
+		return consensus.ErrUnknownAncestor
 	}
-
-	nTargetSpacingInterval := nTimeInterval / nSposTargetSpacing
-	header.Time = StartNewLoopTime + PushForwardTime + (nTargetSpacingInterval + 1) * nSposTargetSpacing
+	header.Time = parent.Time + s.config.Period
+	if header.Time < uint64(time.Now().Unix()) {
+		header.Time = uint64(time.Now().Unix())
+	}
 
 	return nil
 }
@@ -710,6 +745,11 @@ func (s *Spos) Seal(chain consensus.ChainHeaderReader, block *types.Block, resul
 		return errUnknownBlock
 	}
 
+	if s.config.Period == 0 {
+		log.Info("Sealing paused")
+		return nil
+	}
+
 	// Don't hold the signer fields for the entire sealing procedure
 	s.lock.RLock()
 	signer, signFn := s.signer, s.signFn
@@ -722,6 +762,17 @@ func (s *Spos) Seal(chain consensus.ChainHeaderReader, block *types.Block, resul
 	}
 	if _, authorized := snap.Signers[signer]; !authorized {
 		return errUnauthorizedSigner
+	}
+
+	// If we're amongst the recent signers, wait for the next block
+	for seen, recent := range snap.Recents {
+		if recent == signer {
+			// Signer is among recents, only wait if the current block doesn't shift it out
+			if limit := uint64(len(snap.Signers)/2 + 1); number < limit || seen > number-limit {
+				log.Info("Signed recently, must wait for others")
+				return nil
+			}
+		}
 	}
 
 	// Sweet, the protocol permits us to sign the block, wait for our time
@@ -767,14 +818,11 @@ func (s *Spos) CalcDifficulty(chain consensus.ChainHeaderReader, time uint64, pa
 	if err != nil {
 		return nil
 	}
-	s.lock.RLock()
-	signer := s.signer
-	s.lock.RUnlock()
-	return calcSposDifficulty(snap,  signer)
+	return calcDifficulty(snap,  s.signer)
 }
 
-func calcSposDifficulty(snap *Snapshot, signer common.Address)*big.Int {
-	if snap.inturnblock(signer) {
+func (s *Spos) calcDifficulty(snap *Snapshot, signer common.Address)*big.Int {
+	if snap.inturn(snap.Number + 1,signer) {
 		return new(big.Int).Set(diffInTurn)
 	}
 	return new(big.Int).Set(diffNoTurn)

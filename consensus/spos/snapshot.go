@@ -23,7 +23,6 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethdb"
 	"math/big"
-	"sort"
 	//"github.com/ethereum/go-ethereum/log"
 	"github.com/ethereum/go-ethereum/params"
 	lru "github.com/hashicorp/golang-lru"
@@ -157,9 +156,9 @@ func (s *Snapshot) apply(headers []*types.Header) (*Snapshot, error) {
 		if err != nil {
 			return nil, err
 		}
-		if _, ok := snap.Signers[signer]; !ok {
+		/*if _, ok := snap.Signers[signer]; !ok {
 			return nil, errUnauthorizedSigner
-		}
+		}*/
 		for _, recent := range snap.Recents {
 			if recent == signer {
 				return nil, errRecentlySigned
@@ -180,7 +179,7 @@ func (s *Snapshot) signers() []common.Address {
 	for sig := range s.Signers {
 		sigs = append(sigs, sig)
 	}
-	sort.Sort(signersAscending(sigs))
+	//sort.Sort(signersAscending(sigs))
 	return sigs
 }
 

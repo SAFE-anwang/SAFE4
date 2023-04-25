@@ -95,8 +95,6 @@ var (
 	diffNoTurn = big.NewInt(1) // Block difficulty for out-of-turn signatures
 )
 
-var SposLock   sync.RWMutex
-var StartNewLoopTime uint64
 //var SposTxLock    sync.RWMutex
 //var MinerRewardTx *types.Transaction
 var ReceiptsLock  sync.RWMutex
@@ -316,7 +314,7 @@ func (s *Spos) verifyHeader(chain consensus.ChainHeaderReader, header *types.Hea
 		return errExtraSigners
 	}
 
-	if isEpoch && signersBytes%common.AddressLength != 0 {
+	if isEpoch && signersBytes%validatorBytesLength != 0 {
 		return errInvalidCheckpointSigners
 	}
 
@@ -429,9 +427,22 @@ func (s *Spos) snapshot(chain consensus.ChainHeaderReader, number uint64, hash c
 			if checkpoint != nil {
 				hash := checkpoint.Hash()
 
-				var signers   []common.Address
+				var signers []common.Address
 				if number == 0 {
-					signers = params.SafeSposOfficialSuperNodeConfig.Signers
+					tempStartNewLoopTime := checkpoint.Time
+					tempSignermap := make(map[common.Address]struct{})
+					for _, signer := range params.SafeSposOfficialSuperNodeConfig.Signers {
+						tempSignermap[signer] = struct{}{}
+					}
+
+					resultSuperNode :=make([]common.Address, 0)
+					resultSuperNode = sortSupernode(tempSignermap, checkpoint, tempStartNewLoopTime)
+					signers = make([]common.Address, 0)
+
+					for i := 0; i < superNodeSPosCount; i++{
+						signers =  append(signers, resultSuperNode[i])
+						log.Info("singers info", "number", number, "signers[i]", signers[i])
+					}
 				}else{
 					signers = make([]common.Address, (len(checkpoint.Extra)-extraVanity-extraSeal)/common.AddressLength)
 					for i := 0; i < len(signers); i++ {
@@ -440,7 +451,56 @@ func (s *Spos) snapshot(chain consensus.ChainHeaderReader, number uint64, hash c
 				}
 
 				snap = newSnapshot(s.config, s.signatures, number, hash, signers)
+				if err := snap.store(s.db); err != nil {
+					return nil, err
+				}
+				log.Info("Stored checkpoint snapshot to disk", "number", number, "hash", hash)
+				break
+			}
+		}else{
+			checkpoint := chain.GetHeaderByNumber(number)
+			if checkpoint != nil {
+				hash := checkpoint.Hash()
 
+				var startNewLoopTime uint64
+				signersmap := make(map[common.Address]struct{})
+				var signers []common.Address
+
+				if number > pushForwardHeight {
+					forwardHeight := number - pushForwardHeight
+					forwardblock := chain.GetHeaderByNumber(forwardHeight)
+					startNewLoopTime = forwardblock.Time
+				}else{
+					startNewLoopTime = checkpoint.Time
+				}
+
+				if number < params.SafeSposOfficialSuperNodeConfig.StartCommonSuperHeight {
+					for _, signer := range params.SafeSposOfficialSuperNodeConfig.Signers {
+						signersmap[signer] = struct{}{}
+					}
+				}else { //TODO Call the contract to get the super node list
+					superMasterNodeInfos, err := s.getTopSuperMasterNode(number)
+					if err != nil {
+						log.Error("Failed to GetTopSMN", "error", err)
+						return nil, err
+					}
+
+					for i := range superMasterNodeInfos {
+						log.Info("Super MasterNode Addr Info", "superMasterNodeInfos[i].Addr", superMasterNodeInfos[i].Addr)
+						signersmap[superMasterNodeInfos[i].Addr] = struct{}{}
+					}
+				}
+
+				resultSuperNode := make([]common.Address, 0)
+				resultSuperNode = sortSupernode(signersmap, checkpoint, startNewLoopTime)
+
+				signers = make([]common.Address, 0)
+				for i := 0; i < superNodeSPosCount; i++{
+					signers = append(signers, resultSuperNode[i])
+					log.Info("singers info", "number", number, "i", i, "signers[i]", signers[i])
+				}
+
+				snap = newSnapshot(s.config, s.signatures, number, hash, signers)
 				if err := snap.store(s.db); err != nil {
 					return nil, err
 				}
@@ -565,60 +625,8 @@ func (s *Spos) Prepare(chain consensus.ChainHeaderReader, header *types.Header) 
 		return err
 	}
 
-	//Select 7 bookkeepers
-	if number%s.config.Epoch != 0 {
-		s.lock.RLock()
-
-		if number > pushForwardHeight {
-			forwardHeight := number - pushForwardHeight
-			forwardblock := chain.GetHeaderByNumber(forwardHeight)
-
-			SposLock.Lock()
-			StartNewLoopTime = forwardblock.Time
-			SposLock.Unlock()
-		}else{
-			parentblock := chain.GetHeaderByHash(header.ParentHash)
-
-			SposLock.Lock()
-			StartNewLoopTime = parentblock.Time
-			SposLock.Unlock()
-		}
-
-		if number < params.SafeSposOfficialSuperNodeConfig.StartCommonSuperHeight {
-			snap.Signers = make(map[common.Address]struct{})
-
-			for _, signer := range params.SafeSposOfficialSuperNodeConfig.Signers {
-				snap.Signers[signer] = struct{}{}
-			}
-		}else { //TODO Call the contract to get the super node list
-			superMasterNodeInfos, err := s.getTopSuperMasterNode(number - 1)
-			if err != nil {
-				log.Error("Failed to GetTopSMN", "error", err)
-				return err
-			}
-
-			snap.Signers = make(map[common.Address]struct{})
-			for i := range superMasterNodeInfos {
-				log.Info("Super MasterNode Addr Info", "superMasterNodeInfos[i].Addr", superMasterNodeInfos[i].Addr)
-				snap.Signers[superMasterNodeInfos[i].Addr] = struct{}{}
-			}
-		}
-
-		resultSuperNode := []common.Address{}
-		resultSuperNode = sortSupernode(snap, header)
-
-		SposLock.Lock()
-		snap.Signers = make(map[common.Address]struct{})
-		for i := 0; i < superNodeSPosCount; i++{
-			snap.Signers[resultSuperNode[i]] = struct{}{}
-		}
-
-		SposLock.Unlock()
-		s.lock.RUnlock()
-	}
-
 	// Set the correct difficulty
-	header.Difficulty = calcDifficulty(snap,s.signer)
+	header.Difficulty = calcDifficulty(snap, s.signer)
 
 	// Ensure the extra data has all its components
 	if len(header.Extra) < extraVanity {
@@ -930,19 +938,15 @@ func sortKey (mp map[string]common.Address) map[string]common.Address{
 	return newScoreMasternode
 }
 
-func sortSupernode(snap *Snapshot, header *types.Header) []common.Address {
-	scoreSupernode := make(map[string]common.Address,len(snap.Signers))
-	afterscoreSupernode := make(map[string]common.Address,len(snap.Signers))
+func sortSupernode(Signers map[common.Address]struct{}, header *types.Header, scoreTime uint64) []common.Address {
+	scoreSupernode := make(map[string]common.Address,len(Signers))
+	afterscoreSupernode := make(map[string]common.Address,len(Signers))
 
-	SposLock.RLock()
-	tempPushForwardBlockTime := StartNewLoopTime
-	SposLock.RUnlock()
-
-	for signer,_ := range snap.Signers {
+	for signer,_ := range Signers {
 		hasher := sha3.NewLegacyKeccak256()
 		enc := []interface{}{
 			signer.Hash(),
-			tempPushForwardBlockTime,
+			scoreTime,
 		}
 
 		if err := rlp.Encode(hasher, enc); err != nil {
@@ -956,7 +960,7 @@ func sortSupernode(snap *Snapshot, header *types.Header) []common.Address {
 
 	afterscoreSupernode = sortKey(scoreSupernode)
 
-	resultSuperMasterNode := []common.Address{}
+	resultSuperMasterNode := make([]common.Address, 0)
 	for _,address := range afterscoreSupernode {
 		resultSuperMasterNode = append(resultSuperMasterNode, address)
 	}

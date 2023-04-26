@@ -441,7 +441,12 @@ func (s *Spos) snapshot(chain consensus.ChainHeaderReader, number uint64, hash c
 					resultSuperNode = sortSupernode(tempSignermap, checkpoint, tempStartNewLoopTime)
 					signers = make([]common.Address, 0)
 
-					for i := 0; i < superNodeSPosCount; i++{
+					icountsupernode := len(resultSuperNode)
+					if icountsupernode > superNodeSPosCount {
+						icountsupernode = superNodeSPosCount
+					}
+
+					for i := 0; i < icountsupernode; i++{
 						signers =  append(signers, resultSuperNode[i])
 						log.Info("singers info", "number", number, "signers[i]", signers[i])
 					}
@@ -497,7 +502,13 @@ func (s *Spos) snapshot(chain consensus.ChainHeaderReader, number uint64, hash c
 				resultSuperNode = sortSupernode(signersmap, checkpoint, startNewLoopTime)
 
 				signers = make([]common.Address, 0)
-				for i := 0; i < superNodeSPosCount; i++{
+
+				icountsupernode := len(resultSuperNode)
+				if icountsupernode > superNodeSPosCount {
+					icountsupernode = superNodeSPosCount
+				}
+
+				for i := 0; i < icountsupernode; i++{
 					signers = append(signers, resultSuperNode[i])
 					log.Info("singers info", "number", number, "i", i, "signers[i]", signers[i])
 				}

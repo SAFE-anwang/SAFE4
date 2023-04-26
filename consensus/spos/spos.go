@@ -59,9 +59,11 @@ const (
 	validatorBytesLength = common.AddressLength
 
 	wiggleTime = 500 * time.Millisecond // Random delay (per signer) to allow concurrent signers
+	fixedBackOffTimeBeforeFork = 200 * time.Millisecond
+
 
 	//superNodeSPosCount = 7           //Total number of bookkeepers
-	superNodeSPosCount = 1
+	superNodeSPosCount = 2
 	pushForwardHeight  = 14	          //Push forward the block height
 	//chtAddress         = "0x043807066705c6EF9EB3D28D5D230b4d87EC4832" //Contract address
 
@@ -435,7 +437,7 @@ func (s *Spos) snapshot(chain consensus.ChainHeaderReader, number uint64, hash c
 						tempSignermap[signer] = struct{}{}
 					}
 
-					resultSuperNode :=make([]common.Address, 0)
+					resultSuperNode := make([]common.Address, 0)
 					resultSuperNode = sortSupernode(tempSignermap, checkpoint, tempStartNewLoopTime)
 					signers = make([]common.Address, 0)
 
@@ -588,6 +590,7 @@ func (s *Spos) verifySeal(chain consensus.ChainHeaderReader, header *types.Heade
 		return errUnauthorizedValidator
 	}
 
+	/*
 	for seen, recent := range snap.Recents {
 		if recent == signer {
 			// Signer is among recents, only fail if the current block doesn't shift it out
@@ -595,7 +598,7 @@ func (s *Spos) verifySeal(chain consensus.ChainHeaderReader, header *types.Heade
 				return errRecentlySigned
 			}
 		}
-	}
+	}*/
 
 	// Ensure that the difficulty corresponds to the turn-ness of the signer
 	if !s.fakeDiff {
@@ -772,6 +775,7 @@ func (s *Spos) Seal(chain consensus.ChainHeaderReader, block *types.Block, resul
 		return errUnauthorizedSigner
 	}
 
+	/*
 	// If we're amongst the recent signers, wait for the next block
 	for seen, recent := range snap.Recents {
 		if recent == signer {
@@ -781,17 +785,18 @@ func (s *Spos) Seal(chain consensus.ChainHeaderReader, block *types.Block, resul
 				return nil
 			}
 		}
-	}
+	}*/
 
 	// Sweet, the protocol permits us to sign the block, wait for our time
-	delay := time.Unix(int64(header.Time), 0).Sub(time.Now()) // nolint: gosimple
+	delay := time.Until(time.Unix(int64(header.Time), 0)) // nolint: gosimple
 	if header.Difficulty.Cmp(diffNoTurn) == 0 {
 		// It's not our turn explicitly to sign, delay it a bit
 		wiggle := time.Duration(len(snap.Signers)/2+1) * wiggleTime
-		delay += time.Duration(rand.Int63n(int64(wiggle)))
+		delay += fixedBackOffTimeBeforeFork + time.Duration(rand.Int63n(int64(wiggle)))
 
-		log.Trace("Out-of-turn signing requested", "wiggle", common.PrettyDuration(wiggle))
+		log.Info("Sealing block with", "number", number, "delay", delay, "headerDifficulty", header.Difficulty, "signer", signer.Hex())
 	}
+
 	// Sign all the things!
 	sighash, err := signFn(accounts.Account{Address: signer}, accounts.MimetypeSpos, SposRLP(header))
 	if err != nil {
@@ -1064,6 +1069,7 @@ func (s *Spos) distributeReward(header *types.Header, state *state.StateDB) (*ty
 	}
 	return s.Reward(number - 1, state, header.Coinbase, superNodeReward, *mnAddr, masterNodePayment)
 }
+
 func (s *Spos) getNextMasterNode(height uint64) (*common.Address, error) {
 	log.Info("lemengbin", "height", height, "latest", rpc.LatestBlockNumber)
 	blockNrOrHash := rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(height))

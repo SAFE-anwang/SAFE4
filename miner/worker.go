@@ -462,6 +462,18 @@ func (w *worker) newWorkLoop(recommit time.Duration) {
 		case head := <-w.chainHeadCh:
 			clearPending(head.Block.NumberU64())
 			timestamp = time.Now().Unix()
+			if s, ok := w.engine.(*spos.Spos); ok {
+				needWait, err := s.NeedWaitNextBlock(w.chain, head.Block.Header())
+				if err != nil {
+					log.Info("Not allowed to propose block", "err", err)
+					continue
+				}
+				if needWait {
+					log.Info("Need to wait for the next block")
+					continue
+				}
+			}
+
 			commit(false, commitInterruptNewHead)
 
 		case <-timer.C:

@@ -478,7 +478,8 @@ func (s *Spos) snapshot(chain consensus.ChainHeaderReader, number uint64, hash c
 					forwardblock := chain.GetHeaderByNumber(forwardHeight)
 					startNewLoopTime = forwardblock.Time
 				}else{
-					startNewLoopTime = checkpoint.Time
+					forwardblock := chain.GetHeaderByNumber(0)
+					startNewLoopTime = forwardblock.Time
 				}
 
 				if number < params.SafeSposOfficialSuperNodeConfig.StartCommonSuperHeight {
@@ -1193,6 +1194,26 @@ func (s *Spos) Reward(height uint64, state *state.StateDB, smnAddr common.Addres
 		return nil, err
 	}
 	return tx, err
+}
+
+func (s *Spos) NeedWaitNextBlock(chain consensus.ChainReader, parent *types.Header) (bool, error) {
+	snap, err := s.snapshot(chain, parent.Number.Uint64(), parent.ParentHash, nil)
+	if err != nil {
+		return true, err
+	}
+
+	// Bail out if we're unauthorized to sign a block
+	if _, authorized := snap.Signers[s.signer]; !authorized {
+		return true, errUnauthorizedValidator
+	}
+
+	// If we're amongst the recent signers, wait for the next block
+	difficulty := calcDifficulty(snap, s.signer)
+	if difficulty.Cmp(diffNoTurn) == 0 {
+		return true, nil
+	}
+
+	return false, nil
 }
 
 func getDistributeRewardFlag(number uint64) bool{

@@ -330,7 +330,7 @@ func (s *Spos) verifyHeader(chain consensus.ChainHeaderReader, header *types.Hea
 	}
 	// Ensure that the block's difficulty is meaningful (may not be correct at this point)
 	if number > 0 {
-		if header.Difficulty == nil || (header.Difficulty.Cmp(diffInTurn) != 0 && header.Difficulty.Cmp(diffNoTurn) != 0) {
+		if header.Difficulty == nil  {
 			return errInvalidDifficulty
 		}
 	}
@@ -542,6 +542,10 @@ func (s *Spos) snapshot(chain consensus.ChainHeaderReader, number uint64, hash c
 		headers = append(headers, header)
 		number, hash = number-1, header.ParentHash
 	}
+	// check if snapshot is nil
+	if snap == nil {
+		return nil, fmt.Errorf("unknown error while retrieving snapshot at block number %v", number)
+	}
 	// Previous snapshot found, apply any pending headers on top of it
 	for i := 0; i < len(headers)/2; i++ {
 		headers[i], headers[len(headers)-1-i] = headers[len(headers)-1-i], headers[i]
@@ -602,7 +606,6 @@ func (s *Spos) verifySeal(chain consensus.ChainHeaderReader, header *types.Heade
 		return errUnauthorizedValidator
 	}
 
-	/*
 	for seen, recent := range snap.Recents {
 		if recent == signer {
 			// Signer is among recents, only fail if the current block doesn't shift it out
@@ -610,7 +613,7 @@ func (s *Spos) verifySeal(chain consensus.ChainHeaderReader, header *types.Heade
 				return errRecentlySigned
 			}
 		}
-	}*/
+	}
 
 	// Ensure that the difficulty corresponds to the turn-ness of the signer
 	if !s.fakeDiff {
@@ -787,7 +790,6 @@ func (s *Spos) Seal(chain consensus.ChainHeaderReader, block *types.Block, resul
 		return errUnauthorizedSigner
 	}
 
-	/*
 	// If we're amongst the recent signers, wait for the next block
 	for seen, recent := range snap.Recents {
 		if recent == signer {
@@ -797,7 +799,7 @@ func (s *Spos) Seal(chain consensus.ChainHeaderReader, block *types.Block, resul
 				return nil
 			}
 		}
-	}*/
+	}
 
 	// Sweet, the protocol permits us to sign the block, wait for our time
 	delay := time.Until(time.Unix(int64(header.Time), 0)) // nolint: gosimple
@@ -1196,7 +1198,7 @@ func (s *Spos) Reward(height uint64, state *state.StateDB, smnAddr common.Addres
 	return tx, err
 }
 
-func (s *Spos) NeedWaitNextBlock(chain consensus.ChainReader, parent *types.Header) (bool, error) {
+func (s *Spos) SignRecently(chain consensus.ChainReader, parent *types.Header) (bool, error) {
 	snap, err := s.snapshot(chain, parent.Number.Uint64(), parent.ParentHash, nil)
 	if err != nil {
 		return true, err
@@ -1208,11 +1210,15 @@ func (s *Spos) NeedWaitNextBlock(chain consensus.ChainReader, parent *types.Head
 	}
 
 	// If we're amongst the recent signers, wait for the next block
-	difficulty := calcDifficulty(snap, s.signer)
-	if difficulty.Cmp(diffNoTurn) == 0 {
-		return true, nil
+	number := parent.Number.Uint64() + 1
+	for seen, recent := range snap.Recents {
+		if recent == s.signer {
+			// Signer is among recents, only wait if the current block doesn't shift it out
+			if limit := uint64(len(snap.Signers)/2 + 1); number < limit || seen > number-limit {
+				return true, nil
+			}
+		}
 	}
-
 	return false, nil
 }
 

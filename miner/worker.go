@@ -463,7 +463,7 @@ func (w *worker) newWorkLoop(recommit time.Duration) {
 			clearPending(head.Block.NumberU64())
 			timestamp = time.Now().Unix()
 			if s, ok := w.engine.(*spos.Spos); ok {
-				needWait, err := s.NeedWaitNextBlock(w.chain, head.Block.Header())
+				needWait, err := s.SignRecently(w.chain, head.Block.Header())
 				if err != nil {
 					log.Info("Not allowed to propose block", "err", err)
 					continue
@@ -559,6 +559,9 @@ func (w *worker) mainLoop() {
 			}
 		case ev := <-w.chainSideCh:
 			// Short circuit for duplicate side blocks
+			if _, ok := w.engine.(*spos.Spos); ok {
+				continue
+			}
 			if _, exist := w.localUncles[ev.Block.Hash()]; exist {
 				continue
 			}
@@ -623,7 +626,8 @@ func (w *worker) mainLoop() {
 				// Special case, if the consensus engine is 0 period clique(dev mode),
 				// submit sealing work here since all empty submission will be rejected
 				// by clique. Of course the advance sealing(empty submission) is disabled.
-				if w.chainConfig.Clique != nil && w.chainConfig.Clique.Period == 0 {
+				if w.chainConfig.Clique != nil && w.chainConfig.Clique.Period == 0 ||
+					(w.chainConfig.Spos != nil && w.chainConfig.Spos.Period == 0) {
 					w.commitWork(nil, true, time.Now().Unix())
 				}
 			}

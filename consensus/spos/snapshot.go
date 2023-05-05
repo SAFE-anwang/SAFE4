@@ -23,6 +23,8 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethdb"
 	"math/big"
+	"sort"
+
 	//"github.com/ethereum/go-ethereum/log"
 	"github.com/ethereum/go-ethereum/params"
 	lru "github.com/hashicorp/golang-lru"
@@ -181,7 +183,7 @@ func (s *Snapshot) signers() []common.Address {
 	for sig := range s.Signers {
 		sigs = append(sigs, sig)
 	}
-	//sort.Sort(signersAscending(sigs))
+	sort.Sort(signersAscending(sigs))
 	return sigs
 }
 

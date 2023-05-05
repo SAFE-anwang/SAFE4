@@ -162,7 +162,7 @@ var (
 
 	// errRecentlySigned is returned if a header is signed by an authorized entity
 	// that already signed a header recently, thus is temporarily not allowed to.
-	errRecentlySigned = errors.New("recently signed")
+	//errRecentlySigned = errors.New("recently signed")
 
 	// errWrongDifficulty is returned if the difficulty of a block doesn't match the
 	// turn of the signer.
@@ -605,6 +605,7 @@ func (s *Spos) verifySeal(chain consensus.ChainHeaderReader, header *types.Heade
 		return errUnauthorizedValidator
 	}
 
+	/*
 	for seen, recent := range snap.Recents {
 		if recent == signer {
 			// Signer is among recents, only fail if the current block doesn't shift it out
@@ -612,7 +613,7 @@ func (s *Spos) verifySeal(chain consensus.ChainHeaderReader, header *types.Heade
 				return errRecentlySigned
 			}
 		}
-	}
+	}*/
 
 	// Ensure that the difficulty corresponds to the turn-ness of the signer
 	if !s.fakeDiff {
@@ -789,6 +790,7 @@ func (s *Spos) Seal(chain consensus.ChainHeaderReader, block *types.Block, resul
 		return errUnauthorizedSigner
 	}
 
+	/*
 	// If we're amongst the recent signers, wait for the next block
 	for seen, recent := range snap.Recents {
 		if recent == signer {
@@ -798,7 +800,7 @@ func (s *Spos) Seal(chain consensus.ChainHeaderReader, block *types.Block, resul
 				return nil
 			}
 		}
-	}
+	}*/
 
 	// Sweet, the protocol permits us to sign the block, wait for our time
 	delay := time.Until(time.Unix(int64(header.Time), 0)) // nolint: gosimple
@@ -1197,6 +1199,7 @@ func (s *Spos) Reward(height uint64, state *state.StateDB, smnAddr common.Addres
 	return tx, err
 }
 
+/*
 func (s *Spos) SignRecently(chain consensus.ChainReader, parent *types.Header) (bool, error) {
 	snap, err := s.snapshot(chain, parent.Number.Uint64(), parent.ParentHash, nil)
 	if err != nil {
@@ -1220,6 +1223,7 @@ func (s *Spos) SignRecently(chain consensus.ChainReader, parent *types.Header) (
 	}
 	return false, nil
 }
+*/
 
 func getDistributeRewardFlag(number uint64) bool{
 	distributeRewardLock.Lock()

@@ -144,6 +144,7 @@ func (s *Snapshot) apply(headers []*types.Header) (*Snapshot, error) {
 	// Iterate through the headers and create a new snapshot
 	snap := s.copy()
 
+	/*
 	for _, header := range headers {
 		number := header.Number.Uint64()
 
@@ -151,21 +152,22 @@ func (s *Snapshot) apply(headers []*types.Header) (*Snapshot, error) {
 		if limit := uint64(len(snap.Signers)/2 + 1); number >= limit {
 			delete(snap.Recents, number-limit)
 		}
+
 		// Resolve the authorization key and check against signers
 		signer, err := ecrecover(header, s.sigcache)
 		if err != nil {
 			return nil, err
 		}
-		/*if _, ok := snap.Signers[signer]; !ok {
+		if _, ok := snap.Signers[signer]; !ok {
 			return nil, errUnauthorizedSigner
 		}
 		for _, recent := range snap.Recents {
 			if recent == signer {
 				return nil, errRecentlySigned
 			}
-		}*/
+		}
 		snap.Recents[number] = signer
-	}
+	}*/
 
 	snap.Number += uint64(len(headers))
 	snap.Hash = headers[len(headers)-1].Hash()

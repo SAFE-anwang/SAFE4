@@ -58,8 +58,7 @@ const (
 	checkpointInterval = 1024     // Number of blocks after which to save the snapshot to the database
 	validatorBytesLength = common.AddressLength
 
-	wiggleTime = 500 * time.Millisecond // Random delay (per signer) to allow concurrent signers
-	fixedBackOffTimeBeforeFork = 200 * time.Millisecond
+	wiggleTime = 5000 * time.Millisecond // Random delay (per signer) to allow concurrent signers
 
 
 	//superNodeSPosCount = 7           //Total number of bookkeepers
@@ -806,7 +805,7 @@ func (s *Spos) Seal(chain consensus.ChainHeaderReader, block *types.Block, resul
 	if header.Difficulty.Cmp(diffNoTurn) == 0 {
 		// It's not our turn explicitly to sign, delay it a bit
 		wiggle := time.Duration(len(snap.Signers)/2+1) * wiggleTime
-		delay += fixedBackOffTimeBeforeFork + time.Duration(rand.Int63n(int64(wiggle)))
+		delay += time.Duration(rand.Int63n(int64(wiggle)))
 
 		log.Info("Sealing block with", "number", number, "delay", delay, "headerDifficulty", header.Difficulty, "signer", signer.Hex())
 	}

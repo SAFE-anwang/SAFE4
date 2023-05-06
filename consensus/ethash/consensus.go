@@ -613,6 +613,10 @@ func (ethash *Ethash) FinalizeAndAssemble(chain consensus.ChainHeaderReader, hea
 	return types.NewBlock(header, txs, uncles, receipts, trie.NewStackTrie(nil)), nil
 }
 
+func (ethash *Ethash) DistributeIncoming(chain consensus.ChainHeaderReader, header *types.Header, state *state.StateDB, txs []*types.Transaction, uncles []*types.Header, receipts []*types.Receipt) error {
+	return nil
+}
+
 // SealHash returns the hash of a block prior to it being sealed.
 func (ethash *Ethash) SealHash(header *types.Header) (hash common.Hash) {
 	hasher := sha3.NewLegacyKeccak256()

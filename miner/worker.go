@@ -1141,6 +1141,15 @@ func (w *worker) commitWork(interrupt *int32, noempty bool, timestamp int64) {
 	// Create an empty block based on temporary copied state for
 	// sealing in advance without waiting block execution finished.
 	if !noempty && atomic.LoadUint32(&w.noempty) == 0 {
+		err = w.prepareCommit(work.copy(), start)
+		if err != nil {
+			return
+		}
+		err = w.fillTransactions(interrupt, work)
+		if errors.Is(err, errBlockInterruptedByNewHead) {
+			work.discard()
+			return
+		}
 		w.commit(work.copy(), nil, false, start)
 	}
 
@@ -1160,6 +1169,23 @@ func (w *worker) commitWork(interrupt *int32, noempty bool, timestamp int64) {
 	w.current = work
 }
 
+func (w *worker) prepareCommit(env *environment,start time.Time) error {
+	if w.isRunning() {
+		// Create a local environment copy, avoid the data race with snapshot state.
+		// https://github.com/ethereum/go-ethereum/issues/24299
+		env := env.copy()
+		if _, ok := w.engine.(*spos.Spos); !ok {
+			return nil
+		}
+		spos.SetTxPool(w.eth.TxPool())
+		err := w.engine.DistributeIncoming(w.chain, env.header, env.state, env.txs, env.unclelist(), env.receipts)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // commit runs any post-transaction state modifications, assembles the final block
 // and commits new work if consensus engine is running.
 // Note the assumption is held that the mutation is allowed to the passed env, do
@@ -1175,10 +1201,6 @@ func (w *worker) commit(env *environment, interval func(), update bool, start ti
 		block, err := w.engine.FinalizeAndAssemble(w.chain, env.header, env.state, env.txs, env.unclelist(), env.receipts)
 		if err != nil {
 			return err
-		}
-
-		if _, ok := w.engine.(*spos.Spos); ok {
-			env.receipts = spos.GetReceipts()
 		}
 
 		// If we're post merge, just ignore

@@ -37,9 +37,11 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/consensus"
 	"github.com/ethereum/go-ethereum/consensus/misc"
+	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/core/state"
 	"github.com/ethereum/go-ethereum/core/systemcontracts"
 	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethdb"
 	"github.com/ethereum/go-ethereum/internal/ethapi"
@@ -65,17 +67,6 @@ const (
 	superNodeSPosCount = 3
 	pushForwardHeight  = 14	          //Push forward the block height
 	//chtAddress         = "0x043807066705c6EF9EB3D28D5D230b4d87EC4832" //Contract address
-
-	// genesis contracts
-	AccountManagerContract ="0x0000000000000000000000000000000000001012"
-	MasterNodeContract = "0x0000000000000000000000000000000000001022"
-	NodeStateContract = "0x0000000000000000000000000000000000001052"
-	SuperNodeStateContract = "0x0000000000000000000000000000000000001062"
-	PropertyContract = "0x0000000000000000000000000000000000001002"
-	ProposalContract = "0x0000000000000000000000000000000000001072"
-	SMNVoteContract = "0x0000000000000000000000000000000000001042"
-	SuperMasterNodeContract = "0x0000000000000000000000000000000000001032"
-	SystemRewardContract ="0x0000000000000000000000000000000000001082"
 )
 
 // Spos SAFE-proof-of-stake protocol constants.
@@ -96,16 +87,10 @@ var (
 	diffNoTurn = big.NewInt(1) // Block difficulty for out-of-turn signatures
 )
 
-//var SposTxLock    sync.RWMutex
-//var MinerRewardTx *types.Transaction
-var ReceiptsLock  sync.RWMutex
-var Receipts []*types.Receipt
-
-//Whether the current block height has been awarded
-var distributeRewardLock   sync.RWMutex
-var distributeRewardMap    map[uint64] bool
-
-
+var TxPool *core.TxPool
+func SetTxPool(txpool *core.TxPool) {
+	TxPool = txpool
+}
 
 // Various error messages to mark blocks invalid. These should be private to
 // prevent engine specific errors from being referenced in the remainder of the
@@ -486,7 +471,7 @@ func (s *Spos) snapshot(chain consensus.ChainHeaderReader, number uint64, hash c
 						signersmap[signer] = struct{}{}
 					}
 				}else { //TODO Call the contract to get the super node list
-					superMasterNodeInfos, err := s.getTopSuperMasterNode(number)
+					superMasterNodeInfos, err := systemcontracts.GetTopSuperMasterNode(s.blockChainAPI)
 					if err != nil {
 						log.Error("Failed to GetTopSMN", "error", err)
 						return nil, err
@@ -687,64 +672,25 @@ func (s *Spos) Finalize(chain consensus.ChainHeaderReader, header *types.Header,
 func (s *Spos) FinalizeAndAssemble(chain consensus.ChainHeaderReader, header *types.Header, state *state.StateDB, txs []*types.Transaction, uncles []*types.Header, receipts []*types.Receipt) (*types.Block, error) {
 	// Finalize block
 	s.Finalize(chain, header, state, txs, uncles)
-
-	number := header.Number.Uint64()
-	clearExpiredBlockRewardData(number)
-
-	//Whether block rewards have been allocated
-	distributeRewardFlag := getDistributeRewardFlag(number)
-
-	var rewardTx *types.Transaction
-	if number >= params.SafeSposOfficialSuperNodeConfig.StartCommonSuperHeight && !distributeRewardFlag {
-		distributeRewardTx, err := s.distributeReward(header, state)
-		if err != nil {
-			return nil, err
-		}
-		rewardTx = distributeRewardTx
-		setDistributeRewardFlag(number, true)
+	if header.GasLimit < header.GasUsed {
+		panic("Gas consumption of system txs exceed the gas limit")
 	}
-
-	//The reward distribution transaction in mining is the first transaction in this block
-	//rewardTx := getMinerRewardTx()
-	if rewardTx != nil {
-		/*tempTransaction := new(types.Transaction)
-		txs = append(txs, tempTransaction)
-		copy(txs[1:], txs[0:])
-		txs[0] = rewardTx
-		 */
-
-		state.Prepare(rewardTx.Hash(), len(txs))
-		txs = append(txs, rewardTx)
-
-		usedGas := rewardTx.Gas()
-		receipt := types.NewReceipt(header.Root.Bytes(), false, usedGas)
-		receipt.TxHash = rewardTx.Hash()
-		receipt.GasUsed = usedGas
-
-		header.GasUsed += usedGas
-
-		// Set the receipt logs and create a bloom for filtering
-		nonce := state.GetNonce(header.Coinbase)
-		receipt.Logs = state.GetLogs(rewardTx.Hash(), header.Hash())
-		receipt.Bloom = types.CreateBloom(types.Receipts{receipt})
-		receipt.BlockHash = header.Hash()
-		receipt.BlockNumber = header.Number
-		receipt.TransactionIndex = uint(state.TxIndex())
-		state.SetNonce(header.Coinbase, nonce + 1)
-
-		receipts = append(receipts, receipt)
-		/*tempreceipts := new(types.Receipt)
-		receipts = append(receipts, tempreceipts)
-		copy(receipts[1:], receipts[0:])
-		receipts[0] = receipt
-		 */
-	}
-
-	SetReceipts(receipts)
 	header.Root = state.IntermediateRoot(chain.Config().IsEIP158(header.Number))
 	header.UncleHash = types.CalcUncleHash(nil)
 	// Assemble and return the final block for sealing
 	return types.NewBlock(header, txs, nil, receipts, trie.NewStackTrie(nil)), nil
+}
+
+func (s *Spos) DistributeIncoming(chain consensus.ChainHeaderReader, header *types.Header, state *state.StateDB, txs []*types.Transaction, uncles []*types.Header, receipts []*types.Receipt) error {
+	number := header.Number.Uint64()
+	if number >= params.SafeSposOfficialSuperNodeConfig.StartCommonSuperHeight {
+		cx := chainContext{Chain: chain, Spos: s}
+		_, err := s.distributeReward(header, cx, state, &txs, &receipts, &header.GasUsed)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // Authorize injects a private key into the consensus engine to mint new blocks
@@ -1035,134 +981,19 @@ func getMasternodePayment(blockReward *big.Int) *big.Int {
 	return new(big.Int).SetUint64(masternodePayment)
 }
 
-/*
-func setMinerRewardTx(tx *types.Transaction) {
-	SposTxLock.Lock()
-	defer SposTxLock.Unlock()
-	if MinerRewardTx != nil {
-		MinerRewardTx = nil
-	}
-	MinerRewardTx = tx
-}
-
-func getMinerRewardTx() *types.Transaction{
-	var minerRewardTx *types.Transaction
-	SposTxLock.Lock()
-	minerRewardTx = MinerRewardTx
-	SposTxLock.Unlock()
-	return minerRewardTx
-}*/
-
-func SetReceipts(receipts []*types.Receipt){
-	ReceiptsLock.Lock()
-	defer ReceiptsLock.Unlock()
-	Receipts = make([]*types.Receipt, len(receipts))
-	copy(Receipts, receipts)
-}
-
-func GetReceipts() []*types.Receipt{
-	var receipts []*types.Receipt
-
-	ReceiptsLock.Lock()
-	receipts = make([]*types.Receipt, len(Receipts))
-	copy(receipts, Receipts)
-	ReceiptsLock.Unlock()
-	return receipts
-}
-
-func (s *Spos) distributeReward(header *types.Header, state *state.StateDB) (*types.Transaction, error) {
+func (s *Spos) distributeReward(header *types.Header, cx core.ChainContext, state *state.StateDB, txs *[]*types.Transaction, receipts *[]*types.Receipt, usedGas *uint64) (*types.Transaction, error) {
 	number := header.Number.Uint64()
 	totalReward := getBlockSubsidy(number, false)
 	masterNodePayment := getMasternodePayment(totalReward)
 	superNodeReward := new(big.Int).Sub(totalReward, masterNodePayment)
-	log.Info("Block reward info", "reward", totalReward,"superNodeReward", superNodeReward,
-		     "masterNodePayment", masterNodePayment)
-
-	mnAddr, err := s.getNextMasterNode(number - 1)
+	mnAddr, err := systemcontracts.GetNextMasterNode(s.blockChainAPI)
 	if err != nil {
 		return nil, err
 	}
-	return s.Reward(number - 1, state, header.Coinbase, superNodeReward, *mnAddr, masterNodePayment)
+	return s.Reward(header.Coinbase, superNodeReward, *mnAddr, masterNodePayment, header, cx, state, txs, receipts, usedGas)
 }
 
-func (s *Spos) getNextMasterNode(height uint64) (*common.Address, error) {
-	log.Info("lemengbin", "height", height, "latest", rpc.LatestBlockNumber)
-	blockNrOrHash := rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(height))
-	method := "getNext"
-
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	vABI, err := abi.JSON(strings.NewReader(systemcontracts.MasterNodeABI))
-	if err != nil {
-		return nil, nil
-	}
-
-	data, err := vABI.Pack(method)
-	if err != nil {
-		return nil, err
-	}
-	msgData := (hexutil.Bytes)(data)
-	args := ethapi.TransactionArgs{
-		To: &systemcontracts.MasterNodeContractAddr,
-		Data: &msgData,
-	}
-	result, err := s.blockChainAPI.Call(ctx, args, blockNrOrHash, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	addr := new(common.Address)
-	if err := vABI.UnpackIntoInterface(&addr, method, result); err != nil {
-		return nil, err
-	}
-	return addr, nil
-}
-
-func (s *Spos) getTopSuperMasterNode(height uint64) ([]types.SuperMasterNodeInfo, error) {
-	log.Info("lemengbin", "height", height, "latest", rpc.LatestBlockNumber)
-	blockNrOrHash := rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(height))
-	method := "getTop"
-
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	vABI, err := abi.JSON(strings.NewReader(systemcontracts.SuperMasterNodeABI))
-	if err != nil {
-		return nil, err
-	}
-
-	data, err := vABI.Pack(method)
-	if err != nil {
-		return nil, err
-	}
-	msgData := (hexutil.Bytes)(data)
-	args := ethapi.TransactionArgs{
-		To: &systemcontracts.SuperMasterNodeContractAddr,
-		Data: &msgData,
-	}
-	result, err := s.blockChainAPI.Call(ctx, args, blockNrOrHash, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	var (
-		ret0 = new([]types.SuperMasterNodeInfo)
-	)
-	out := ret0
-	if err := vABI.UnpackIntoInterface(out, method, result); err != nil {
-		return nil, err
-	}
-
-	addrs :=make([]types.SuperMasterNodeInfo, len(*ret0))
-	for i, addr := range *ret0 {
-		addrs[i] = addr
-	}
-	return addrs, nil
-}
-
-func (s *Spos) Reward(height uint64, state *state.StateDB, smnAddr common.Address, smnCount *big.Int, mnAddr common.Address, mnCount *big.Int) (*types.Transaction, error){
-	log.Info("lemengbin", "height", height, "latest", rpc.LatestBlockNumber)
+func (s *Spos) Reward(smnAddr common.Address, smnCount *big.Int, mnAddr common.Address, mnCount *big.Int, header *types.Header, cx core.ChainContext, state *state.StateDB, txs *[]*types.Transaction, receipts *[]*types.Receipt, usedGas *uint64) (*types.Transaction, error){
 	vABI, err := abi.JSON(strings.NewReader(systemcontracts.SystemRewardABI))
 	if err != nil {
 		return nil, err
@@ -1180,73 +1011,87 @@ func (s *Spos) Reward(height uint64, state *state.StateDB, smnAddr common.Addres
 	value := new(big.Int)
 	value.Add(smnCount, mnCount)
 	msgData := (hexutil.Bytes)(data)
-	args := ethapi.TransactionArgs{
-		From:  &smnAddr,
-		To:    &systemcontracts.SystemRewardContractAddr,
-		Data:  &msgData,
-		Value: (*hexutil.Big)(value),
+	gasPrice := big.NewInt(params.GWei)
+	gasPrice, err = systemcontracts.GetPropertyValue(s.blockChainAPI, "gas_price")
+	if err != nil {
+		gasPrice = big.NewInt(params.GWei / 100)
 	}
-	blockNrOrHash := rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(height))
-	gas, err := s.blockChainAPI.EstimateGas(ctx, args, &blockNrOrHash)
+	args := ethapi.TransactionArgs{
+		From:     &smnAddr,
+		To:       &systemcontracts.SystemRewardContractAddr,
+		Data:     &msgData,
+		Value:    (*hexutil.Big)(value),
+		GasPrice: (*hexutil.Big)(gasPrice),
+	}
+	//blockNrOrHash := rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(header.Number.Uint64() - 1))
+	gas, err := s.blockChainAPI.EstimateGas(ctx, args, nil)
 	args.Gas = &gas
-	nonce := state.GetNonce(smnAddr)
+
+	nonce := state.GetNonce(*args.From)
 
 	rawTx :=types.NewTransaction(nonce, *args.To, value, uint64(*args.Gas), args.GasPrice.ToInt(), msgData)
 	tx, err := s.signTxFn(accounts.Account{Address: smnAddr}, rawTx, s.chainConfig.ChainID)
+
 	if err != nil {
 		return nil, err
 	}
+	state.Prepare(tx.Hash(), len(*txs))
+	gasUsed, err := applyMessage(args, header, cx, state, s.chainConfig)
+	if err != nil {
+		return nil, err
+	}
+	*txs = append(*txs, tx)
+	root := state.IntermediateRoot(s.chainConfig.IsEIP158(header.Number)).Bytes()
+	*usedGas += gasUsed
+	receipt := types.NewReceipt(root, false, *usedGas)
+	receipt.TxHash = tx.Hash()
+	receipt.GasUsed = gasUsed
+
+	// Set the receipt logs and create a bloom for filtering
+	receipt.Logs = state.GetLogs(tx.Hash(), header.Hash())
+	receipt.Bloom = types.CreateBloom(types.Receipts{receipt})
+	receipt.BlockHash = header.Hash()
+	receipt.BlockNumber = header.Number
+	receipt.TransactionIndex = uint(state.TxIndex())
+	*receipts = append(*receipts, receipt)
+	state.SetNonce(*args.From, nonce+1)
+
+	TxPool.AddLocal(tx)
+
 	return tx, err
 }
 
-/*
-func (s *Spos) SignRecently(chain consensus.ChainReader, parent *types.Header) (bool, error) {
-	snap, err := s.snapshot(chain, parent.Number.Uint64(), parent.ParentHash, nil)
+// chain context
+type chainContext struct {
+	Chain  consensus.ChainHeaderReader
+	Spos consensus.Engine
+}
+
+func (c chainContext) Engine() consensus.Engine {
+	return c.Spos
+}
+
+func (c chainContext) GetHeader(hash common.Hash, number uint64) *types.Header {
+	return c.Chain.GetHeader(hash, number)
+}
+
+func applyMessage(
+	args ethapi.TransactionArgs,
+	header *types.Header,
+	cx core.ChainContext,
+	state *state.StateDB,
+	chainConfig *params.ChainConfig,
+) (uint64, error) {
+	// Create a new context to be used in the EVM environment
+	context := core.NewEVMBlockContext(header, cx, nil)
+	// Create a new environment which holds all relevant information
+	// about the transaction and calling mechanisms.
+	vmenv := vm.NewEVM(context, vm.TxContext{Origin: *args.From, GasPrice: big.NewInt(0)}, state, chainConfig, vm.Config{})
+	// Apply the transaction to the current state (included in the env)
+	ret, returnGas, err := vmenv.Call(vm.AccountRef(*args.From), *args.To, *args.Data, uint64(*args.Gas), args.Value.ToInt())
 	if err != nil {
-		return true, err
+		log.Error("apply message failed", "msg", string(ret), "err", err)
+		return 0, err
 	}
-
-	// Bail out if we're unauthorized to sign a block
-	if _, authorized := snap.Signers[s.signer]; !authorized {
-		return true, errUnauthorizedValidator
-	}
-
-	// If we're amongst the recent signers, wait for the next block
-	number := parent.Number.Uint64() + 1
-	for seen, recent := range snap.Recents {
-		if recent == s.signer {
-			// Signer is among recents, only wait if the current block doesn't shift it out
-			if limit := uint64(len(snap.Signers)/2 + 1); number < limit || seen > number-limit {
-				return true, nil
-			}
-		}
-	}
-	return false, nil
-}
-*/
-
-func getDistributeRewardFlag(number uint64) bool{
-	distributeRewardLock.Lock()
-	defer distributeRewardLock.Unlock()
-	_, ok := distributeRewardMap[number]
-	return ok
-}
-
-func setDistributeRewardFlag(number uint64, flag bool) {
-	distributeRewardLock.Lock()
-	defer distributeRewardLock.Unlock()
-	if distributeRewardMap == nil {
-		distributeRewardMap = make(map[uint64] bool, 10)
-	}
-	distributeRewardMap[number] = flag
-}
-
-func clearExpiredBlockRewardData(number uint64) {
-	distributeRewardLock.Lock()
-	defer distributeRewardLock.Unlock()
-	for k,_ := range distributeRewardMap{
-		if k < number {
-			delete(distributeRewardMap, k)
-		}
-	}
+	return uint64(*args.Gas) - returnGas, err
 }

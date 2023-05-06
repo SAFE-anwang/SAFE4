@@ -59,7 +59,7 @@ const (
 	validatorBytesLength = common.AddressLength
 
 	wiggleTime = 5000 * time.Millisecond // Random delay (per signer) to allow concurrent signers
-
+	sposAllowedFutureBlockTimeSeconds = int64(60)   // Max seconds from current time allowed for blocks, before they're considered future blocks
 
 	//superNodeSPosCount = 7           //Total number of bookkeepers
 	superNodeSPosCount = 2
@@ -293,7 +293,7 @@ func (s *Spos) verifyHeader(chain consensus.ChainHeaderReader, header *types.Hea
 	number := header.Number.Uint64()
 
 	// Don't waste time checking blocks from the future
-	if header.Time > uint64(time.Now().Unix()){
+	if header.Time > uint64(time.Now().Unix() + sposAllowedFutureBlockTimeSeconds){
 		return consensus.ErrFutureBlock
 	}
 

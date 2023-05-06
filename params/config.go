@@ -332,7 +332,7 @@ var (
 			common.HexToAddress("0xb86e2B0Ab5A4B1373e40c51A7C712c70Ba2f9f8E"),
 			common.HexToAddress("0x0DF8fa387C602AE62559cC4aFa4972A7045d6707"),
 			 */
-			//common.HexToAddress("0x044f9C93b57eFAA547F8461d4FA864eb40558cD0"),
+			common.HexToAddress("0x044f9C93b57eFAA547F8461d4FA864eb40558cD0"),
 			common.HexToAddress("0xD83076fB57D1fdae23293Cad74999A75D06B7A3A"),
 			common.HexToAddress("0x8b96C90B86CFDBdc971bb54C263a6d021e7f4894"),
 		},

@@ -8,7 +8,7 @@ import (
 )
 
 type SuperMasterNodeMemberInfo struct {
-	LockID [20]byte
+	LockID *big.Int
 	Addr   common.Address
 	Amount *big.Int
 	Height *big.Int
@@ -26,6 +26,7 @@ type SuperMasterNodeInfo struct {
 	Addr             common.Address
 	Creator          common.Address
 	Amount           *big.Int
+	Enode            string
 	Ip               string
 	Pubkey           string
 	Description      string

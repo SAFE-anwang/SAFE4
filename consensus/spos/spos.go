@@ -681,14 +681,48 @@ func (s *Spos) FinalizeAndAssemble(chain consensus.ChainHeaderReader, header *ty
 	return types.NewBlock(header, txs, nil, receipts, trie.NewStackTrie(nil)), nil
 }
 
+
+//Whether the current block height has been awarded
+var distributeRewardLock   sync.RWMutex
+var distributeRewardMap    map[uint64] bool
+
+func getDistributeRewardFlag(number uint64) bool{
+	distributeRewardLock.Lock()
+	defer distributeRewardLock.Unlock()
+	_, ok := distributeRewardMap[number]
+	return ok
+}
+
+func setDistributeRewardFlag(number uint64, flag bool) {
+	distributeRewardLock.Lock()
+	defer distributeRewardLock.Unlock()
+	if distributeRewardMap == nil {
+		distributeRewardMap = make(map[uint64] bool, 10)
+	}
+	distributeRewardMap[number] = flag
+}
+
+func clearExpiredBlockRewardData(number uint64) {
+	distributeRewardLock.Lock()
+	defer distributeRewardLock.Unlock()
+	for k,_ := range distributeRewardMap{
+		if k < number {
+			delete(distributeRewardMap, k)
+		}
+	}
+}
+
 func (s *Spos) DistributeIncoming(chain consensus.ChainHeaderReader, header *types.Header, state *state.StateDB, txs []*types.Transaction, uncles []*types.Header, receipts []*types.Receipt) error {
 	number := header.Number.Uint64()
-	if number >= params.SafeSposOfficialSuperNodeConfig.StartCommonSuperHeight {
+	clearExpiredBlockRewardData(number)
+	distributeRewardFlag := getDistributeRewardFlag(number)
+	if number >= params.SafeSposOfficialSuperNodeConfig.StartCommonSuperHeight && !distributeRewardFlag {
 		cx := chainContext{Chain: chain, Spos: s}
 		_, err := s.distributeReward(header, cx, state, &txs, &receipts, &header.GasUsed)
 		if err != nil {
 			return err
 		}
+		setDistributeRewardFlag(number, true)
 	}
 	return nil
 }

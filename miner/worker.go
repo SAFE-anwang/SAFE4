@@ -1145,11 +1145,13 @@ func (w *worker) commitWork(interrupt *int32, noempty bool, timestamp int64) {
 		if err != nil {
 			return
 		}
+		/*
 		err = w.fillTransactions(interrupt, work)
 		if errors.Is(err, errBlockInterruptedByNewHead) {
 			work.discard()
 			return
 		}
+		*/
 		w.commit(work.copy(), nil, false, start)
 	}
 

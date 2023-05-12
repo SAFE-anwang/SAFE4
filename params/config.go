@@ -33,7 +33,7 @@ var (
 	RinkebyGenesisHash = common.HexToHash("0x6341fd3daf94b748c72ced5a5b26028f2474f5f00d824504e4fa37a75767e177")
 	GoerliGenesisHash  = common.HexToHash("0xbf7e331f7f7c1dd2e05159666b3bf8bc7a8a3a9eb1d518969eab529dd9b88c1a")
 	KilnGenesisHash    = common.HexToHash("0x51c7fe41be669f69c45c33a56982cbde405313342d9e2b00d7c91a7b284dd4f8")
-	SafeGenesisHash    = common.HexToHash("0xf206120ba8e4a1db00f6469556b750738730189c9a6c265ef12b40cb0d966c77")
+	SafeGenesisHash    = common.HexToHash("0xf53e9a9885ca0c80edfd0376ed008f165b2df3a3b9aec6703f66a57a96f8ff22")
 )
 
 // TrustedCheckpoints associates each known checkpoint with the genesis hash of
@@ -336,7 +336,7 @@ var (
 			common.HexToAddress("0xD83076fB57D1fdae23293Cad74999A75D06B7A3A"),
 			common.HexToAddress("0x8b96C90B86CFDBdc971bb54C263a6d021e7f4894"),
 		},
-		StartCommonSuperHeight: 200,
+		StartCommonSuperHeight: 100,
 	}
 
 	// AllEthashProtocolChanges contains every protocol change (EIPs) introduced

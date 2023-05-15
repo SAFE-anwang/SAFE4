@@ -87,6 +87,28 @@ var (
 	diffNoTurn = big.NewInt(1) // Block difficulty for out-of-turn signatures
 )
 
+//var SposTxLock    sync.RWMutex
+//var MinerRewardTx *types.Transaction
+var ReceiptsLock  sync.RWMutex
+var Receipts []*types.Receipt
+
+func SetReceipts(receipts []*types.Receipt){
+	ReceiptsLock.Lock()
+	defer ReceiptsLock.Unlock()
+	Receipts = make([]*types.Receipt, len(receipts))
+	copy(Receipts, receipts)
+}
+
+func GetReceipts() []*types.Receipt{
+	var receipts []*types.Receipt
+
+	ReceiptsLock.Lock()
+	receipts = make([]*types.Receipt, len(Receipts))
+	copy(receipts, Receipts)
+	ReceiptsLock.Unlock()
+	return receipts
+}
+
 var TxPool *core.TxPool
 func SetTxPool(txpool *core.TxPool) {
 	TxPool = txpool
@@ -672,9 +694,61 @@ func (s *Spos) Finalize(chain consensus.ChainHeaderReader, header *types.Header,
 func (s *Spos) FinalizeAndAssemble(chain consensus.ChainHeaderReader, header *types.Header, state *state.StateDB, txs []*types.Transaction, uncles []*types.Header, receipts []*types.Receipt) (*types.Block, error) {
 	// Finalize block
 	s.Finalize(chain, header, state, txs, uncles)
-	if header.GasLimit < header.GasUsed {
-		panic("Gas consumption of system txs exceed the gas limit")
+
+	number := header.Number.Uint64()
+	clearExpiredBlockRewardData(number)
+
+	//Whether block rewards have been allocated
+	distributeRewardFlag := getDistributeRewardFlag(number)
+
+	var rewardTx *types.Transaction
+	if number >= params.SafeSposOfficialSuperNodeConfig.StartCommonSuperHeight && !distributeRewardFlag {
+		cx := chainContext{Chain: chain, Spos: s}
+		distributeRewardTx, err := s.distributeReward(header, cx, state, &txs, &receipts, &header.GasUsed)
+		if err != nil {
+			return nil, err
+		}
+		rewardTx = distributeRewardTx
+		setDistributeRewardFlag(number, true)
 	}
+
+	//The reward distribution transaction in mining is the first transaction in this block
+	//rewardTx := getMinerRewardTx()
+	if rewardTx != nil {
+		/*tempTransaction := new(types.Transaction)
+		txs = append(txs, tempTransaction)
+		copy(txs[1:], txs[0:])
+		txs[0] = rewardTx
+		*/
+
+		state.Prepare(rewardTx.Hash(), len(txs))
+		txs = append(txs, rewardTx)
+
+		usedGas := rewardTx.Gas()
+		receipt := types.NewReceipt(header.Root.Bytes(), false, usedGas)
+		receipt.TxHash = rewardTx.Hash()
+		receipt.GasUsed = usedGas
+
+		header.GasUsed += usedGas
+
+		// Set the receipt logs and create a bloom for filtering
+		nonce := state.GetNonce(header.Coinbase)
+		receipt.Logs = state.GetLogs(rewardTx.Hash(), header.Hash())
+		receipt.Bloom = types.CreateBloom(types.Receipts{receipt})
+		receipt.BlockHash = header.Hash()
+		receipt.BlockNumber = header.Number
+		receipt.TransactionIndex = uint(state.TxIndex())
+		state.SetNonce(header.Coinbase, nonce + 1)
+
+		receipts = append(receipts, receipt)
+		/*tempreceipts := new(types.Receipt)
+		receipts = append(receipts, tempreceipts)
+		copy(receipts[1:], receipts[0:])
+		receipts[0] = receipt
+		*/
+	}
+
+	SetReceipts(receipts)
 	header.Root = state.IntermediateRoot(chain.Config().IsEIP158(header.Number))
 	header.UncleHash = types.CalcUncleHash(nil)
 	// Assemble and return the final block for sealing
@@ -1090,7 +1164,7 @@ func (s *Spos) Reward(smnAddr common.Address, smnCount *big.Int, mnAddr common.A
 	*receipts = append(*receipts, receipt)
 	state.SetNonce(*args.From, nonce+1)
 
-	TxPool.AddLocal(tx)
+//	TxPool.AddLocal(tx)
 
 	return tx, err
 }

@@ -1201,6 +1201,12 @@ func (w *worker) commit(env *environment, interval func(), update bool, start ti
 		}
 		// Create a local environment copy, avoid the data race with snapshot state.
 		// https://github.com/ethereum/go-ethereum/issues/24299
+		if update {
+			spos.SetCompleteBlockFlag(true)
+		}else {
+			spos.SetCompleteBlockFlag(false)
+		}
+
 		env := env.copy()
 		block, err := w.engine.FinalizeAndAssemble(w.chain, env.header, env.state, env.txs, env.unclelist(), env.receipts)
 		if err != nil {
@@ -1208,7 +1214,10 @@ func (w *worker) commit(env *environment, interval func(), update bool, start ti
 		}
 
 		if _, ok := w.engine.(*spos.Spos); ok {
-			env.receipts = spos.GetReceipts()
+			if update {
+				env.receipts = spos.GetReceipts()
+				env.txs = spos.GetTxs()
+			}
 		}
 
 		// If we're post merge, just ignore

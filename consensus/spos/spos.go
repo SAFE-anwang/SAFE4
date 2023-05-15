@@ -109,6 +109,43 @@ func GetReceipts() []*types.Receipt{
 	return receipts
 }
 
+var TxsLock  sync.RWMutex
+var Txs []*types.Transaction
+func SetTxs(txs []*types.Transaction){
+	TxsLock.Lock()
+	defer TxsLock.Unlock()
+	Txs = make([]*types.Transaction, len(txs))
+	copy(Txs, txs)
+}
+
+func GetTxs() []*types.Transaction{
+	var txs []*types.Transaction
+
+	TxsLock.Lock()
+	txs = make([]*types.Transaction, len(Receipts))
+	copy(txs, Txs)
+	TxsLock.Unlock()
+	return txs
+}
+
+var CompleteBlockLock sync.RWMutex
+var CompleteBlockFlag bool
+
+func SetCompleteBlockFlag(flag bool) {
+	CompleteBlockLock.Lock()
+	defer CompleteBlockLock.Unlock()
+	CompleteBlockFlag = flag
+}
+
+func GetCompleteBlockFlag() bool {
+	var flag bool
+	CompleteBlockLock.Lock()
+	defer CompleteBlockLock.Unlock()
+	flag = CompleteBlockFlag
+	return flag
+}
+
+
 var TxPool *core.TxPool
 func SetTxPool(txpool *core.TxPool) {
 	TxPool = txpool
@@ -694,61 +731,25 @@ func (s *Spos) Finalize(chain consensus.ChainHeaderReader, header *types.Header,
 func (s *Spos) FinalizeAndAssemble(chain consensus.ChainHeaderReader, header *types.Header, state *state.StateDB, txs []*types.Transaction, uncles []*types.Header, receipts []*types.Receipt) (*types.Block, error) {
 	// Finalize block
 	s.Finalize(chain, header, state, txs, uncles)
-
 	number := header.Number.Uint64()
-	clearExpiredBlockRewardData(number)
+
+	completeBlockFlag := GetCompleteBlockFlag()
+
+	//clearExpiredBlockRewardData(number)
 
 	//Whether block rewards have been allocated
-	distributeRewardFlag := getDistributeRewardFlag(number)
+	//distributeRewardFlag := getDistributeRewardFlag(number)
 
-	var rewardTx *types.Transaction
-	if number >= params.SafeSposOfficialSuperNodeConfig.StartCommonSuperHeight && !distributeRewardFlag {
+	//if number >= params.SafeSposOfficialSuperNodeConfig.StartCommonSuperHeight && !distributeRewardFlag && completeBlockFlag {
+	if number >= params.SafeSposOfficialSuperNodeConfig.StartCommonSuperHeight && completeBlockFlag {
 		cx := chainContext{Chain: chain, Spos: s}
-		distributeRewardTx, err := s.distributeReward(header, cx, state, &txs, &receipts, &header.GasUsed)
+		_, err := s.distributeReward(header, cx, state, &txs, &receipts, &header.GasUsed)
 		if err != nil {
 			return nil, err
 		}
-		rewardTx = distributeRewardTx
-		setDistributeRewardFlag(number, true)
+		//setDistributeRewardFlag(number, true)
 	}
 
-	//The reward distribution transaction in mining is the first transaction in this block
-	//rewardTx := getMinerRewardTx()
-	if rewardTx != nil {
-		/*tempTransaction := new(types.Transaction)
-		txs = append(txs, tempTransaction)
-		copy(txs[1:], txs[0:])
-		txs[0] = rewardTx
-		*/
-
-		state.Prepare(rewardTx.Hash(), len(txs))
-		txs = append(txs, rewardTx)
-
-		usedGas := rewardTx.Gas()
-		receipt := types.NewReceipt(header.Root.Bytes(), false, usedGas)
-		receipt.TxHash = rewardTx.Hash()
-		receipt.GasUsed = usedGas
-
-		header.GasUsed += usedGas
-
-		// Set the receipt logs and create a bloom for filtering
-		nonce := state.GetNonce(header.Coinbase)
-		receipt.Logs = state.GetLogs(rewardTx.Hash(), header.Hash())
-		receipt.Bloom = types.CreateBloom(types.Receipts{receipt})
-		receipt.BlockHash = header.Hash()
-		receipt.BlockNumber = header.Number
-		receipt.TransactionIndex = uint(state.TxIndex())
-		state.SetNonce(header.Coinbase, nonce + 1)
-
-		receipts = append(receipts, receipt)
-		/*tempreceipts := new(types.Receipt)
-		receipts = append(receipts, tempreceipts)
-		copy(receipts[1:], receipts[0:])
-		receipts[0] = receipt
-		*/
-	}
-
-	SetReceipts(receipts)
 	header.Root = state.IntermediateRoot(chain.Config().IsEIP158(header.Number))
 	header.UncleHash = types.CalcUncleHash(nil)
 	// Assemble and return the final block for sealing
@@ -1165,6 +1166,8 @@ func (s *Spos) Reward(smnAddr common.Address, smnCount *big.Int, mnAddr common.A
 	state.SetNonce(*args.From, nonce+1)
 
 //	TxPool.AddLocal(tx)
+	SetReceipts(*receipts)
+	SetTxs(*txs)
 
 	return tx, err
 }

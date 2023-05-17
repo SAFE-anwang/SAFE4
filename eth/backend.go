@@ -259,6 +259,9 @@ func New(stack *node.Node, config *ethconfig.Config) (*Ethereum, error) {
 	}
 	eth.APIBackend.gpo = gasprice.NewOracle(eth.APIBackend, gpoParams)
 
+	if s, ok := eth.engine.(*spos2.Spos); ok {
+		s.SetChain(eth.blockchain)
+	}
 	eth.engine.VerifyHeader(eth.blockchain, eth.blockchain.CurrentHeader(), true)
 
 	// Setup DNS discovery iterators.

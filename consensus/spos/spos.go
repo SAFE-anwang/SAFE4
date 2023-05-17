@@ -41,7 +41,6 @@ import (
 	"github.com/ethereum/go-ethereum/core/state"
 	"github.com/ethereum/go-ethereum/core/systemcontracts"
 	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethdb"
 	"github.com/ethereum/go-ethereum/internal/ethapi"
@@ -143,12 +142,6 @@ func GetCompleteBlockFlag() bool {
 	defer CompleteBlockLock.Unlock()
 	flag = CompleteBlockFlag
 	return flag
-}
-
-
-var TxPool *core.TxPool
-func SetTxPool(txpool *core.TxPool) {
-	TxPool = txpool
 }
 
 // Various error messages to mark blocks invalid. These should be private to
@@ -268,30 +261,35 @@ type Spos struct {
 
 	//etherbaseprivatekey *ecdsa.PrivateKey
 
+	chain         *core.BlockChain
 	blockChainAPI *ethapi.PublicBlockChainAPI
 }
 
 // New creates a Spos SAFE-proof-of-stack consensus engine with the initial
 // signers set to the ones provided by the user.
-func New(config *params.ChainConfig, db ethdb.Database, blockChainAPI *ethapi.PublicBlockChainAPI) *Spos {
+func New(chainConfig *params.ChainConfig, db ethdb.Database, blockChainAPI *ethapi.PublicBlockChainAPI) *Spos {
 	// Set any missing consensus parameters to their defaults
-	conf := config.Spos
-	if conf != nil && conf.Epoch == 0 {
-		conf.Epoch = epochLength
+	sposConfig := chainConfig.Spos
+	if sposConfig != nil && sposConfig.Epoch == 0 {
+		sposConfig.Epoch = epochLength
 	}
 	// Allocate the snapshot caches and create the engine
 	recents, _ := lru.NewARC(inmemorySnapshots)
 	signatures, _ := lru.NewARC(inmemorySignatures)
 
 	return &Spos{
-		chainConfig: config,
-		config:     conf,
+		chainConfig: chainConfig,
+		config:     sposConfig,
 		db:         db,
 		recents:    recents,
 		signatures: signatures,
 		proposals:  make(map[common.Address]bool),
 		blockChainAPI: blockChainAPI,
 	}
+}
+
+func (s *Spos) SetChain(chain *core.BlockChain) {
+	s.chain = chain
 }
 
 // Author implements consensus.Engine, returning the Ethereum address recovered
@@ -740,66 +738,17 @@ func (s *Spos) FinalizeAndAssemble(chain consensus.ChainHeaderReader, header *ty
 	//Whether block rewards have been allocated
 	//distributeRewardFlag := getDistributeRewardFlag(number)
 
-	//if number >= params.SafeSposOfficialSuperNodeConfig.StartCommonSuperHeight && !distributeRewardFlag && completeBlockFlag {
 	if number >= params.SafeSposOfficialSuperNodeConfig.StartCommonSuperHeight && completeBlockFlag {
-		cx := chainContext{Chain: chain, Spos: s}
-		_, err := s.distributeReward(header, cx, state, &txs, &receipts, &header.GasUsed)
+		_, err := s.distributeReward(header, state, &txs, &receipts)
 		if err != nil {
 			return nil, err
 		}
-		//setDistributeRewardFlag(number, true)
 	}
 
 	header.Root = state.IntermediateRoot(chain.Config().IsEIP158(header.Number))
 	header.UncleHash = types.CalcUncleHash(nil)
 	// Assemble and return the final block for sealing
 	return types.NewBlock(header, txs, nil, receipts, trie.NewStackTrie(nil)), nil
-}
-
-
-//Whether the current block height has been awarded
-var distributeRewardLock   sync.RWMutex
-var distributeRewardMap    map[uint64] bool
-
-func getDistributeRewardFlag(number uint64) bool{
-	distributeRewardLock.Lock()
-	defer distributeRewardLock.Unlock()
-	_, ok := distributeRewardMap[number]
-	return ok
-}
-
-func setDistributeRewardFlag(number uint64, flag bool) {
-	distributeRewardLock.Lock()
-	defer distributeRewardLock.Unlock()
-	if distributeRewardMap == nil {
-		distributeRewardMap = make(map[uint64] bool, 10)
-	}
-	distributeRewardMap[number] = flag
-}
-
-func clearExpiredBlockRewardData(number uint64) {
-	distributeRewardLock.Lock()
-	defer distributeRewardLock.Unlock()
-	for k,_ := range distributeRewardMap{
-		if k < number {
-			delete(distributeRewardMap, k)
-		}
-	}
-}
-
-func (s *Spos) DistributeIncoming(chain consensus.ChainHeaderReader, header *types.Header, state *state.StateDB, txs []*types.Transaction, uncles []*types.Header, receipts []*types.Receipt) error {
-	number := header.Number.Uint64()
-	clearExpiredBlockRewardData(number)
-	distributeRewardFlag := getDistributeRewardFlag(number)
-	if number >= params.SafeSposOfficialSuperNodeConfig.StartCommonSuperHeight && !distributeRewardFlag {
-		cx := chainContext{Chain: chain, Spos: s}
-		_, err := s.distributeReward(header, cx, state, &txs, &receipts, &header.GasUsed)
-		if err != nil {
-			return err
-		}
-		setDistributeRewardFlag(number, true)
-	}
-	return nil
 }
 
 // Authorize injects a private key into the consensus engine to mint new blocks
@@ -915,17 +864,6 @@ func (s *Spos) calcDifficulty(snap *Snapshot, signer common.Address)*big.Int {
 func (s *Spos) SealHash(header *types.Header) common.Hash {
 	return SealHash(header)
 }
-
-/*
-func (s * Spos) EhterbasePrivatekey() (ehterbasePrivatekey *ecdsa.PrivateKey, err error) {
-	s.lock.RLock()
-	defer s.lock.RUnlock()
-	ebpk := s.etherbaseprivatekey
-	if ebpk != nil {
-		return ebpk, nil
-	}
-	return nil, fmt.Errorf("etherbase privatekey missing: %v", err)
-}*/
 
 // Close implements consensus.Engine. It's a noop for spos as there are no background threads.
 func (s *Spos) Close() error {
@@ -1090,7 +1028,7 @@ func getMasternodePayment(blockReward *big.Int) *big.Int {
 	return new(big.Int).SetUint64(masternodePayment)
 }
 
-func (s *Spos) distributeReward(header *types.Header, cx core.ChainContext, state *state.StateDB, txs *[]*types.Transaction, receipts *[]*types.Receipt, usedGas *uint64) (*types.Transaction, error) {
+func (s *Spos) distributeReward(header *types.Header, state *state.StateDB, txs *[]*types.Transaction, receipts *[]*types.Receipt) (*types.Transaction, error) {
 	number := header.Number.Uint64()
 	totalReward := getBlockSubsidy(number, false)
 	masterNodePayment := getMasternodePayment(totalReward)
@@ -1099,10 +1037,10 @@ func (s *Spos) distributeReward(header *types.Header, cx core.ChainContext, stat
 	if err != nil {
 		return nil, err
 	}
-	return s.Reward(header.Coinbase, superNodeReward, *mnAddr, masterNodePayment, header, cx, state, txs, receipts, usedGas)
+	return s.Reward(header.Coinbase, superNodeReward, *mnAddr, masterNodePayment, header, state, txs, receipts)
 }
 
-func (s *Spos) Reward(smnAddr common.Address, smnCount *big.Int, mnAddr common.Address, mnCount *big.Int, header *types.Header, cx core.ChainContext, state *state.StateDB, txs *[]*types.Transaction, receipts *[]*types.Receipt, usedGas *uint64) (*types.Transaction, error){
+func (s *Spos) Reward(smnAddr common.Address, smnCount *big.Int, mnAddr common.Address, mnCount *big.Int, header *types.Header, state *state.StateDB, txs *[]*types.Transaction, receipts *[]*types.Receipt) (*types.Transaction, error){
 	vABI, err := abi.JSON(strings.NewReader(systemcontracts.SystemRewardABI))
 	if err != nil {
 		return nil, err
@@ -1125,84 +1063,41 @@ func (s *Spos) Reward(smnAddr common.Address, smnCount *big.Int, mnAddr common.A
 	if err != nil {
 		gasPrice = big.NewInt(params.GWei / 100)
 	}
+	nonce := state.GetNonce(smnAddr)
+
 	args := ethapi.TransactionArgs{
 		From:     &smnAddr,
 		To:       &systemcontracts.SystemRewardContractAddr,
 		Data:     &msgData,
 		Value:    (*hexutil.Big)(value),
 		GasPrice: (*hexutil.Big)(gasPrice),
+		Nonce:    (*hexutil.Uint64)(&nonce),
 	}
-	//blockNrOrHash := rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(header.Number.Uint64() - 1))
 	gas, err := s.blockChainAPI.EstimateGas(ctx, args, nil)
+	if err != nil {
+		return nil , err
+	}
 	args.Gas = &gas
 
-	nonce := state.GetNonce(*args.From)
-
-	rawTx :=types.NewTransaction(nonce, *args.To, value, uint64(*args.Gas), args.GasPrice.ToInt(), msgData)
+	rawTx := args.ToTransaction()
 	tx, err := s.signTxFn(accounts.Account{Address: smnAddr}, rawTx, s.chainConfig.ChainID)
-
 	if err != nil {
 		return nil, err
 	}
+
 	state.Prepare(tx.Hash(), len(*txs))
-	gasUsed, err := applyMessage(args, header, cx, state, s.chainConfig)
+	snap := state.Snapshot()
+	gasPool := new(core.GasPool).AddGas(header.GasLimit)
+	receipt, err := core.ApplyTransaction(s.chainConfig, s.chain, &header.Coinbase, gasPool, state, header, tx, &header.GasUsed, *s.chain.GetVMConfig())
 	if err != nil {
+		state.RevertToSnapshot(snap)
 		return nil, err
 	}
+
 	*txs = append(*txs, tx)
-	root := state.IntermediateRoot(s.chainConfig.IsEIP158(header.Number)).Bytes()
-	*usedGas += gasUsed
-	receipt := types.NewReceipt(root, false, *usedGas)
-	receipt.TxHash = tx.Hash()
-	receipt.GasUsed = gasUsed
-
-	// Set the receipt logs and create a bloom for filtering
-	receipt.Logs = state.GetLogs(tx.Hash(), header.Hash())
-	receipt.Bloom = types.CreateBloom(types.Receipts{receipt})
-	receipt.BlockHash = header.Hash()
-	receipt.BlockNumber = header.Number
-	receipt.TransactionIndex = uint(state.TxIndex())
 	*receipts = append(*receipts, receipt)
-	state.SetNonce(*args.From, nonce+1)
 
-//	TxPool.AddLocal(tx)
 	SetReceipts(*receipts)
 	SetTxs(*txs)
-
 	return tx, err
-}
-
-// chain context
-type chainContext struct {
-	Chain  consensus.ChainHeaderReader
-	Spos consensus.Engine
-}
-
-func (c chainContext) Engine() consensus.Engine {
-	return c.Spos
-}
-
-func (c chainContext) GetHeader(hash common.Hash, number uint64) *types.Header {
-	return c.Chain.GetHeader(hash, number)
-}
-
-func applyMessage(
-	args ethapi.TransactionArgs,
-	header *types.Header,
-	cx core.ChainContext,
-	state *state.StateDB,
-	chainConfig *params.ChainConfig,
-) (uint64, error) {
-	// Create a new context to be used in the EVM environment
-	context := core.NewEVMBlockContext(header, cx, nil)
-	// Create a new environment which holds all relevant information
-	// about the transaction and calling mechanisms.
-	vmenv := vm.NewEVM(context, vm.TxContext{Origin: *args.From, GasPrice: big.NewInt(0)}, state, chainConfig, vm.Config{})
-	// Apply the transaction to the current state (included in the env)
-	ret, returnGas, err := vmenv.Call(vm.AccountRef(*args.From), *args.To, *args.Data, uint64(*args.Gas), args.Value.ToInt())
-	if err != nil {
-		log.Error("apply message failed", "msg", string(ret), "err", err)
-		return 0, err
-	}
-	return uint64(*args.Gas) - returnGas, err
 }

@@ -336,7 +336,7 @@ var (
 			common.HexToAddress("0xD83076fB57D1fdae23293Cad74999A75D06B7A3A"),
 			common.HexToAddress("0x8b96C90B86CFDBdc971bb54C263a6d021e7f4894"),
 		},
-		StartCommonSuperHeight: 100,
+		StartCommonSuperHeight: 50,
 	}
 
 	// AllEthashProtocolChanges contains every protocol change (EIPs) introduced

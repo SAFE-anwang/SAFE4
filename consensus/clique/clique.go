@@ -749,3 +749,7 @@ func encodeSigHeader(w io.Writer, header *types.Header) {
 		panic("can't encode: " + err.Error())
 	}
 }
+
+func (c *Clique) CheckRewardTransaction(block *types.Block) error{
+	return nil
+}

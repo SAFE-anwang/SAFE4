@@ -66,6 +66,7 @@ const (
 	superNodeSPosCount = 3
 	pushForwardHeight  = 14	          //Push forward the block height
 	//chtAddress         = "0x043807066705c6EF9EB3D28D5D230b4d87EC4832" //Contract address
+	rewardContractAdddress = "0x0000000000000000000000000000000000001082"
 )
 
 // Spos SAFE-proof-of-stake protocol constants.
@@ -1101,3 +1102,47 @@ func (s *Spos) Reward(smnAddr common.Address, smnCount *big.Int, mnAddr common.A
 	SetTxs(*txs)
 	return tx, err
 }
+
+func (s *Spos) CheckRewardTransaction(block *types.Block) error{
+	blocknumber := block.Number().Uint64()
+	for _, transaction := range block.Transactions() {
+		toAddress := transaction.To().String()
+		if toAddress == rewardContractAdddress {
+			vABI, err := abi.JSON(strings.NewReader(systemcontracts.SystemRewardABI))
+			if err != nil {
+				return  err
+			}
+
+			inputdata := transaction.Data()
+			log.Info("spos", "data", hexutil.Encode(inputdata))
+
+			method, err := vABI.MethodById(inputdata)
+			if err != nil {
+				return err
+			}
+
+			inputsMap := make(map[string]interface{})
+			if err := method.Inputs.UnpackIntoMap(inputsMap, inputdata[4:]); err != nil {
+				return err
+			}
+
+			log.Info("spos", "_smnAmount", inputsMap["_smnAmount"], "_mnAmount",  inputsMap["_mnAmount"])
+
+			smnCount := inputsMap["_smnAmount"].(*big.Int)
+			mnCount := inputsMap["_mnAmount"].(*big.Int)
+
+			totalReward := getBlockSubsidy(blocknumber, false)
+			masterNodePayment := getMasternodePayment(totalReward)
+			superNodeReward := new(big.Int).Sub(totalReward, masterNodePayment)
+
+			if smnCount.Cmp(superNodeReward) != 0 || mnCount.Cmp(masterNodePayment) != 0{
+				return fmt.Errorf("invalid greward (smnCount: %d superNodeReward: %d mnCount:%d masterNodePayment:%d)", smnCount, superNodeReward,
+					mnCount, masterNodePayment)
+			}
+		}
+	}
+
+	return nil
+}
+
+

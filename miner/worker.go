@@ -1171,25 +1171,6 @@ func (w *worker) commitWork(interrupt *int32, noempty bool, timestamp int64) {
 	w.current = work
 }
 
-/*
-func (w *worker) prepareCommit(env *environment,start time.Time) error {
-	if w.isRunning() {
-		// Create a local environment copy, avoid the data race with snapshot state.
-		// https://github.com/ethereum/go-ethereum/issues/24299
-		env := env.copy()
-		if _, ok := w.engine.(*spos.Spos); !ok {
-			return nil
-		}
-		spos.SetTxPool(w.eth.TxPool())
-		err := w.engine.DistributeIncoming(w.chain, env.header, env.state, env.txs, env.unclelist(), env.receipts)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-*/
-
 // commit runs any post-transaction state modifications, assembles the final block
 // and commits new work if consensus engine is running.
 // Note the assumption is held that the mutation is allowed to the passed env, do

@@ -254,7 +254,7 @@ var (
 
 		Spos: &SposConfig{
 			Period: 30,
-			Epoch:  200000,
+			Epoch:  200,
 		},
 	}
 

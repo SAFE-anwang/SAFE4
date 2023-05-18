@@ -1114,8 +1114,6 @@ func (s *Spos) CheckRewardTransaction(block *types.Block) error{
 			}
 
 			inputdata := transaction.Data()
-			log.Info("spos", "data", hexutil.Encode(inputdata))
-
 			method, err := vABI.MethodById(inputdata)
 			if err != nil {
 				return err
@@ -1125,8 +1123,6 @@ func (s *Spos) CheckRewardTransaction(block *types.Block) error{
 			if err := method.Inputs.UnpackIntoMap(inputsMap, inputdata[4:]); err != nil {
 				return err
 			}
-
-			log.Info("spos", "_smnAmount", inputsMap["_smnAmount"], "_mnAmount",  inputsMap["_mnAmount"])
 
 			smnCount := inputsMap["_smnAmount"].(*big.Int)
 			mnCount := inputsMap["_mnAmount"].(*big.Int)
@@ -1144,5 +1140,3 @@ func (s *Spos) CheckRewardTransaction(block *types.Block) error{
 
 	return nil
 }
-
-

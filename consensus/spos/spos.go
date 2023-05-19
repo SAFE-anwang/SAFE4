@@ -938,7 +938,7 @@ func accumulateRewards(state *state.StateDB, header *types.Header) {
 
 func sortKey (mp map[string]common.Address) map[string]common.Address{
 	var newMap = make([]string, 0)
-	for k,_ := range mp {
+	for k := range mp {
 		newMap = append(newMap, k)
 	}
 

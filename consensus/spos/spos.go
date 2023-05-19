@@ -480,7 +480,7 @@ func (s *Spos) snapshot(chain consensus.ChainHeaderReader, number uint64, hash c
 					}
 
 					resultSuperNode := make([]common.Address, 0)
-					resultSuperNode = sortSupernode(tempSignermap, checkpoint, tempStartNewLoopTime)
+					resultSuperNode = sortSupernode(tempSignermap, tempStartNewLoopTime)
 					signers = make([]common.Address, 0)
 
 					icountsupernode := len(resultSuperNode)
@@ -542,7 +542,7 @@ func (s *Spos) snapshot(chain consensus.ChainHeaderReader, number uint64, hash c
 				}
 
 				resultSuperNode := make([]common.Address, 0)
-				resultSuperNode = sortSupernode(signersmap, checkpoint, startNewLoopTime)
+				resultSuperNode = sortSupernode(signersmap, startNewLoopTime)
 
 				signers = make([]common.Address, 0)
 
@@ -952,7 +952,7 @@ func sortKey (mp map[string]common.Address) map[string]common.Address{
 	return newScoreMasternode
 }
 
-func sortSupernode(Signers map[common.Address]struct{}, header *types.Header, scoreTime uint64) []common.Address {
+func sortSupernode(Signers map[common.Address]struct{}, scoreTime uint64) []common.Address {
 	scoreSupernode := make(map[string]common.Address,len(Signers))
 	afterscoreSupernode := make(map[string]common.Address,len(Signers))
 
@@ -978,7 +978,7 @@ func sortSupernode(Signers map[common.Address]struct{}, header *types.Header, sc
 	for _,address := range afterscoreSupernode {
 		resultSuperMasterNode = append(resultSuperMasterNode, address)
 	}
-	now_hi := uint64(header.Time) << 32
+	now_hi := scoreTime << 32
 	for i := 0; i < len(resultSuperMasterNode); i++ {
 		k := now_hi + uint64(i) * 2685821657736338717
 		k ^= (k >> 12)

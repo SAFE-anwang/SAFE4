@@ -2,26 +2,23 @@ package eth
 
 import (
 	"context"
-	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/core/systemcontracts"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/internal/ethapi"
 	"github.com/ethereum/go-ethereum/log"
-	"github.com/ethereum/go-ethereum/rpc"
 	"math/big"
-	"strings"
 )
 
 type PublicSuperMasterNodeAPI struct {
 	e *Ethereum
 	blockChainAPI *ethapi.PublicBlockChainAPI
+	transactionPoolAPI *ethapi.PublicTransactionPoolAPI
 }
 
-func NewPublicSuperMasterNodeAPI(e *Ethereum) *PublicSuperMasterNodeAPI {
-	return &PublicSuperMasterNodeAPI{e, ethapi.NewPublicBlockChainAPI(e.APIBackend)}
+func NewPublicSuperMasterNodeAPI(e *Ethereum, blockChainAPI *ethapi.PublicBlockChainAPI, transactionPoolAPI *ethapi.PublicTransactionPoolAPI) *PublicSuperMasterNodeAPI {
+	return &PublicSuperMasterNodeAPI{e, blockChainAPI, transactionPoolAPI}
 }
 
 func (api *PublicSuperMasterNodeAPI) Start(ctx context.Context, addr common.Address) (bool, error) {
@@ -47,88 +44,25 @@ func (api *PublicSuperMasterNodeAPI) Restart(ctx context.Context, addr common.Ad
 }
 
 func (api *PublicSuperMasterNodeAPI) GetInfo(ctx context.Context, addr common.Address) (*types.SuperMasterNodeInfo, error) {
-	vABI, err := abi.JSON(strings.NewReader(systemcontracts.SuperMasterNodeABI))
-	if err != nil {
-		return nil, err
-	}
+	return systemcontracts.GetSuperMasterNodeInfo(ctx, api.blockChainAPI, addr)
+}
 
-	method := "getInfo"
-	data, err := vABI.Pack(method, addr)
-	if err != nil {
-		return nil, err
-	}
-
-	msgData := (hexutil.Bytes)(data)
-	args := ethapi.TransactionArgs{
-		To: &systemcontracts.SuperMasterNodeContractAddr,
-		Data: &msgData,
-	}
-	result, err := api.blockChainAPI.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
-	if err != nil {
-		return nil, err
-	}
-
-	info := new(types.SuperMasterNodeInfo)
-	if err := vABI.UnpackIntoInterface(&info, method, result); err != nil {
-		return nil, err
-	}
-	return info, nil
+func (api *PublicSuperMasterNodeAPI) GetAll(ctx context.Context) ([]types.SuperMasterNodeInfo, error) {
+	return systemcontracts.GetAllSuperMasterNode(ctx, api.blockChainAPI)
 }
 
 func (api *PublicSuperMasterNodeAPI) GetTop(ctx context.Context) ([]types.SuperMasterNodeInfo, error) {
-	vABI, err := abi.JSON(strings.NewReader(systemcontracts.SuperMasterNodeABI))
-	if err != nil {
-		return nil, err
-	}
-
-	method := "getTop"
-	data, err := vABI.Pack(method)
-	if err != nil {
-		return nil, err
-	}
-
-	msgData := (hexutil.Bytes)(data)
-	args := ethapi.TransactionArgs{
-		To: &systemcontracts.SuperMasterNodeContractAddr,
-		Data: &msgData,
-	}
-	result, err := api.blockChainAPI.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
-	if err != nil {
-		return nil, err
-	}
-
-	info := new([]types.SuperMasterNodeInfo)
-	if err := vABI.UnpackIntoInterface(&info, method, result); err != nil {
-		return nil, err
-	}
-	return *info, nil
+	return systemcontracts.GetTopSuperMasterNode(ctx, api.blockChainAPI)
 }
 
 func (api *PublicSuperMasterNodeAPI) GetNum(ctx context.Context) (*big.Int, error) {
-	vABI, err := abi.JSON(strings.NewReader(systemcontracts.SuperMasterNodeABI))
-	if err != nil {
-		return nil, err
-	}
+	return systemcontracts.GetSuperMasterNodeNum(ctx, api.blockChainAPI)
+}
 
-	method := "getNum"
-	data, err := vABI.Pack(method)
-	if err != nil {
-		return nil, err
-	}
+func (api *PublicSuperMasterNodeAPI) RegisterSuperMasterNode(ctx context.Context, from common.Address, amount *big.Int, isUnion bool, smnAddr common.Address, lockDay *big.Int, name string, enode string, pubkey string, description string, creatorIncentive *big.Int, partnerIncentive *big.Int, voterIncentive *big.Int) (common.Hash, error) {
+	return systemcontracts.RegisterSuperMasterNode(ctx, api.blockChainAPI, api.transactionPoolAPI, from, amount, isUnion, smnAddr, lockDay, name, enode, pubkey, description, creatorIncentive, partnerIncentive, voterIncentive)
+}
 
-	msgData := (hexutil.Bytes)(data)
-	args := ethapi.TransactionArgs{
-		To: &systemcontracts.SuperMasterNodeContractAddr,
-		Data: &msgData,
-	}
-	result, err := api.blockChainAPI.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
-	if err != nil {
-		return nil, err
-	}
-
-	count := new(big.Int)
-	if err := vABI.UnpackIntoInterface(&count, method, result); err != nil {
-		return nil, err
-	}
-	return count, nil
+func (api *PublicSuperMasterNodeAPI) AppendRegisterSuperMasterNode(ctx context.Context, from common.Address, amount *big.Int, smnAddr common.Address, lockDay *big.Int) (common.Hash, error) {
+	return systemcontracts.AppendRegisterSuperMasterNode(ctx, api.blockChainAPI, api.transactionPoolAPI, from, amount, smnAddr, lockDay)
 }

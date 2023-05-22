@@ -13753,12 +13753,35 @@ module.exports = XMLHttpRequest;
       params: 0
     });
 
+    var getAll = new Method({
+      name: 'getAll',
+      call: 'masternode_getAll',
+      params: 0
+    });
+
+    var register = new Method({
+      name: 'register',
+      call: 'masternode_register',
+      params: 10,
+      inputFormatter: [formatters.inputAddressFormatter, formatters.formatInputInt, formatters.formatInputBool, formatters.inputAddressFormatter, formatters.formatInputInt, formatters.formatInputString, formatters.formatInputString, formatters.formatInputString, formatters.formatInputInt, formatters.formatInputInt]
+    });
+
+    var appendRegister = new Method({
+      name: 'appendRegister',
+      call: 'masternode_appendRegister',
+      params: 4,
+      inputFormatter: [formatters.inputAddressFormatter, formatters.formatInputInt, formatters.inputAddressFormatter, formatters.formatInputInt]
+    });
+
     return [
       start,
       stop,
       restart,
       getInfo,
-      getNext
+      getNext,
+      getAll,
+      register,
+      appendRegister
     ];
   };
 
@@ -13818,6 +13841,12 @@ module.exports = XMLHttpRequest;
       inputFormatter: [formatters.inputAddressFormatter]
     });
 
+    var getAll = new Method({
+      name: 'getAll',
+      call: 'supermasternode_getAll',
+      params: 0
+    });
+
     var getTop = new Method({
       name: 'getTop',
       call: 'supermasternode_getTop',
@@ -13830,13 +13859,30 @@ module.exports = XMLHttpRequest;
       params: 0
     });
 
+    var register = new Method({
+      name: 'register',
+      call: 'supermasternode_register',
+      params: 12,
+      inputFormatter: [formatters.inputAddressFormatter, formatters.formatInputInt, formatters.formatInputBool, formatters.inputAddressFormatter, formatters.formatInputInt, formatters.formatInputString, formatters.formatInputString, formatters.formatInputString, formatters.formatInputString, formatters.formatInputInt, formatters.formatInputInt, formatters.formatInputInt]
+    });
+
+    var appendRegister = new Method({
+      name: 'appendRegister',
+      call: 'supermasternode_appendRegister',
+      params: 4,
+      inputFormatter: [formatters.inputAddressFormatter, formatters.formatInputInt, formatters.inputAddressFormatter, formatters.formatInputInt]
+    });
+
     return [
       start,
       stop,
       restart,
       getInfo,
+      getAll,
       getTop,
-      getNum
+      getNum,
+      register,
+      appendRegister,
     ];
   };
 

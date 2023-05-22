@@ -298,13 +298,14 @@ func (c *Console) initMasterNode(vm *goja.Runtime, bridge *bridge) {
 	getJeth(vm).Set("stopMasterNode", masternode.Get("stop"))
 	getJeth(vm).Set("restartMasterNode", masternode.Get("restart"))
 	getJeth(vm).Set("getMasterNodeInfo", masternode.Get("getInfo"))
-	getJeth(vm).Set("getMasterNodeNext", masternode.Get("getNext"))
+	getJeth(vm).Set("getNextMasterNode", masternode.Get("getNext"))
 
 	masternode.Set("start", jsre.MakeCallback(vm, bridge.StartMasterNode))
 	masternode.Set("stop", jsre.MakeCallback(vm, bridge.StopMasterNode))
 	masternode.Set("restart", jsre.MakeCallback(vm, bridge.RestartMasterNode))
 	masternode.Set("getInfo", jsre.MakeCallback(vm, bridge.GetMasterNodeInfo))
-	masternode.Set("getNext", jsre.MakeCallback(vm, bridge.GetMasterNodeNext))
+	masternode.Set("getNext", jsre.MakeCallback(vm, bridge.GetNextMasterNode))
+	masternode.Set("getAll", jsre.MakeCallback(vm, bridge.GetAllMasterNode))
 }
 
 func (c *Console) initSuperMasterNode(vm *goja.Runtime, bridge *bridge) {
@@ -317,14 +318,16 @@ func (c *Console) initSuperMasterNode(vm *goja.Runtime, bridge *bridge) {
 	getJeth(vm).Set("stopSuperMasterNode", supermasternode.Get("stop"))
 	getJeth(vm).Set("restartSuperMasterNode", supermasternode.Get("restart"))
 	getJeth(vm).Set("getSuperMasterNodeInfo", supermasternode.Get("getInfo"))
-	getJeth(vm).Set("getSuperMasterNodeTop", supermasternode.Get("getTop"))
+	getJeth(vm).Set("getAllSuperMasterNode", supermasternode.Get("getAll"))
+	getJeth(vm).Set("getTopSuperMasterNode", supermasternode.Get("getTop"))
 	getJeth(vm).Set("getSuperMasterNodeNum", supermasternode.Get("getNum"))
 
 	supermasternode.Set("start", jsre.MakeCallback(vm, bridge.StartSuperMasterNode))
 	supermasternode.Set("stop", jsre.MakeCallback(vm, bridge.StopSuperMasterNode))
 	supermasternode.Set("restart", jsre.MakeCallback(vm, bridge.RestartSuperMasterNode))
 	supermasternode.Set("getInfo", jsre.MakeCallback(vm, bridge.GetSuperMasterNodeInfo))
-	supermasternode.Set("getTop", jsre.MakeCallback(vm, bridge.GetSuperMasterNodeTop))
+	supermasternode.Set("getAll", jsre.MakeCallback(vm, bridge.GetAllSuperMasterNode))
+	supermasternode.Set("getTop", jsre.MakeCallback(vm, bridge.GetTopSuperMasterNode))
 	supermasternode.Set("getNum", jsre.MakeCallback(vm, bridge.GetSuperMasterNodeNum))
 }
 

@@ -242,6 +242,9 @@ func ecrecover(header *types.Header, sigcache *lru.ARCCache) (common.Address, er
 // Spos is the SAFE-proof-of-stake consensus engine proposed to support the
 // Ethereum testnet following the Ropsten attacks.
 type Spos struct {
+	ctx context.Context
+	cancel func()
+
 	chainConfig *params.ChainConfig
 	config *params.SposConfig   // Consensus engine configuration parameters
 	db     ethdb.Database       // Database to store and retrieve snapshot checkpoints
@@ -267,7 +270,9 @@ type Spos struct {
 
 // New creates a Spos SAFE-proof-of-stack consensus engine with the initial
 // signers set to the ones provided by the user.
-func New(chainConfig *params.ChainConfig, db ethdb.Database, blockChainAPI *ethapi.PublicBlockChainAPI) *Spos {
+func New(chainConfig *params.ChainConfig, db ethdb.Database) *Spos {
+	ctx, cancel := context.WithCancel(context.Background())
+
 	// Set any missing consensus parameters to their defaults
 	sposConfig := chainConfig.Spos
 	if sposConfig != nil && sposConfig.Epoch == 0 {
@@ -278,18 +283,23 @@ func New(chainConfig *params.ChainConfig, db ethdb.Database, blockChainAPI *etha
 	signatures, _ := lru.NewARC(inmemorySignatures)
 
 	return &Spos{
+		ctx:        ctx,
+		cancel:     cancel,
 		chainConfig: chainConfig,
 		config:     sposConfig,
 		db:         db,
 		recents:    recents,
 		signatures: signatures,
 		proposals:  make(map[common.Address]bool),
-		blockChainAPI: blockChainAPI,
 	}
 }
 
 func (s *Spos) SetChain(chain *core.BlockChain) {
 	s.chain = chain
+}
+
+func (s *Spos) SetExtraAPIs(blockChainAPI *ethapi.PublicBlockChainAPI) {
+	s.blockChainAPI = blockChainAPI
 }
 
 // Author implements consensus.Engine, returning the Ethereum address recovered
@@ -528,7 +538,7 @@ func (s *Spos) snapshot(chain consensus.ChainHeaderReader, number uint64, hash c
 						signersmap[signer] = struct{}{}
 					}
 				}else { //TODO Call the contract to get the super node list
-					superMasterNodeInfos, err := systemcontracts.GetTopSuperMasterNode(s.blockChainAPI)
+					superMasterNodeInfos, err := systemcontracts.GetTopSuperMasterNode(s.ctx, s.blockChainAPI)
 					if err != nil {
 						log.Error("Failed to GetTopSMN", "error", err)
 						return nil, err
@@ -867,6 +877,7 @@ func (s *Spos) SealHash(header *types.Header) common.Hash {
 
 // Close implements consensus.Engine. It's a noop for spos as there are no background threads.
 func (s *Spos) Close() error {
+	s.cancel()
 	return nil
 }
 
@@ -1028,7 +1039,7 @@ func (s *Spos) distributeReward(header *types.Header, state *state.StateDB, txs 
 	totalReward := getBlockSubsidy(number, false)
 	masterNodePayment := getMasternodePayment(totalReward)
 	superNodeReward := new(big.Int).Sub(totalReward, masterNodePayment)
-	mnAddr, err := systemcontracts.GetNextMasterNode(s.blockChainAPI)
+	mnAddr, err := systemcontracts.GetNextMasterNode(s.ctx, s.blockChainAPI)
 	if err != nil {
 		return nil, err
 	}
@@ -1054,7 +1065,7 @@ func (s *Spos) Reward(smnAddr common.Address, smnCount *big.Int, mnAddr common.A
 	value.Add(smnCount, mnCount)
 	msgData := (hexutil.Bytes)(data)
 	gasPrice := big.NewInt(params.GWei)
-	gasPrice, err = systemcontracts.GetPropertyValue(s.blockChainAPI, "gas_price")
+	gasPrice, err = systemcontracts.GetPropertyValue(s.ctx, s.blockChainAPI, "gas_price")
 	if err != nil {
 		gasPrice = big.NewInt(params.GWei / 100)
 	}

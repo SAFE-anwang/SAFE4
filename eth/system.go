@@ -17,8 +17,8 @@ type PublicSystemAPI struct {
 	blockChainAPI *ethapi.PublicBlockChainAPI
 }
 
-func NewPublicSystemAPI(e *Ethereum) *PublicSystemAPI {
-	return &PublicSystemAPI{e, ethapi.NewPublicBlockChainAPI(e.APIBackend)}
+func NewPublicSystemAPI(e *Ethereum, blockChainAPI *ethapi.PublicBlockChainAPI) *PublicSystemAPI {
+	return &PublicSystemAPI{e, blockChainAPI}
 }
 
 func (api *PublicSystemAPI) GetProperty(ctx context.Context, name string) (*types.PropertyInfo, error) {
@@ -78,35 +78,3 @@ func (api *PublicSystemAPI) GetPropertyValue(ctx context.Context, name string) (
 	}
 	return value, nil
 }
-/*
-func (api *PublicSystemAPI) Reward(ctx context.Context, smnAddr common.Address, smnCount *big.Int, mnAddr common.Address, mnCount *big.Int) (common.Hash, error) {
-	vABI, err := abi.JSON(strings.NewReader(systemcontracts.SystemRewardABI))
-	if err != nil {
-		return common.Hash{}, err
-	}
-
-	method := "reward"
-	data, err := vABI.Pack(method, smnAddr, smnCount, mnAddr, mnCount)
-	if err != nil {
-		return common.Hash{}, err
-	}
-
-	value := new(big.Int)
-	value.Add(smnCount, mnCount)
-	msgData := (hexutil.Bytes)(data)
-	args := ethapi.TransactionArgs{
-		From: &smnAddr,
-		To: &systemcontracts.SystemRewardContractAddr,
-		Data: &msgData,
-	}
-	blockNrOrHash := rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber)
-	gas, err := api.blockChainAPI.EstimateGas(ctx, args, &blockNrOrHash)
-	args.Gas = &gas
-
-	hash, err := ethapi.NewPrivateAccountAPI(api.e.APIBackend, new(ethapi.AddrLocker)).SendTransaction(ctx, args, "123")
-	if err != nil {
-		return common.Hash{}, err
-	}
-	return hash, err
-}
-*/

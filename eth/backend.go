@@ -174,7 +174,7 @@ func New(stack *node.Node, config *ethconfig.Config) (*Ethereum, error) {
 	}
 
 	eth.APIBackend = &EthAPIBackend{stack.Config().ExtRPCEnabled(), stack.Config().AllowUnprotectedTxs, eth, nil}
-	eth.engine = ethconfig.CreateConsensusEngine(stack, chainConfig, &ethashConfig, config.Miner.Notify, config.Miner.Noverify, chainDb, ethapi.NewPublicBlockChainAPI(eth.APIBackend))
+	eth.engine = ethconfig.CreateConsensusEngine(stack, chainConfig, &ethashConfig, config.Miner.Notify, config.Miner.Noverify, chainDb)
 
 	bcVersion := rawdb.ReadDatabaseVersion(chainDb)
 	var dbVer = "<nil>"
@@ -259,8 +259,10 @@ func New(stack *node.Node, config *ethconfig.Config) (*Ethereum, error) {
 	}
 	eth.APIBackend.gpo = gasprice.NewOracle(eth.APIBackend, gpoParams)
 
+	apis := eth.APIs()
 	if s, ok := eth.engine.(*spos2.Spos); ok {
 		s.SetChain(eth.blockchain)
+		s.SetExtraAPIs(GetPublicBlockChainAPI(apis))
 	}
 	eth.engine.VerifyHeader(eth.blockchain, eth.blockchain.CurrentHeader(), true)
 
@@ -315,7 +317,7 @@ func (s *Ethereum) APIs() []rpc.API {
 	apis = append(apis, s.engine.APIs(s.BlockChain())...)
 
 	// Append all the local APIs and return
-	return append(apis, []rpc.API{
+	apis = append(apis, []rpc.API{
 		{
 			Namespace: "eth",
 			Version:   "1.0",
@@ -359,25 +361,31 @@ func (s *Ethereum) APIs() []rpc.API {
 			Version:   "1.0",
 			Service:   s.netRPCService,
 			Public:    true,
-		}, {
+		},
+	}...)
+
+	blockChainAPI := GetPublicBlockChainAPI(apis)
+	transactionPoolAPI := GetPublicTransactionPoolAPI(apis)
+	return append(apis, []rpc.API{
+		{
 			Namespace: "system",
 			Version:   "1.0",
-			Service:   NewPublicSystemAPI(s),
+			Service:   NewPublicSystemAPI(s, blockChainAPI),
 			Public:    true,
 		},{
 			Namespace: "masternode",
 			Version:   "1.0",
-			Service:   NewPublicMasterNodeAPI(s),
+			Service:   NewPublicMasterNodeAPI(s, blockChainAPI, transactionPoolAPI),
 			Public:    true,
 		}, {
 			Namespace: "supermasternode",
 			Version:   "1.0",
-			Service:   NewPublicSuperMasterNodeAPI(s),
+			Service:   NewPublicSuperMasterNodeAPI(s, blockChainAPI, transactionPoolAPI),
 			Public:    true,
 		}, {
 			Namespace: "proposal",
 			Version:   "1.0",
-			Service:   NewPublicProposalAPI(s),
+			Service:   NewPublicProposalAPI(s, blockChainAPI, transactionPoolAPI),
 			Public:    true,
 		},
 	}...)
@@ -664,5 +672,24 @@ func (s *Ethereum) Stop() error {
 	s.chainDb.Close()
 	s.eventMux.Stop()
 
+	return nil
+}
+
+
+func GetPublicBlockChainAPI(apis []rpc.API) *ethapi.PublicBlockChainAPI {
+	for i := 0; i < len(apis); i++ {
+		if api, ok := apis[i].Service.(*ethapi.PublicBlockChainAPI); ok {
+			return api
+		}
+	}
+	return nil
+}
+
+func GetPublicTransactionPoolAPI(apis []rpc.API) *ethapi.PublicTransactionPoolAPI {
+	for i := 0; i < len(apis); i++ {
+		if api, ok := apis[i].Service.(*ethapi.PublicTransactionPoolAPI); ok {
+			return api
+		}
+	}
 	return nil
 }

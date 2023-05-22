@@ -11,10 +11,7 @@ import (
 	"strings"
 )
 
-func GetPropertyValue(api *ethapi.PublicBlockChainAPI, key string) (*big.Int, error) {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
+func GetPropertyValue(ctx context.Context, api *ethapi.PublicBlockChainAPI, key string) (*big.Int, error) {
 	if api == nil {
 		return nil, errors.New("invalid blockchain api")
 	}

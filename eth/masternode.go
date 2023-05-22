@@ -2,25 +2,23 @@ package eth
 
 import (
 	"context"
-	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/core/systemcontracts"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/internal/ethapi"
 	"github.com/ethereum/go-ethereum/log"
-	"github.com/ethereum/go-ethereum/rpc"
-	"strings"
+	"math/big"
 )
 
 type PublicMasterNodeAPI struct {
 	e *Ethereum
 	blockChainAPI *ethapi.PublicBlockChainAPI
+	transactionPoolAPI *ethapi.PublicTransactionPoolAPI
 }
 
-func NewPublicMasterNodeAPI(e *Ethereum) *PublicMasterNodeAPI {
-	return &PublicMasterNodeAPI{e, ethapi.NewPublicBlockChainAPI(e.APIBackend)}
+func NewPublicMasterNodeAPI(e *Ethereum, blockChainAPI *ethapi.PublicBlockChainAPI, transactionPoolAPI *ethapi.PublicTransactionPoolAPI) *PublicMasterNodeAPI {
+	return &PublicMasterNodeAPI{e, blockChainAPI, transactionPoolAPI}
 }
 
 func (api *PublicMasterNodeAPI) Start(ctx context.Context, addr common.Address) (bool, error) {
@@ -32,7 +30,7 @@ func (api *PublicMasterNodeAPI) Start(ctx context.Context, addr common.Address) 
 	return true, nil
 }
 
-func (api *PublicMasterNodeAPI) Stop(ctx context.Context,addr common.Address) (bool, error) {
+func (api *PublicMasterNodeAPI) Stop(ctx context.Context, addr common.Address) (bool, error) {
 	log.Info("Stop masternode", "address", addr)
 	return true, nil
 }
@@ -43,59 +41,21 @@ func (api *PublicMasterNodeAPI) Restart(ctx context.Context, addr common.Address
 }
 
 func (api *PublicMasterNodeAPI) GetInfo(ctx context.Context, addr common.Address) (*types.MasterNodeInfo, error) {
-	vABI, err := abi.JSON(strings.NewReader(systemcontracts.MasterNodeABI))
-	if err != nil {
-		return nil, err
-	}
-
-	method := "getInfo"
-	data, err := vABI.Pack(method, addr)
-	if err != nil {
-		return nil, err
-	}
-
-	msgData := (hexutil.Bytes)(data)
-	args := ethapi.TransactionArgs{
-		To: &systemcontracts.MasterNodeContractAddr,
-		Data: &msgData,
-	}
-	result, err := api.blockChainAPI.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
-	if err != nil {
-		return nil, err
-	}
-
-	info := new(types.MasterNodeInfo)
-	if err := vABI.UnpackIntoInterface(&info, method, result); err != nil {
-		return nil, err
-	}
-	return info, nil
+	return systemcontracts.GetMasterNodeInfo(ctx, api.blockChainAPI, addr)
 }
 
 func (api *PublicMasterNodeAPI) GetNext(ctx context.Context) (*common.Address, error) {
-	vABI, err := abi.JSON(strings.NewReader(systemcontracts.MasterNodeABI))
-	if err != nil {
-		return nil, err
-	}
+	return systemcontracts.GetNextMasterNode(ctx, api.blockChainAPI)
+}
 
-	method := "getNext"
-	data, err := vABI.Pack(method)
-	if err != nil {
-		return nil, err
-	}
+func (api *PublicMasterNodeAPI) GetAll(ctx context.Context) ([]types.MasterNodeInfo, error) {
+	return systemcontracts.GetAllMasterNode(ctx, api.blockChainAPI)
+}
 
-	msgData := (hexutil.Bytes)(data)
-	args := ethapi.TransactionArgs{
-		To: &systemcontracts.MasterNodeContractAddr,
-		Data: &msgData,
-	}
-	result, err := api.blockChainAPI.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
-	if err != nil {
-		return nil, err
-	}
+func (api *PublicMasterNodeAPI) Register(ctx context.Context, from common.Address, amount *big.Int, isUnion bool, mnAddr common.Address, lockDay *big.Int, enode string, pubkey string, description string, creatorIncentive *big.Int, partnerIncentive *big.Int) (common.Hash, error) {
+	return systemcontracts.RegisterMasterNode(ctx, api.blockChainAPI, api.transactionPoolAPI, from, amount, isUnion, mnAddr, lockDay, enode, pubkey, description, creatorIncentive, partnerIncentive)
+}
 
-	info := new(common.Address)
-	if err := vABI.UnpackIntoInterface(&info, method, result); err != nil {
-		return nil, err
-	}
-	return info, nil
+func (api *PublicMasterNodeAPI) AppendRegister(ctx context.Context, from common.Address, amount *big.Int, mnAddr common.Address, lockDay *big.Int) (common.Hash, error) {
+	return systemcontracts.AppendRegisterMasterNode(ctx, api.blockChainAPI, api.transactionPoolAPI, from, amount, mnAddr, lockDay)
 }

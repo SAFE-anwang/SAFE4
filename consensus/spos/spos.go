@@ -936,17 +936,17 @@ func accumulateRewards(state *state.StateDB, header *types.Header) {
 	state.AddBalance(header.Coinbase, totalReward)
 }
 
-func sortKey (mp map[string]common.Address) map[string]common.Address{
-	var newMap = make([]string, 0)
-	for k := range mp {
-		newMap = append(newMap, k)
+func sortKey (mp map[string]common.Address)[]common.Address{
+	var keys []string
+	for k, _ := range mp {
+		keys = append(keys, k)
 	}
 
-	sort.Strings(newMap)
+	sort.Strings(keys)
 
-	newScoreMasternode := make(map[string]common.Address,len(mp))
-	for _, v:= range newMap {
-		newScoreMasternode[v] = mp[v]
+	var newScoreMasternode []common.Address
+	for _, v:= range keys {
+		newScoreMasternode= append(newScoreMasternode, mp[v])
 	}
 
 	return newScoreMasternode
@@ -954,7 +954,6 @@ func sortKey (mp map[string]common.Address) map[string]common.Address{
 
 func sortSupernode(Signers map[common.Address]struct{}, scoreTime uint64) []common.Address {
 	scoreSupernode := make(map[string]common.Address,len(Signers))
-	afterscoreSupernode := make(map[string]common.Address,len(Signers))
 
 	for signer,_ := range Signers {
 		hasher := sha3.NewLegacyKeccak256()
@@ -972,12 +971,8 @@ func sortSupernode(Signers map[common.Address]struct{}, scoreTime uint64) []comm
 		scoreSupernode[hash.String()] = signer
 	}
 
-	afterscoreSupernode = sortKey(scoreSupernode)
+	resultSuperMasterNode := sortKey(scoreSupernode)
 
-	resultSuperMasterNode := make([]common.Address, 0)
-	for _,address := range afterscoreSupernode {
-		resultSuperMasterNode = append(resultSuperMasterNode, address)
-	}
 	now_hi := scoreTime << 32
 	for i := 0; i < len(resultSuperMasterNode); i++ {
 		k := now_hi + uint64(i) * 2685821657736338717

@@ -538,15 +538,15 @@ func (s *Spos) snapshot(chain consensus.ChainHeaderReader, number uint64, hash c
 						signersmap[signer] = struct{}{}
 					}
 				}else { //TODO Call the contract to get the super node list
-					superMasterNodeInfos, err := systemcontracts.GetTopSuperMasterNode(s.ctx, s.blockChainAPI)
+					superNodeInfos, err := systemcontracts.GetTopSuperNode(s.ctx, s.blockChainAPI)
 					if err != nil {
-						log.Error("Failed to GetTopSMN", "error", err)
+						log.Error("Failed to GetTopSN", "error", err)
 						return nil, err
 					}
 
-					for i := range superMasterNodeInfos {
-						log.Info("Super MasterNode Addr Info", "superMasterNodeInfos[i].Addr", superMasterNodeInfos[i].Addr)
-						signersmap[superMasterNodeInfos[i].Addr] = struct{}{}
+					for i := range superNodeInfos {
+						log.Info("Super MasterNode Addr Info", "superNodeInfos[i].Addr", superNodeInfos[i].Addr)
+						signersmap[superNodeInfos[i].Addr] = struct{}{}
 					}
 				}
 
@@ -981,22 +981,22 @@ func sortSupernode(Signers map[common.Address]struct{}, scoreTime uint64) []comm
 		scoreSupernode[hash.String()] = signer
 	}
 
-	resultSuperMasterNode := sortKey(scoreSupernode)
+	resultSuperNode := sortKey(scoreSupernode)
 
 	now_hi := scoreTime << 32
-	for i := 0; i < len(resultSuperMasterNode); i++ {
+	for i := 0; i < len(resultSuperNode); i++ {
 		k := now_hi + uint64(i) * 2685821657736338717
 		k ^= (k >> 12)
 		k ^= (k << 25)
 		k ^= (k >> 27)
 		k *= 2685821657736338717
 
-		jmax := len(resultSuperMasterNode) - i
+		jmax := len(resultSuperNode) - i
 		j := uint64(i) + k % uint64(jmax)
-		resultSuperMasterNode[i], resultSuperMasterNode[j] = resultSuperMasterNode[j],resultSuperMasterNode[i]
+		resultSuperNode[i], resultSuperNode[j] = resultSuperNode[j],resultSuperNode[i]
 	}
 
-	return resultSuperMasterNode
+	return resultSuperNode
 }
 
 func getBlockSubsidy(nBlockNum uint64, fSuperblockPartOnly bool) *big.Int {
@@ -1046,7 +1046,7 @@ func (s *Spos) distributeReward(header *types.Header, state *state.StateDB, txs 
 	return s.Reward(header.Coinbase, superNodeReward, *mnAddr, masterNodePayment, header, state, txs, receipts)
 }
 
-func (s *Spos) Reward(smnAddr common.Address, smnCount *big.Int, mnAddr common.Address, mnCount *big.Int, header *types.Header, state *state.StateDB, txs *[]*types.Transaction, receipts *[]*types.Receipt) (*types.Transaction, error){
+func (s *Spos) Reward(snAddr common.Address, snCount *big.Int, mnAddr common.Address, mnCount *big.Int, header *types.Header, state *state.StateDB, txs *[]*types.Transaction, receipts *[]*types.Receipt) (*types.Transaction, error){
 	vABI, err := abi.JSON(strings.NewReader(systemcontracts.SystemRewardABI))
 	if err != nil {
 		return nil, err
@@ -1056,23 +1056,23 @@ func (s *Spos) Reward(smnAddr common.Address, smnCount *big.Int, mnAddr common.A
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	data, err := vABI.Pack(method, smnAddr, smnCount, mnAddr, mnCount)
+	data, err := vABI.Pack(method, snAddr, snCount, mnAddr, mnCount)
 	if err != nil {
 		return nil, err
 	}
 
 	value := new(big.Int)
-	value.Add(smnCount, mnCount)
+	value.Add(snCount, mnCount)
 	msgData := (hexutil.Bytes)(data)
 	gasPrice := big.NewInt(params.GWei)
 	gasPrice, err = systemcontracts.GetPropertyValue(s.ctx, s.blockChainAPI, "gas_price")
 	if err != nil {
 		gasPrice = big.NewInt(params.GWei / 100)
 	}
-	nonce := state.GetNonce(smnAddr)
+	nonce := state.GetNonce(snAddr)
 
 	args := ethapi.TransactionArgs{
-		From:     &smnAddr,
+		From:     &snAddr,
 		To:       &systemcontracts.SystemRewardContractAddr,
 		Data:     &msgData,
 		Value:    (*hexutil.Big)(value),
@@ -1086,7 +1086,7 @@ func (s *Spos) Reward(smnAddr common.Address, smnCount *big.Int, mnAddr common.A
 	args.Gas = &gas
 
 	rawTx := args.ToTransaction()
-	tx, err := s.signTxFn(accounts.Account{Address: smnAddr}, rawTx, s.chainConfig.ChainID)
+	tx, err := s.signTxFn(accounts.Account{Address: snAddr}, rawTx, s.chainConfig.ChainID)
 	if err != nil {
 		return nil, err
 	}
@@ -1129,15 +1129,15 @@ func (s *Spos) CheckRewardTransaction(block *types.Block) error{
 				return err
 			}
 
-			smnCount := inputsMap["_smnAmount"].(*big.Int)
+			snCount := inputsMap["_snAmount"].(*big.Int)
 			mnCount := inputsMap["_mnAmount"].(*big.Int)
 
 			totalReward := getBlockSubsidy(blocknumber, false)
 			masterNodePayment := getMasternodePayment(totalReward)
 			superNodeReward := new(big.Int).Sub(totalReward, masterNodePayment)
 
-			if smnCount.Cmp(superNodeReward) != 0 || mnCount.Cmp(masterNodePayment) != 0{
-				return fmt.Errorf("invalid greward (smnCount: %d superNodeReward: %d mnCount:%d masterNodePayment:%d)", smnCount, superNodeReward,
+			if snCount.Cmp(superNodeReward) != 0 || mnCount.Cmp(masterNodePayment) != 0{
+				return fmt.Errorf("invalid greward (snCount: %d superNodeReward: %d mnCount:%d masterNodePayment:%d)", snCount, superNodeReward,
 					mnCount, masterNodePayment)
 			}
 		}

@@ -7,20 +7,20 @@ import (
 	"time"
 )
 
-type SuperMasterNodeMemberInfo struct {
+type SuperNodeMemberInfo struct {
 	LockID *big.Int
 	Addr   common.Address
 	Amount *big.Int
 	Height *big.Int
 }
 
-type SuperMasterNodeIncentivePlan struct {
+type SuperNodeIncentivePlan struct {
 	Creator *big.Int
 	Partner *big.Int
 	Voter   *big.Int
 }
 
-type SuperMasterNodeInfo struct {
+type SuperNodeInfo struct {
 	Id               *big.Int
 	Name             string
 	Addr             common.Address
@@ -31,17 +31,17 @@ type SuperMasterNodeInfo struct {
 	Pubkey           string
 	Description      string
 	State            *big.Int
-	Founders         []SuperMasterNodeMemberInfo
-	IncentivePlan    SuperMasterNodeIncentivePlan
-	Voters           []SuperMasterNodeMemberInfo
+	Founders         []SuperNodeMemberInfo
+	IncentivePlan    SuperNodeIncentivePlan
+	Voters           []SuperNodeMemberInfo
 	TotalVoteNum     *big.Int
 	TotalVoterAmount *big.Int
 	CreateHeight     *big.Int
 	UpdateHeight     *big.Int
 }
 
-// SuperMasterNodePing is a supermasternode ping.
-type SuperMasterNodePing struct {
+// SuperNodePing is a supernode ping.
+type SuperNodePing struct {
 	version int             `json:"version"        gencodec:"required"`
 	signTime time.Time      `json:"signTime"       gencodec:"required"`
 	sign []byte             `json:"sign"           gencodec:"required"`
@@ -52,22 +52,22 @@ type SuperMasterNodePing struct {
 	size atomic.Value
 }
 
-const SmnpVersion = 1001
+const SnpVersion = 1001
 
-func NewSuperMasterNodePing(superMasterNodeInfo *SuperMasterNodeInfo) *SuperMasterNodePing {
-	smnp := &SuperMasterNodePing{}
-	smnp.version = SmnpVersion
-	smnp.signTime = time.Now()
-	smnp.sign = nil
-	return smnp
+func NewSuperNodePing(superNodeInfo *SuperNodeInfo) *SuperNodePing {
+	snp := &SuperNodePing{}
+	snp.version = SnpVersion
+	snp.signTime = time.Now()
+	snp.sign = nil
+	return snp
 }
 
 // Hash returns the transaction hash.
-func (smnp *SuperMasterNodePing) Hash() common.Hash {
-	if hash := smnp.hash.Load(); hash != nil {
+func (snp *SuperNodePing) Hash() common.Hash {
+	if hash := snp.hash.Load(); hash != nil {
 		return hash.(common.Hash)
 	}
-	h := rlpHash(smnp)
-	smnp.hash.Store(h)
+	h := rlpHash(snp)
+	snp.hash.Store(h)
 	return h
 }

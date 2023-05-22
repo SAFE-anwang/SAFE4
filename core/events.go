@@ -51,7 +51,7 @@ type NewMasterNodeEvent struct {
 	Operator int
 }
 
-type NewSuperMasterNodeEvent struct {
-	SuperMasterNodeInfo *types.SuperMasterNodeInfo
+type NewSuperNodeEvent struct {
+	SuperNodeInfo *types.SuperNodeInfo
 	Operator int
 }

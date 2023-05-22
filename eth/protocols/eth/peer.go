@@ -57,7 +57,7 @@ const (
 
 	maxKnownMasterNodePings = 40960
 
-	maxKnownSuperMasterNodePings = 1024
+	maxKnownSuperNodePings = 1024
 )
 
 // max is a helper function which returns the larger of the two given integers.
@@ -98,8 +98,8 @@ type Peer struct {
 	knownMasterNodePing *knownCache
 	queuedMasterNodePing chan *types.MasterNodePing
 
-	knownSuperMasterNodePing *knownCache
-	queuedSuperMasterNodePing chan *types.SuperMasterNodePing
+	knownSuperNodePing *knownCache
+	queuedSuperNodePing chan *types.SuperNodePing
 }
 
 // NewPeer create a wrapper for a network connection and negotiated  protocol
@@ -123,8 +123,8 @@ func NewPeer(version uint, p *p2p.Peer, rw p2p.MsgReadWriter, txpool TxPool) *Pe
 		term:            make(chan struct{}),
 		knownMasterNodePing: newKnownCache(maxKnownMasterNodePings),
 		queuedMasterNodePing: make(chan *types.MasterNodePing),
-		knownSuperMasterNodePing: newKnownCache(maxKnownSuperMasterNodePings),
-		queuedSuperMasterNodePing: make(chan *types.SuperMasterNodePing),
+		knownSuperNodePing: newKnownCache(maxKnownSuperNodePings),
+		queuedSuperNodePing: make(chan *types.SuperNodePing),
 	}
 	// Start up all the broadcasters
 	go peer.broadcastBlocks()
@@ -132,7 +132,7 @@ func NewPeer(version uint, p *p2p.Peer, rw p2p.MsgReadWriter, txpool TxPool) *Pe
 	go peer.announceTransactions()
 	go peer.dispatcher()
 	go peer.broadcastMasterNodePing()
-	go peer.broadcastSuperMasterNodePing()
+	go peer.broadcastSuperNodePing()
 
 	return peer
 }
@@ -552,7 +552,7 @@ func (p *Peer) markMasterNodePing(hash common.Hash) {
 
 func (p *Peer) SendMasterNodePing(mnp *types.MasterNodePing) error {
 	p.knownMasterNodePing.Add(mnp.Hash())
-	return p2p.Send(p.rw, MasterNodePingMsg, MasterNodePingPacket{mnp})
+	return p2p.Send(p.rw, MasterNodePingMsg, &MasterNodePingPacket{mnp})
 }
 
 func (p *Peer) AsyncSendNewMasterNodePing(mnp *types.MasterNodePing) {
@@ -564,25 +564,25 @@ func (p *Peer) AsyncSendNewMasterNodePing(mnp *types.MasterNodePing) {
 	}
 }
 
-func (p *Peer) KnownSuperMasterNodePing(hash common.Hash) bool {
-	return p.knownSuperMasterNodePing.Contains(hash)
+func (p *Peer) KnownSuperNodePing(hash common.Hash) bool {
+	return p.knownSuperNodePing.Contains(hash)
 }
 
-func (p *Peer) markSuperMasterNodePing(hash common.Hash) {
+func (p *Peer) markSuperNodePing(hash common.Hash) {
 	// If we reached the memory allowance, drop a previously known block hash
-	p.knownSuperMasterNodePing.Add(hash)
+	p.knownSuperNodePing.Add(hash)
 }
 
-func (p *Peer) SendSuperMasterNodePing(smnp *types.SuperMasterNodePing) error {
-	p.knownMasterNodePing.Add(smnp.Hash())
-	return p2p.Send(p.rw, SuperMasterNodePingMsg, SuperMasterNodePingPacket{smnp})
+func (p *Peer) SendSuperNodePing(snp *types.SuperNodePing) error {
+	p.knownMasterNodePing.Add(snp.Hash())
+	return p2p.Send(p.rw, SuperNodePingMsg, &SuperNodePingPacket{snp})
 }
 
-func (p *Peer) AsyncSendNewSuperMasterNodePing(smnp *types.SuperMasterNodePing) {
+func (p *Peer) AsyncSendNewSuperNodePing(snp *types.SuperNodePing) {
 	select {
-	case p.queuedSuperMasterNodePing <- smnp:
-		p.knownSuperMasterNodePing.Add(smnp.Hash())
+	case p.queuedSuperNodePing <- snp:
+		p.knownSuperNodePing.Add(snp.Hash())
 	default:
-		p.Log().Debug("Dropping smnp announcement", "hash", smnp.Hash())
+		p.Log().Debug("Dropping snp announcement", "hash", snp.Hash())
 	}
 }

@@ -378,9 +378,9 @@ func (s *Ethereum) APIs() []rpc.API {
 			Service:   NewPublicMasterNodeAPI(s, blockChainAPI, transactionPoolAPI),
 			Public:    true,
 		}, {
-			Namespace: "supermasternode",
+			Namespace: "supernode",
 			Version:   "1.0",
-			Service:   NewPublicSuperMasterNodeAPI(s, blockChainAPI, transactionPoolAPI),
+			Service:   NewPublicSuperNodeAPI(s, blockChainAPI, transactionPoolAPI),
 			Public:    true,
 		}, {
 			Namespace: "proposal",

@@ -8,13 +8,13 @@ var AccountManagerContractAddr = common.HexToAddress("0x000000000000000000000000
 
 var MasterNodeContractAddr = common.HexToAddress("0x0000000000000000000000000000000000001022")
 
-var SuperMasterNodeContractAddr = common.HexToAddress("0x0000000000000000000000000000000000001032")
+var SuperNodeContractAddr = common.HexToAddress("0x0000000000000000000000000000000000001032")
 
-var SMNVoteContractAddr = common.HexToAddress("0x0000000000000000000000000000000000001042")
+var SNVoteContractAddr = common.HexToAddress("0x0000000000000000000000000000000000001042")
 
 var MasterNodeStateContractAddr = common.HexToAddress("0x0000000000000000000000000000000000001052")
 
-var SuperMasterNodeStateContractAddr = common.HexToAddress("0x0000000000000000000000000000000000001062")
+var SuperNodeStateContractAddr = common.HexToAddress("0x0000000000000000000000000000000000001062")
 
 var ProposalContractAddr = common.HexToAddress("0x0000000000000000000000000000000000001072")
 

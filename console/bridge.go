@@ -589,60 +589,60 @@ func (b *bridge) GetAllMasterNode(call jsre.Call) (goja.Value, error) {
 	return getAllMasterNode(goja.Null())
 }
 
-func (b *bridge) StartSuperMasterNode(call jsre.Call) (goja.Value, error) {
-	startSuperMasterNode, callable := goja.AssertFunction(getJeth(call.VM).Get("startSuperMasterNode"))
+func (b *bridge) StartSuperNode(call jsre.Call) (goja.Value, error) {
+	startSuperNode, callable := goja.AssertFunction(getJeth(call.VM).Get("startSuperNode"))
 	if !callable {
-		return nil, fmt.Errorf("jeth.startSuperMasterNode is not callable")
+		return nil, fmt.Errorf("jeth.startSuperNode is not callable")
 	}
-	return startSuperMasterNode(goja.Null(), call.Argument(0))
+	return startSuperNode(goja.Null(), call.Argument(0))
 }
 
-func (b *bridge) StopSuperMasterNode(call jsre.Call) (goja.Value, error) {
-	StopSuperMasterNode, callable := goja.AssertFunction(getJeth(call.VM).Get("StopSuperMasterNode"))
+func (b *bridge) StopSuperNode(call jsre.Call) (goja.Value, error) {
+	stopSuperNode, callable := goja.AssertFunction(getJeth(call.VM).Get("stopSuperNode"))
 	if !callable {
-		return nil, fmt.Errorf("jeth.StopSuperMasterNode is not callable")
+		return nil, fmt.Errorf("jeth.stopSuperNode is not callable")
 	}
-	return StopSuperMasterNode(goja.Null(), call.Argument(0))
+	return stopSuperNode(goja.Null(), call.Argument(0))
 }
 
-func (b *bridge) RestartSuperMasterNode(call jsre.Call) (goja.Value, error) {
-	RestartSuperMasterNode, callable := goja.AssertFunction(getJeth(call.VM).Get("RestartSuperMasterNode"))
+func (b *bridge) RestartSuperNode(call jsre.Call) (goja.Value, error) {
+	restartSuperNode, callable := goja.AssertFunction(getJeth(call.VM).Get("restartSuperNode"))
 	if !callable {
-		return nil, fmt.Errorf("jeth.RestartSuperMasterNode is not callable")
+		return nil, fmt.Errorf("jeth.restartSuperNode is not callable")
 	}
-	return RestartSuperMasterNode(goja.Null(), call.Argument(0))
+	return restartSuperNode(goja.Null(), call.Argument(0))
 }
 
-func (b *bridge) GetSuperMasterNodeInfo(call jsre.Call) (goja.Value, error) {
-	getSuperMasterNodeInfo, callable := goja.AssertFunction(getJeth(call.VM).Get("getSuperMasterNodeInfo"))
+func (b *bridge) GetSuperNodeInfo(call jsre.Call) (goja.Value, error) {
+	getSuperNodeInfo, callable := goja.AssertFunction(getJeth(call.VM).Get("getSuperNodeInfo"))
 	if !callable {
-		return nil, fmt.Errorf("jeth.getSuperMasterNodeInfo is not callable")
+		return nil, fmt.Errorf("jeth.getSuperNodeInfo is not callable")
 	}
-	return getSuperMasterNodeInfo(goja.Null(), call.Argument(0))
+	return getSuperNodeInfo(goja.Null(), call.Argument(0))
 }
 
-func (b *bridge) GetAllSuperMasterNode(call jsre.Call) (goja.Value, error) {
-	getAllSuperMasterNode, callable := goja.AssertFunction(getJeth(call.VM).Get("getAllSuperMasterNode"))
+func (b *bridge) GetAllSuperNode(call jsre.Call) (goja.Value, error) {
+	getAllSuperNode, callable := goja.AssertFunction(getJeth(call.VM).Get("getAllSuperNode"))
 	if !callable {
-		return nil, fmt.Errorf("jeth.getAllSuperMasterNode is not callable")
+		return nil, fmt.Errorf("jeth.getAllSuperNode is not callable")
 	}
-	return getAllSuperMasterNode(goja.Null())
+	return getAllSuperNode(goja.Null())
 }
 
-func (b *bridge) GetTopSuperMasterNode(call jsre.Call) (goja.Value, error) {
-	getTopSuperMasterNode, callable := goja.AssertFunction(getJeth(call.VM).Get("getTopSuperMasterNode"))
+func (b *bridge) GetTopSuperNode(call jsre.Call) (goja.Value, error) {
+	getTopSuperNode, callable := goja.AssertFunction(getJeth(call.VM).Get("getTopSuperNode"))
 	if !callable {
-		return nil, fmt.Errorf("jeth.getTopSuperMasterNode is not callable")
+		return nil, fmt.Errorf("jeth.getTopSuperNode is not callable")
 	}
-	return getTopSuperMasterNode(goja.Null())
+	return getTopSuperNode(goja.Null())
 }
 
-func (b *bridge) GetSuperMasterNodeNum(call jsre.Call) (goja.Value, error) {
-	getSuperMasterNodeNum, callable := goja.AssertFunction(getJeth(call.VM).Get("getSuperMasterNodeNum"))
+func (b *bridge) GetSuperNodeNum(call jsre.Call) (goja.Value, error) {
+	getSuperNodeNum, callable := goja.AssertFunction(getJeth(call.VM).Get("getSuperNodeNum"))
 	if !callable {
-		return nil, fmt.Errorf("jeth.getSuperMasterNodeNum is not callable")
+		return nil, fmt.Errorf("jeth.getSuperNodeNum is not callable")
 	}
-	return getSuperMasterNodeNum(goja.Null())
+	return getSuperNodeNum(goja.Null())
 }
 
 func (b *bridge) CreateProposal(call jsre.Call) (goja.Value, error) {

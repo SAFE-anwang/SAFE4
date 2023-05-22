@@ -144,7 +144,7 @@ func (c *Console) init(preload []string) error {
 		c.initPersonal(vm, bridge)
 		c.initSystem(vm, bridge)
 		c.initMasterNode(vm, bridge)
-		c.initSuperMasterNode(vm, bridge)
+		c.initSuperNode(vm, bridge)
 		c.initProposal(vm, bridge)
 	})
 
@@ -308,27 +308,27 @@ func (c *Console) initMasterNode(vm *goja.Runtime, bridge *bridge) {
 	masternode.Set("getAll", jsre.MakeCallback(vm, bridge.GetAllMasterNode))
 }
 
-func (c *Console) initSuperMasterNode(vm *goja.Runtime, bridge *bridge) {
-	supermasternode := getObject(vm, "supermasternode")
-	if supermasternode == nil || c.prompter == nil {
+func (c *Console) initSuperNode(vm *goja.Runtime, bridge *bridge) {
+	supernode := getObject(vm, "supernode")
+	if supernode == nil || c.prompter == nil {
 		return
 	}
 
-	getJeth(vm).Set("startSuperMasterNode", supermasternode.Get("start"))
-	getJeth(vm).Set("stopSuperMasterNode", supermasternode.Get("stop"))
-	getJeth(vm).Set("restartSuperMasterNode", supermasternode.Get("restart"))
-	getJeth(vm).Set("getSuperMasterNodeInfo", supermasternode.Get("getInfo"))
-	getJeth(vm).Set("getAllSuperMasterNode", supermasternode.Get("getAll"))
-	getJeth(vm).Set("getTopSuperMasterNode", supermasternode.Get("getTop"))
-	getJeth(vm).Set("getSuperMasterNodeNum", supermasternode.Get("getNum"))
+	getJeth(vm).Set("startSuperNode", supernode.Get("start"))
+	getJeth(vm).Set("stopSuperNode", supernode.Get("stop"))
+	getJeth(vm).Set("restartSuperNode", supernode.Get("restart"))
+	getJeth(vm).Set("getSuperNodeInfo", supernode.Get("getInfo"))
+	getJeth(vm).Set("getAllSuperNode", supernode.Get("getAll"))
+	getJeth(vm).Set("getTopSuperNode", supernode.Get("getTop"))
+	getJeth(vm).Set("getSuperNodeNum", supernode.Get("getNum"))
 
-	supermasternode.Set("start", jsre.MakeCallback(vm, bridge.StartSuperMasterNode))
-	supermasternode.Set("stop", jsre.MakeCallback(vm, bridge.StopSuperMasterNode))
-	supermasternode.Set("restart", jsre.MakeCallback(vm, bridge.RestartSuperMasterNode))
-	supermasternode.Set("getInfo", jsre.MakeCallback(vm, bridge.GetSuperMasterNodeInfo))
-	supermasternode.Set("getAll", jsre.MakeCallback(vm, bridge.GetAllSuperMasterNode))
-	supermasternode.Set("getTop", jsre.MakeCallback(vm, bridge.GetTopSuperMasterNode))
-	supermasternode.Set("getNum", jsre.MakeCallback(vm, bridge.GetSuperMasterNodeNum))
+	supernode.Set("start", jsre.MakeCallback(vm, bridge.StartSuperNode))
+	supernode.Set("stop", jsre.MakeCallback(vm, bridge.StopSuperNode))
+	supernode.Set("restart", jsre.MakeCallback(vm, bridge.RestartSuperNode))
+	supernode.Set("getInfo", jsre.MakeCallback(vm, bridge.GetSuperNodeInfo))
+	supernode.Set("getAll", jsre.MakeCallback(vm, bridge.GetAllSuperNode))
+	supernode.Set("getTop", jsre.MakeCallback(vm, bridge.GetTopSuperNode))
+	supernode.Set("getNum", jsre.MakeCallback(vm, bridge.GetSuperNodeNum))
 }
 
 func (c *Console) initProposal(vm *goja.Runtime, bridge *bridge) {

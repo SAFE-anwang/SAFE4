@@ -2526,7 +2526,7 @@ var IpcProvider = require('./web3/ipcprovider');
 var BigNumber = require('bignumber.js');
 var System = require('./web3/methods/system');
 var MasterNode = require('./web3/methods/masternode');
-var SuperMasterNode = require('./web3/methods/supermasternode');
+var SuperNode = require('./web3/methods/supernode');
 var Proposal = require('./web3/methods/proposal');
 
 
@@ -2543,7 +2543,7 @@ function Web3 (provider) {
     this.settings = new Settings();
     this.system = new System(this);
     this.masternode = new MasterNode(this);
-    this.supermasternode = new SuperMasterNode(this);
+    this.supernode = new SuperNode(this);
     this.proposal = new Proposal(this);
     this.version = {
         api: version.version
@@ -2640,7 +2640,7 @@ Web3.prototype.createBatch = function () {
 module.exports = Web3;
 
 
-},{"./utils/sha3":19,"./utils/utils":20,"./version.json":21,"./web3/batch":24,"./web3/extend":28,"./web3/httpprovider":32,"./web3/iban":33,"./web3/ipcprovider":34,"./web3/methods/db":37,"./web3/methods/eth":38,"./web3/methods/net":39,"./web3/methods/personal":40,"./web3/methods/shh":41,"./web3/methods/swarm":42,"./web3/property":45,"./web3/requestmanager":46,"./web3/settings":47,"./web3/methods/system":87,"./web3/methods/masternode":88,"./web3/methods/supermasternode":89,"./web3/methods/proposal":90,"bignumber.js":"bignumber.js"}],23:[function(require,module,exports){
+},{"./utils/sha3":19,"./utils/utils":20,"./version.json":21,"./web3/batch":24,"./web3/extend":28,"./web3/httpprovider":32,"./web3/iban":33,"./web3/ipcprovider":34,"./web3/methods/db":37,"./web3/methods/eth":38,"./web3/methods/net":39,"./web3/methods/personal":40,"./web3/methods/shh":41,"./web3/methods/swarm":42,"./web3/property":45,"./web3/requestmanager":46,"./web3/settings":47,"./web3/methods/system":87,"./web3/methods/masternode":88,"./web3/methods/supernode":89,"./web3/methods/proposal":90,"bignumber.js":"bignumber.js"}],23:[function(require,module,exports){
 /*
     This file is part of web3.js.
 
@@ -13801,7 +13801,7 @@ module.exports = XMLHttpRequest;
   var Method = require('../method');
   var formatters = require('../formatters');
 
-  function SuperMasterNode(web3) {
+  function SuperNode(web3) {
     this._requestManager = web3._requestManager;
 
     var self = this;
@@ -13815,60 +13815,60 @@ module.exports = XMLHttpRequest;
   var methods = function () {
     var start = new Method({
       name: 'start',
-      call: 'supermasternode_start',
+      call: 'supernode_start',
       params: 1,
       inputFormatter: [formatters.inputAddressFormatter]
     });
 
     var stop = new Method({
       name: 'stop',
-      call: 'supermasternode_stop',
+      call: 'supernode_stop',
       params: 1,
       inputFormatter: [formatters.inputAddressFormatter]
     });
 
     var restart = new Method({
       name: 'restart',
-      call: 'supermasternode_restart',
+      call: 'supernode_restart',
       params: 1,
       inputFormatter: [formatters.inputAddressFormatter]
     });
 
     var getInfo = new Method({
       name: 'getInfo',
-      call: 'supermasternode_getInfo',
+      call: 'supernode_getInfo',
       params: 1,
       inputFormatter: [formatters.inputAddressFormatter]
     });
 
     var getAll = new Method({
       name: 'getAll',
-      call: 'supermasternode_getAll',
+      call: 'supernode_getAll',
       params: 0
     });
 
     var getTop = new Method({
       name: 'getTop',
-      call: 'supermasternode_getTop',
+      call: 'supernode_getTop',
       params: 0
     });
 
     var getNum = new Method({
       name: 'getNum',
-      call: 'supermasternode_getNum',
+      call: 'supernode_getNum',
       params: 0
     });
 
     var register = new Method({
       name: 'register',
-      call: 'supermasternode_register',
+      call: 'supernode_register',
       params: 12,
       inputFormatter: [formatters.inputAddressFormatter, formatters.formatInputInt, formatters.formatInputBool, formatters.inputAddressFormatter, formatters.formatInputInt, formatters.formatInputString, formatters.formatInputString, formatters.formatInputString, formatters.formatInputString, formatters.formatInputInt, formatters.formatInputInt, formatters.formatInputInt]
     });
 
     var appendRegister = new Method({
       name: 'appendRegister',
-      call: 'supermasternode_appendRegister',
+      call: 'supernode_appendRegister',
       params: 4,
       inputFormatter: [formatters.inputAddressFormatter, formatters.formatInputInt, formatters.inputAddressFormatter, formatters.formatInputInt]
     });
@@ -13886,7 +13886,7 @@ module.exports = XMLHttpRequest;
     ];
   };
 
-  module.exports = SuperMasterNode;
+  module.exports = SuperNode;
 
 },{"./formatters":9,"../formatters":30,"../method":36}],90:[function(require,module,exports){
   /* This file is part of web3.js. */

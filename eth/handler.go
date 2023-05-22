@@ -115,7 +115,7 @@ type handler struct {
 	txsSub        event.Subscription
 	minedBlockSub *event.TypeMuxSubscription
 	masterNodeSub *event.TypeMuxSubscription
-	superMasterNodeSub *event.TypeMuxSubscription
+	superNodeSub *event.TypeMuxSubscription
 
 	requiredBlocks map[uint64]common.Hash
 
@@ -543,17 +543,17 @@ func (h *handler) Start(maxPeers int) {
 	h.masterNodeSub = h.eventMux.Subscribe(core.NewMasterNodeEvent{})
 	go h.masterNodeBroadcastLoop()
 
-	// broadcast smnp
+	// broadcast snp
 	h.wg.Add(1)
-	h.superMasterNodeSub = h.eventMux.Subscribe(core.NewSuperMasterNodeEvent{})
-	go h.superMasterNodeBroadcastLoop()
+	h.superNodeSub = h.eventMux.Subscribe(core.NewSuperNodeEvent{})
+	go h.superNodeBroadcastLoop()
 }
 
 func (h *handler) Stop() {
 	h.txsSub.Unsubscribe()        // quits txBroadcastLoop
 	h.minedBlockSub.Unsubscribe() // quits blockBroadcastLoop
 	h.masterNodeSub.Unsubscribe() // quits masterNodeBroadcastLoop
-	h.superMasterNodeSub.Unsubscribe() // quits superMasterNodeBroadcastLoop
+	h.superNodeSub.Unsubscribe() // quits superNodeBroadcastLoop
 
 	// Quit chainSync and txsync64.
 	// After this is done, no new peers will be accepted.
@@ -683,7 +683,7 @@ func (h *handler) txBroadcastLoop() {
 }
 
 func (h *handler) BroadcastMasterNode(masterNodeInfo *types.MasterNodeInfo) {
-	mnp := types.NewMasterNodePing(masterNodeInfo)
+	mnp := types.NewMasterNodePing(masterNodeInfo, h.chain.CurrentBlock().Hash())
 	hash := mnp.Hash()
 	peers := h.peers.peersWithoutMnp(hash)
 
@@ -702,22 +702,22 @@ func (h *handler) masterNodeBroadcastLoop() {
 	}
 }
 
-func (h *handler) BroadcastSuperMasterNode(superMasterNodeInfo *types.SuperMasterNodeInfo) {
-	smnp := types.NewSuperMasterNodePing(superMasterNodeInfo)
-	hash := smnp.Hash()
-	peers := h.peers.peersWithoutSmnp(hash)
+func (h *handler) BroadcastSuperNode(superNodeInfo *types.SuperNodeInfo) {
+	snp := types.NewSuperNodePing(superNodeInfo)
+	hash := snp.Hash()
+	peers := h.peers.peersWithoutSnp(hash)
 
 	for _, peer := range peers {
-		peer.SendSuperMasterNodePing(smnp)
+		peer.SendSuperNodePing(snp)
 	}
-	log.Trace("Announced smnp", "hash", hash, "recipients", len(peers))
+	log.Trace("Announced snp", "hash", hash, "recipients", len(peers))
 }
 
-func (h *handler) superMasterNodeBroadcastLoop() {
+func (h *handler) superNodeBroadcastLoop() {
 	defer h.wg.Done()
-	for obj := range h.superMasterNodeSub.Chan() {
-		if ev, ok := obj.Data.(core.NewSuperMasterNodeEvent); ok {
-			h.BroadcastSuperMasterNode(ev.SuperMasterNodeInfo)
+	for obj := range h.superNodeSub.Chan() {
+		if ev, ok := obj.Data.(core.NewSuperNodeEvent); ok {
+			h.BroadcastSuperNode(ev.SuperNodeInfo)
 		}
 	}
 }

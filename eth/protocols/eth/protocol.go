@@ -44,7 +44,7 @@ var ProtocolVersions = []uint{ETH67, ETH66}
 
 // protocolLengths are the number of implemented message corresponding to
 // different protocol versions.
-var protocolLengths = map[uint]uint64{ETH67: 17, ETH66: 17}
+var protocolLengths = map[uint]uint64{ETH67: 34, ETH66: 34}
 
 // maxMessageSize is the maximum cap on the size of a protocol message.
 const maxMessageSize = 10 * 1024 * 1024
@@ -66,7 +66,7 @@ const (
 	GetPooledTransactionsMsg      = 0x09
 	PooledTransactionsMsg         = 0x0a
 	MasterNodePingMsg             = 0x20
-	SuperMasterNodePingMsg        = 0x21
+	SuperNodePingMsg        = 0x21
 )
 
 var (
@@ -375,10 +375,10 @@ func (*GetPooledTransactionsPacket) Kind() byte   { return GetPooledTransactions
 func (*PooledTransactionsPacket) Name() string { return "PooledTransactions" }
 func (*PooledTransactionsPacket) Kind() byte   { return PooledTransactionsMsg }
 
-type MasterNodePingPacket struct { mnp *types.MasterNodePing }
+type MasterNodePingPacket struct { MNP *types.MasterNodePing }
 func (*MasterNodePingPacket) Name() string { return "MasterNodePing" }
 func (*MasterNodePingPacket) Kind() byte { return MasterNodePingMsg }
 
-type SuperMasterNodePingPacket struct { smnp *types.SuperMasterNodePing }
-func (*SuperMasterNodePingPacket) Name() string { return "SuperMasterNodePing" }
-func (*SuperMasterNodePingPacket) Kind() byte { return SuperMasterNodePingMsg }
+type SuperNodePingPacket struct { SNP *types.SuperNodePing }
+func (*SuperNodePingPacket) Name() string { return "SuperNodePing" }
+func (*SuperNodePingPacket) Kind() byte { return SuperNodePingMsg }

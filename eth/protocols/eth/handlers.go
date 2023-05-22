@@ -534,19 +534,19 @@ func handleMasterNodePing(backend Backend, msg Decoder, peer *Peer) error {
 		return fmt.Errorf("%w: message %v: %v", errDecode, msg, err)
 	}
 	// Mark the hashes as present at the remote node
-	log.Info("==lemengbin== accept masternode ping: ", packet.mnp.Hash())
-	peer.markMasterNodePing(packet.mnp.Hash())
+	log.Info("==lemengbin== accept masternode ping: ", packet.MNP.Hash())
+	peer.markMasterNodePing(packet.MNP.Hash())
 	return backend.Handle(peer, packet)
 }
 
-func handleSuperMasterNodePing(backend Backend, msg Decoder, peer *Peer) error {
-	// SuperMasterNode pings arrived
-	packet := new(SuperMasterNodePingPacket)
+func handleSuperNodePing(backend Backend, msg Decoder, peer *Peer) error {
+	// SuperNode pings arrived
+	packet := new(SuperNodePingPacket)
 	if err := msg.Decode(packet); err != nil {
 		return fmt.Errorf("%w: message %v: %v", errDecode, msg, err)
 	}
 	// Mark the hashes as present at the remote node
-	log.Info("==lemengbin== accept supermasternode ping: ", packet.smnp.Hash())
-	peer.markSuperMasterNodePing(packet.smnp.Hash())
+	log.Info("==lemengbin== accept supernode ping: ", packet.SNP.Hash())
+	peer.markSuperNodePing(packet.SNP.Hash())
 	return backend.Handle(peer, packet)
 }

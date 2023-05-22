@@ -209,14 +209,14 @@ func (p *Peer) broadcastMasterNodePing() {
 	}
 }
 
-func (p *Peer) broadcastSuperMasterNodePing() {
+func (p *Peer) broadcastSuperNodePing() {
 	for {
 		select {
-		case smnp := <-p.queuedSuperMasterNodePing:
-			if err := p.SendSuperMasterNodePing(smnp); err != nil {
+		case snp := <-p.queuedSuperNodePing:
+			if err := p.SendSuperNodePing(snp); err != nil {
 				return
 			}
-			p.Log().Trace("Announced smnp", "hash", smnp.Hash())
+			p.Log().Trace("Announced snp", "hash", snp.Hash())
 
 		case <-p.term:
 			return

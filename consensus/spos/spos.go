@@ -62,8 +62,7 @@ const (
 	wiggleTime = 5000 * time.Millisecond // Random delay (per signer) to allow concurrent signers
 	sposAllowedFutureBlockTimeSeconds = int64(60)   // Max seconds from current time allowed for blocks, before they're considered future blocks
 
-	//superNodeSPosCount = 7           //Total number of bookkeepers
-	superNodeSPosCount = 3
+	superNodeSPosCount = 7            //Total number of bookkeepers
 	pushForwardHeight  = 14	          //Push forward the block height
 	//chtAddress         = "0x043807066705c6EF9EB3D28D5D230b4d87EC4832" //Contract address
 	rewardContractAdddress = "0x0000000000000000000000000000000000001082"

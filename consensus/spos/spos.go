@@ -739,7 +739,6 @@ func (s *Spos) Finalize(chain consensus.ChainHeaderReader, header *types.Header,
 func (s *Spos) FinalizeAndAssemble(chain consensus.ChainHeaderReader, header *types.Header, state *state.StateDB, txs []*types.Transaction, uncles []*types.Header, receipts []*types.Receipt) (*types.Block, error) {
 	// Finalize block
 	s.Finalize(chain, header, state, txs, uncles)
-	number := header.Number.Uint64()
 
 	completeBlockFlag := GetCompleteBlockFlag()
 
@@ -748,7 +747,7 @@ func (s *Spos) FinalizeAndAssemble(chain consensus.ChainHeaderReader, header *ty
 	//Whether block rewards have been allocated
 	//distributeRewardFlag := getDistributeRewardFlag(number)
 
-	if number >= params.SafeSposOfficialSuperNodeConfig.StartCommonSuperHeight && completeBlockFlag {
+	if completeBlockFlag {
 		_, err := s.distributeReward(header, state, &txs, &receipts)
 		if err != nil {
 			return nil, err

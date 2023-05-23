@@ -299,6 +299,9 @@ func (c *Console) initMasterNode(vm *goja.Runtime, bridge *bridge) {
 	getJeth(vm).Set("restartMasterNode", masternode.Get("restart"))
 	getJeth(vm).Set("getMasterNodeInfo", masternode.Get("getInfo"))
 	getJeth(vm).Set("getNextMasterNode", masternode.Get("getNext"))
+	getJeth(vm).Set("getAllMasterNode", masternode.Get("getAll"))
+	getJeth(vm).Set("registerMasterNode", masternode.Get("register"))
+	getJeth(vm).Set("appendRegisterMasterNode", masternode.Get("appendRegister"))
 
 	masternode.Set("start", jsre.MakeCallback(vm, bridge.StartMasterNode))
 	masternode.Set("stop", jsre.MakeCallback(vm, bridge.StopMasterNode))
@@ -306,6 +309,8 @@ func (c *Console) initMasterNode(vm *goja.Runtime, bridge *bridge) {
 	masternode.Set("getInfo", jsre.MakeCallback(vm, bridge.GetMasterNodeInfo))
 	masternode.Set("getNext", jsre.MakeCallback(vm, bridge.GetNextMasterNode))
 	masternode.Set("getAll", jsre.MakeCallback(vm, bridge.GetAllMasterNode))
+	masternode.Set("register", jsre.MakeCallback(vm, bridge.RegisterMasterNode))
+	masternode.Set("appendRegister", jsre.MakeCallback(vm, bridge.AppendRegisterMasterNode))
 }
 
 func (c *Console) initSuperNode(vm *goja.Runtime, bridge *bridge) {
@@ -321,6 +326,8 @@ func (c *Console) initSuperNode(vm *goja.Runtime, bridge *bridge) {
 	getJeth(vm).Set("getAllSuperNode", supernode.Get("getAll"))
 	getJeth(vm).Set("getTopSuperNode", supernode.Get("getTop"))
 	getJeth(vm).Set("getSuperNodeNum", supernode.Get("getNum"))
+	getJeth(vm).Set("registerSuperNode", supernode.Get("register"))
+	getJeth(vm).Set("appendRegisterSuperNode", supernode.Get("appendRegister"))
 
 	supernode.Set("start", jsre.MakeCallback(vm, bridge.StartSuperNode))
 	supernode.Set("stop", jsre.MakeCallback(vm, bridge.StopSuperNode))
@@ -329,6 +336,8 @@ func (c *Console) initSuperNode(vm *goja.Runtime, bridge *bridge) {
 	supernode.Set("getAll", jsre.MakeCallback(vm, bridge.GetAllSuperNode))
 	supernode.Set("getTop", jsre.MakeCallback(vm, bridge.GetTopSuperNode))
 	supernode.Set("getNum", jsre.MakeCallback(vm, bridge.GetSuperNodeNum))
+	supernode.Set("register", jsre.MakeCallback(vm, bridge.RegisterSuperNode))
+	supernode.Set("appendRegister", jsre.MakeCallback(vm, bridge.AppendRegisterSuperNode))
 }
 
 func (c *Console) initProposal(vm *goja.Runtime, bridge *bridge) {

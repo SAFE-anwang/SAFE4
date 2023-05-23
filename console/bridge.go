@@ -589,6 +589,22 @@ func (b *bridge) GetAllMasterNode(call jsre.Call) (goja.Value, error) {
 	return getAllMasterNode(goja.Null())
 }
 
+func (b *bridge) RegisterMasterNode(call jsre.Call) (goja.Value, error) {
+	registerMasterNode, callable := goja.AssertFunction(getJeth(call.VM).Get("registerMasterNode"))
+	if !callable {
+		return nil, fmt.Errorf("jeth.registerMasterNode is not callable")
+	}
+	return registerMasterNode(goja.Null(), call.Argument(0), call.Argument(1), call.Argument(2), call.Argument(3), call.Argument(4), call.Argument(5), call.Argument(6), call.Argument(7), call.Argument(8), call.Argument(9))
+}
+
+func (b *bridge) AppendRegisterMasterNode(call jsre.Call) (goja.Value, error) {
+	appendRegisterMasterNode, callable := goja.AssertFunction(getJeth(call.VM).Get("appendRegisterMasterNode"))
+	if !callable {
+		return nil, fmt.Errorf("jeth.appendRegisterMasterNode is not callable")
+	}
+	return appendRegisterMasterNode(goja.Null(), call.Argument(0), call.Argument(1), call.Argument(2), call.Argument(3))
+}
+
 func (b *bridge) StartSuperNode(call jsre.Call) (goja.Value, error) {
 	startSuperNode, callable := goja.AssertFunction(getJeth(call.VM).Get("startSuperNode"))
 	if !callable {
@@ -643,6 +659,22 @@ func (b *bridge) GetSuperNodeNum(call jsre.Call) (goja.Value, error) {
 		return nil, fmt.Errorf("jeth.getSuperNodeNum is not callable")
 	}
 	return getSuperNodeNum(goja.Null())
+}
+
+func (b *bridge) RegisterSuperNode(call jsre.Call) (goja.Value, error) {
+	registerSuperNode, callable := goja.AssertFunction(getJeth(call.VM).Get("registerSuperNode"))
+	if !callable {
+		return nil, fmt.Errorf("jeth.registerSuperNode is not callable")
+	}
+	return registerSuperNode(goja.Null(), call.Argument(0), call.Argument(1), call.Argument(2), call.Argument(3), call.Argument(4), call.Argument(5), call.Argument(6), call.Argument(7), call.Argument(8), call.Argument(9), call.Argument(10), call.Argument(11))
+}
+
+func (b *bridge) AppendRegisterSuperNode(call jsre.Call) (goja.Value, error) {
+	appendRegisterSuperNode, callable := goja.AssertFunction(getJeth(call.VM).Get("appendRegisterSuperNode"))
+	if !callable {
+		return nil, fmt.Errorf("jeth.appendRegisterSuperNode is not callable")
+	}
+	return appendRegisterSuperNode(goja.Null(), call.Argument(0), call.Argument(1), call.Argument(2), call.Argument(3))
 }
 
 func (b *bridge) CreateProposal(call jsre.Call) (goja.Value, error) {

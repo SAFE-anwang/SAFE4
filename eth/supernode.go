@@ -59,8 +59,8 @@ func (api *PublicSuperNodeAPI) GetNum(ctx context.Context) (*big.Int, error) {
 	return systemcontracts.GetSuperNodeNum(ctx, api.blockChainAPI)
 }
 
-func (api *PublicSuperNodeAPI) RegisterSuperNode(ctx context.Context, from common.Address, amount *big.Int, isUnion bool, snAddr common.Address, lockDay *big.Int, name string, enode string, pubkey string, description string, creatorIncentive *big.Int, partnerIncentive *big.Int, voterIncentive *big.Int) (common.Hash, error) {
-	return systemcontracts.RegisterSuperNode(ctx, api.blockChainAPI, api.transactionPoolAPI, from, amount, isUnion, snAddr, lockDay, name, enode, pubkey, description, creatorIncentive, partnerIncentive, voterIncentive)
+func (api *PublicSuperNodeAPI) RegisterSuperNode(ctx context.Context, from common.Address, amount *big.Int, isUnion bool, snAddr common.Address, lockDay *big.Int, name string, enode string, description string, creatorIncentive *big.Int, partnerIncentive *big.Int, voterIncentive *big.Int) (common.Hash, error) {
+	return systemcontracts.RegisterSuperNode(ctx, api.blockChainAPI, api.transactionPoolAPI, from, amount, isUnion, snAddr, lockDay, name, enode, description, creatorIncentive, partnerIncentive, voterIncentive)
 }
 
 func (api *PublicSuperNodeAPI) AppendRegisterSuperNode(ctx context.Context, from common.Address, amount *big.Int, snAddr common.Address, lockDay *big.Int) (common.Hash, error) {

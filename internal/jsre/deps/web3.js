@@ -13762,8 +13762,8 @@ module.exports = XMLHttpRequest;
     var register = new Method({
       name: 'register',
       call: 'masternode_register',
-      params: 10,
-      inputFormatter: [formatters.inputAddressFormatter, formatters.formatInputInt, formatters.formatInputBool, formatters.inputAddressFormatter, formatters.formatInputInt, formatters.formatInputString, formatters.formatInputString, formatters.formatInputString, formatters.formatInputInt, formatters.formatInputInt]
+      params: 9,
+      inputFormatter: [formatters.inputAddressFormatter, formatters.formatInputInt, formatters.formatInputBool, formatters.inputAddressFormatter, formatters.formatInputInt, formatters.formatInputString, formatters.formatInputString, formatters.formatInputInt, formatters.formatInputInt]
     });
 
     var appendRegister = new Method({
@@ -13862,8 +13862,8 @@ module.exports = XMLHttpRequest;
     var register = new Method({
       name: 'register',
       call: 'supernode_register',
-      params: 12,
-      inputFormatter: [formatters.inputAddressFormatter, formatters.formatInputInt, formatters.formatInputBool, formatters.inputAddressFormatter, formatters.formatInputInt, formatters.formatInputString, formatters.formatInputString, formatters.formatInputString, formatters.formatInputString, formatters.formatInputInt, formatters.formatInputInt, formatters.formatInputInt]
+      params: 11,
+      inputFormatter: [formatters.inputAddressFormatter, formatters.formatInputInt, formatters.formatInputBool, formatters.inputAddressFormatter, formatters.formatInputInt, formatters.formatInputString, formatters.formatInputString, formatters.formatInputString, formatters.formatInputInt, formatters.formatInputInt, formatters.formatInputInt]
     });
 
     var appendRegister = new Method({

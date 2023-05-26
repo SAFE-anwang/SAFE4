@@ -161,7 +161,7 @@ func GetSuperNodeNum(ctx context.Context, api *ethapi.PublicBlockChainAPI) (*big
 	return count, nil
 }
 
-func RegisterSuperNode(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, transactionPoolAPI *ethapi.PublicTransactionPoolAPI, from common.Address, amount *big.Int, isUnion bool, snAddr common.Address, lockDay *big.Int, name string, enode string, pubkey string, description string, creatorIncentive *big.Int, partnerIncentive *big.Int, voterIncentive *big.Int) (common.Hash, error) {
+func RegisterSuperNode(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, transactionPoolAPI *ethapi.PublicTransactionPoolAPI, from common.Address, amount *big.Int, isUnion bool, snAddr common.Address, lockDay *big.Int, name string, enode string, description string, creatorIncentive *big.Int, partnerIncentive *big.Int, voterIncentive *big.Int) (common.Hash, error) {
 	if blockChainAPI == nil || transactionPoolAPI == nil {
 		return common.Hash{}, errors.New("invalid blockchain/transactionpool api")
 	}
@@ -175,7 +175,7 @@ func RegisterSuperNode(ctx context.Context, blockChainAPI *ethapi.PublicBlockCha
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	data, err := vABI.Pack(method, isUnion, snAddr, lockDay, name, enode, pubkey, description, creatorIncentive, partnerIncentive, voterIncentive)
+	data, err := vABI.Pack(method, isUnion, snAddr, lockDay, name, enode, description, creatorIncentive, partnerIncentive, voterIncentive)
 	if err != nil {
 		return common.Hash{}, err
 	}

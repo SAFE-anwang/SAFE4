@@ -121,7 +121,7 @@ func GetAllMasterNode(ctx context.Context, api *ethapi.PublicBlockChainAPI) ([]t
 	return mnList, nil
 }
 
-func RegisterMasterNode(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, transactionPoolAPI *ethapi.PublicTransactionPoolAPI, from common.Address, amount *big.Int, isUnion bool, mnAddr common.Address, lockDay *big.Int, enode string, pubkey string, description string, creatorIncentive *big.Int, partnerIncentive *big.Int) (common.Hash, error) {
+func RegisterMasterNode(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, transactionPoolAPI *ethapi.PublicTransactionPoolAPI, from common.Address, amount *big.Int, isUnion bool, mnAddr common.Address, lockDay *big.Int, enode string, description string, creatorIncentive *big.Int, partnerIncentive *big.Int) (common.Hash, error) {
 	vABI, err := abi.JSON(strings.NewReader(MasterNodeABI))
 	if err != nil {
 		return common.Hash{}, err
@@ -131,7 +131,7 @@ func RegisterMasterNode(ctx context.Context, blockChainAPI *ethapi.PublicBlockCh
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	data, err := vABI.Pack(method, isUnion, mnAddr, lockDay, enode, pubkey, description, creatorIncentive, partnerIncentive)
+	data, err := vABI.Pack(method, isUnion, mnAddr, lockDay, enode, description, creatorIncentive, partnerIncentive)
 	if err != nil {
 		return common.Hash{}, err
 	}

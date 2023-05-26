@@ -29,7 +29,6 @@ type MasterNodeInfo struct {
 	Amount        *big.Int
 	Enode         string
 	Ip            string
-	Pubkey        string
 	Description   string
 	State         *big.Int
 	Founders      []MasterNodeMemberInfo

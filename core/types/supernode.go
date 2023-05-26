@@ -28,7 +28,6 @@ type SuperNodeInfo struct {
 	Amount           *big.Int
 	Enode            string
 	Ip               string
-	Pubkey           string
 	Description      string
 	State            *big.Int
 	Founders         []SuperNodeMemberInfo

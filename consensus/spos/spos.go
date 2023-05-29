@@ -794,6 +794,20 @@ func (s *Spos) Seal(chain consensus.ChainHeaderReader, block *types.Block, resul
 		return nil
 	}
 
+	miningRewardTransactionsExist := false
+	for _, transaction := range block.Transactions() {
+		toAddress := transaction.To().String()
+		if toAddress == rewardContractAdddress {
+			miningRewardTransactionsExist = true
+			break
+		}
+	}
+
+	if !miningRewardTransactionsExist {
+		log.Info("Sealing paused, mining reward transactions are not included in the block")
+		return nil
+	}
+
 	// Don't hold the signer fields for the entire sealing procedure
 	s.lock.RLock()
 	signer, signFn := s.signer, s.signFn

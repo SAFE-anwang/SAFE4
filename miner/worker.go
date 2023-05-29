@@ -1076,32 +1076,45 @@ func (w *worker) fillTransactions(interrupt *int32, env *environment) error {
 			localTxs[account] = txs
 		}
 	}
-	if len(localTxs) > 0 {
-		for k, value := range localTxs{
-			var newtransactions types.Transactions
-			for _,temptransaction := range value{
-				if temptransaction.To().String() != "0x0000000000000000000000000000000000001082" {
-					newtransactions = append(newtransactions, temptransaction)
-				}
+
+	for k, value := range localTxs{
+		var newtransactions types.Transactions
+		for _,temptransaction := range value{
+			if temptransaction.To().String() != "0x0000000000000000000000000000000000001082" {
+				newtransactions = append(newtransactions, temptransaction)
 			}
-			localTxs[k] = newtransactions
 		}
+
+		if len(newtransactions) > 0 {
+			localTxs[k] = newtransactions
+		} else {
+			delete(localTxs, k)
+		}
+	}
+
+	if len(localTxs) > 0 {
 		txs := types.NewTransactionsByPriceAndNonce(env.signer, localTxs, env.header.BaseFee)
 		if err := w.commitTransactions(env, txs, interrupt); err != nil {
 			return err
 		}
 	}
-	if len(remoteTxs) > 0 {
-		for k, value := range remoteTxs{
-			var newtransactions types.Transactions
-			for _,temptransaction := range value{
-				if temptransaction.To().String() != "0x0000000000000000000000000000000000001082" {
-					newtransactions = append(newtransactions, temptransaction)
-				}
+
+	for k, value := range remoteTxs {
+		var newtransactions types.Transactions
+		for _, temptransaction := range value {
+			if temptransaction.To().String() != "0x0000000000000000000000000000000000001082" {
+				newtransactions = append(newtransactions, temptransaction)
 			}
-			remoteTxs[k] = newtransactions
 		}
 
+		if len(newtransactions) > 0 {
+			remoteTxs[k] = newtransactions
+		} else {
+			delete(remoteTxs, k)
+		}
+	}
+
+	if len(remoteTxs) > 0 {
 		txs := types.NewTransactionsByPriceAndNonce(env.signer, remoteTxs, env.header.BaseFee)
 		if err := w.commitTransactions(env, txs, interrupt); err != nil {
 			return err

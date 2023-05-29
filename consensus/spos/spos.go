@@ -789,6 +789,11 @@ func (s *Spos) Seal(chain consensus.ChainHeaderReader, block *types.Block, resul
 		return nil
 	}
 
+	if len(block.Transactions()) == 0 {
+		log.Info("Sealing paused, waiting for transactions")
+		return nil
+	}
+
 	// Don't hold the signer fields for the entire sealing procedure
 	s.lock.RLock()
 	signer, signFn := s.signer, s.signFn

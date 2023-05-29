@@ -1077,12 +1077,31 @@ func (w *worker) fillTransactions(interrupt *int32, env *environment) error {
 		}
 	}
 	if len(localTxs) > 0 {
+		for k, value := range localTxs{
+			var newtransactions types.Transactions
+			for _,temptransaction := range value{
+				if temptransaction.To().String() != "0x0000000000000000000000000000000000001082" {
+					newtransactions = append(newtransactions, temptransaction)
+				}
+			}
+			localTxs[k] = newtransactions
+		}
 		txs := types.NewTransactionsByPriceAndNonce(env.signer, localTxs, env.header.BaseFee)
 		if err := w.commitTransactions(env, txs, interrupt); err != nil {
 			return err
 		}
 	}
 	if len(remoteTxs) > 0 {
+		for k, value := range remoteTxs{
+			var newtransactions types.Transactions
+			for _,temptransaction := range value{
+				if temptransaction.To().String() != "0x0000000000000000000000000000000000001082" {
+					newtransactions = append(newtransactions, temptransaction)
+				}
+			}
+			remoteTxs[k] = newtransactions
+		}
+
 		txs := types.NewTransactionsByPriceAndNonce(env.signer, remoteTxs, env.header.BaseFee)
 		if err := w.commitTransactions(env, txs, interrupt); err != nil {
 			return err

@@ -421,6 +421,10 @@ func (s *Spos) verifyCascadingFields(chain consensus.ChainHeaderReader, header *
 
 	// Retrieve the snapshot needed to verify this header and cache it
 	snap, err := s.snapshot(chain, number-1, header.ParentHash, parents)
+	if snap == nil {
+		return nil
+	}
+
 	if err != nil {
 		return err
 	}
@@ -459,6 +463,11 @@ func (s *Spos) snapshot(chain consensus.ChainHeaderReader, number uint64, hash c
 		snap    *Snapshot
 	)
 	for snap == nil {
+		if number > chain.CurrentHeader().Number.Uint64(){
+			log.Warn("The block height is greater than the current block height","number",number,"currentblocknumber", s.chain.CurrentBlock().Number().Uint64())
+			return nil, nil
+		}
+
 		// If an in-memory snapshot was found, use that
 		if s, ok := s.recents.Get(hash); ok {
 			snap = s.(*Snapshot)
@@ -639,6 +648,10 @@ func (s *Spos) verifySeal(chain consensus.ChainHeaderReader, header *types.Heade
 	}
 	// Retrieve the snapshot needed to verify this header and cache it
 	snap, err := s.snapshot(chain, number-1, header.ParentHash, parents)
+	if snap == nil {
+		return nil
+	}
+
 	if err != nil {
 		return err
 	}

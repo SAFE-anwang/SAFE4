@@ -64,8 +64,6 @@ const (
 
 	superNodeSPosCount = 7            //Total number of bookkeepers
 	pushForwardHeight  = 14	          //Push forward the block height
-	//chtAddress         = "0x043807066705c6EF9EB3D28D5D230b4d87EC4832" //Contract address
-	rewardContractAdddress = "0x0000000000000000000000000000000000001082"
 )
 
 // Spos SAFE-proof-of-stake protocol constants.
@@ -802,8 +800,7 @@ func (s *Spos) Seal(chain consensus.ChainHeaderReader, block *types.Block, resul
 
 	miningRewardTransactionsExist := false
 	for _, transaction := range block.Transactions() {
-		toAddress := transaction.To().String()
-		if toAddress == rewardContractAdddress {
+		if transaction.To() != nil && *transaction.To() == systemcontracts.SystemRewardContractAddr {
 			miningRewardTransactionsExist = true
 			break
 		}
@@ -1135,8 +1132,7 @@ func (s *Spos) Reward(snAddr common.Address, snCount *big.Int, mnAddr common.Add
 func (s *Spos) CheckRewardTransaction(block *types.Block) error{
 	blocknumber := block.Number().Uint64()
 	for _, transaction := range block.Transactions() {
-		toAddress := transaction.To().String()
-		if toAddress == rewardContractAdddress {
+		if transaction.To() != nil && *transaction.To() == systemcontracts.SystemRewardContractAddr {
 			vABI, err := abi.JSON(strings.NewReader(systemcontracts.SystemRewardABI))
 			if err != nil {
 				return  err

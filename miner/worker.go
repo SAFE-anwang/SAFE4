@@ -20,6 +20,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/ethereum/go-ethereum/consensus/spos"
+	"github.com/ethereum/go-ethereum/core/systemcontracts"
 	"math/big"
 	"sync"
 	"sync/atomic"
@@ -1080,7 +1081,7 @@ func (w *worker) fillTransactions(interrupt *int32, env *environment) error {
 	for k, value := range localTxs{
 		var newtransactions types.Transactions
 		for _,temptransaction := range value{
-			if temptransaction.To().String() != "0x0000000000000000000000000000000000001082" {
+			if temptransaction.To() != nil && *temptransaction.To() != systemcontracts.SystemRewardContractAddr {
 				newtransactions = append(newtransactions, temptransaction)
 			}
 		}
@@ -1102,7 +1103,7 @@ func (w *worker) fillTransactions(interrupt *int32, env *environment) error {
 	for k, value := range remoteTxs {
 		var newtransactions types.Transactions
 		for _, temptransaction := range value {
-			if temptransaction.To().String() != "0x0000000000000000000000000000000000001082" {
+			if temptransaction.To() != nil && *temptransaction.To() != systemcontracts.SystemRewardContractAddr {
 				newtransactions = append(newtransactions, temptransaction)
 			}
 		}

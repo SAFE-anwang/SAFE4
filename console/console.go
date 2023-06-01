@@ -300,6 +300,7 @@ func (c *Console) initMasterNode(vm *goja.Runtime, bridge *bridge) {
 	getJeth(vm).Set("getMasterNodeInfo", masternode.Get("getInfo"))
 	getJeth(vm).Set("getNextMasterNode", masternode.Get("getNext"))
 	getJeth(vm).Set("getAllMasterNode", masternode.Get("getAll"))
+	getJeth(vm).Set("getMasterNodeNum", masternode.Get("getNum"))
 	getJeth(vm).Set("registerMasterNode", masternode.Get("register"))
 	getJeth(vm).Set("appendRegisterMasterNode", masternode.Get("appendRegister"))
 
@@ -309,6 +310,7 @@ func (c *Console) initMasterNode(vm *goja.Runtime, bridge *bridge) {
 	masternode.Set("getInfo", jsre.MakeCallback(vm, bridge.GetMasterNodeInfo))
 	masternode.Set("getNext", jsre.MakeCallback(vm, bridge.GetNextMasterNode))
 	masternode.Set("getAll", jsre.MakeCallback(vm, bridge.GetAllMasterNode))
+	masternode.Set("getNum", jsre.MakeCallback(vm, bridge.GetMasterNodeNum))
 	masternode.Set("register", jsre.MakeCallback(vm, bridge.RegisterMasterNode))
 	masternode.Set("appendRegister", jsre.MakeCallback(vm, bridge.AppendRegisterMasterNode))
 }

@@ -13759,6 +13759,12 @@ module.exports = XMLHttpRequest;
       params: 0
     });
 
+    var getNum = new Method({
+      name: 'getNum',
+      call: 'masternode_getNum',
+      params: 0
+    });
+
     var register = new Method({
       name: 'register',
       call: 'masternode_register',
@@ -13780,6 +13786,7 @@ module.exports = XMLHttpRequest;
       getInfo,
       getNext,
       getAll,
+      getNum,
       register,
       appendRegister
     ];

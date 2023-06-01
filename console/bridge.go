@@ -589,6 +589,14 @@ func (b *bridge) GetAllMasterNode(call jsre.Call) (goja.Value, error) {
 	return getAllMasterNode(goja.Null())
 }
 
+func (b *bridge) GetMasterNodeNum(call jsre.Call) (goja.Value, error) {
+	getMasterNodeNum, callable := goja.AssertFunction(getJeth(call.VM).Get("getMasterNodeNum"))
+	if !callable {
+		return nil, fmt.Errorf("jeth.getMasterNodeNum is not callable")
+	}
+	return getMasterNodeNum(goja.Null())
+}
+
 func (b *bridge) RegisterMasterNode(call jsre.Call) (goja.Value, error) {
 	registerMasterNode, callable := goja.AssertFunction(getJeth(call.VM).Get("registerMasterNode"))
 	if !callable {

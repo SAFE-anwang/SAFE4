@@ -121,6 +121,39 @@ func GetAllMasterNode(ctx context.Context, api *ethapi.PublicBlockChainAPI) ([]t
 	return mnList, nil
 }
 
+func GetMasterNodeNum(ctx context.Context, api *ethapi.PublicBlockChainAPI) (*big.Int, error) {
+	if api == nil {
+		return nil, errors.New("invalid blockchain api")
+	}
+
+	vABI, err := abi.JSON(strings.NewReader(MasterNodeABI))
+	if err != nil {
+		return nil, err
+	}
+
+	method := "getNum"
+	data, err := vABI.Pack(method)
+	if err != nil {
+		return nil, err
+	}
+
+	msgData := (hexutil.Bytes)(data)
+	args := ethapi.TransactionArgs{
+		To: &MasterNodeContractAddr,
+		Data: &msgData,
+	}
+	result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	count := new(big.Int)
+	if err := vABI.UnpackIntoInterface(&count, method, result); err != nil {
+		return nil, err
+	}
+	return count, nil
+}
+
 func RegisterMasterNode(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, transactionPoolAPI *ethapi.PublicTransactionPoolAPI, from common.Address, amount *big.Int, isUnion bool, mnAddr common.Address, lockDay *big.Int, enode string, description string, creatorIncentive *big.Int, partnerIncentive *big.Int) (common.Hash, error) {
 	vABI, err := abi.JSON(strings.NewReader(MasterNodeABI))
 	if err != nil {

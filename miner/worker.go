@@ -1081,7 +1081,7 @@ func (w *worker) fillTransactions(interrupt *int32, env *environment) error {
 	for k, value := range localTxs{
 		var newtransactions types.Transactions
 		for _,temptransaction := range value{
-			if temptransaction.To() != nil && *temptransaction.To() != systemcontracts.SystemRewardContractAddr {
+			if temptransaction.To() == nil || (temptransaction.To() != nil && *temptransaction.To() != systemcontracts.SystemRewardContractAddr) {
 				newtransactions = append(newtransactions, temptransaction)
 			}
 		}
@@ -1103,7 +1103,7 @@ func (w *worker) fillTransactions(interrupt *int32, env *environment) error {
 	for k, value := range remoteTxs {
 		var newtransactions types.Transactions
 		for _, temptransaction := range value {
-			if temptransaction.To() != nil && *temptransaction.To() != systemcontracts.SystemRewardContractAddr {
+			if temptransaction.To() == nil || (temptransaction.To() != nil && *temptransaction.To() != systemcontracts.SystemRewardContractAddr) {
 				newtransactions = append(newtransactions, temptransaction)
 			}
 		}

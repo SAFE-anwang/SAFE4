@@ -19,3 +19,5 @@ var SuperNodeStateContractAddr = common.HexToAddress("0x000000000000000000000000
 var ProposalContractAddr = common.HexToAddress("0x0000000000000000000000000000000000001072")
 
 var SystemRewardContractAddr = common.HexToAddress("0x0000000000000000000000000000000000001082")
+
+var MultiCallContractAddr = common.HexToAddress("0x0000000000000000000000000000000000001102")

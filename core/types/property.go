@@ -6,19 +6,19 @@ import (
 )
 
 type PropertyInfo struct {
-	Name         string
-	Value        *big.Int
-	Description  string
-	CreateHeight *big.Int
-	UpdateHeight *big.Int
+	Name         string         `json:"name"            gencodec:"required"`
+	Value        *big.Int       `json:"value"           gencodec:"required"`
+	Description  string         `json:"description"     gencodec:"required"`
+	CreateHeight *big.Int       `json:"createHeight,omitempty"`
+	UpdateHeight *big.Int       `json:"updateHeight,omitempty"`
 }
 
 type UnconfirmedPropertyInfo struct {
-	Name        string
-	Value       *big.Int
-	Applicant   common.Address
-	Voters      []common.Address
-	VoteResults []*big.Int
-	Reason      string
-	ApplyHeight *big.Int
+	Name        string              `json:"name"          gencodec:"required"`
+	Value       *big.Int            `json:"value"         gencodec:"required"`
+	Applicant   common.Address      `json:"applicant"     gencodec:"required"`
+	Voters      []common.Address    `json:"voters,omitempty"`
+	VoteResults []*big.Int          `json:"voteResults,omitempty"`
+	Reason      string              `json:"reason,omitempty"`
+	ApplyHeight *big.Int            `json:"applyHeight,omitempty"`
 }

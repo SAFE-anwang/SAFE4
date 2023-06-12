@@ -404,7 +404,6 @@ func (s *Spos) verifyCascadingFields(chain consensus.ChainHeaderReader, header *
 	}
 
 	if number > chain.CurrentHeader().Number.Uint64() + 1 {
-		log.Warn("The block height is greater than the current block height","number",number,"currentblocknumber", s.chain.CurrentBlock().Number().Uint64())
 		return nil
 	}
 
@@ -503,7 +502,6 @@ func (s *Spos) snapshot(chain consensus.ChainHeaderReader, number uint64, hash c
 
 					for i := 0; i < icountsupernode; i++{
 						signers =  append(signers, resultSuperNode[i])
-						log.Info("singers info", "number", number, "signers[i]", signers[i])
 					}
 				}else{
 					signers = make([]common.Address, (len(checkpoint.Extra)-extraVanity-extraSeal)/common.AddressLength)
@@ -549,7 +547,6 @@ func (s *Spos) snapshot(chain consensus.ChainHeaderReader, number uint64, hash c
 					}
 
 					for i := range superNodeInfos {
-						log.Info("Super MasterNode Addr Info", "superNodeInfos[i].Addr", superNodeInfos[i].Addr)
 						signersmap[superNodeInfos[i].Addr] = struct{}{}
 					}
 				}
@@ -566,7 +563,6 @@ func (s *Spos) snapshot(chain consensus.ChainHeaderReader, number uint64, hash c
 
 				for i := 0; i < icountsupernode; i++{
 					signers = append(signers, resultSuperNode[i])
-					log.Info("singers info", "number", number, "i", i, "signers[i]", signers[i])
 				}
 
 				snap = newSnapshot(s.config, s.signatures, number, hash, signers)

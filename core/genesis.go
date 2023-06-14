@@ -244,7 +244,7 @@ func SetupGenesisBlockWithOverride(db ethdb.Database, genesis *Genesis, override
 	if (stored == common.Hash{}) {
 		if genesis == nil {
 			log.Info("Writing default main-net genesis block")
-			genesis = DefaultGenesisBlock()
+			genesis = DefaultSafeGenesisBlock()
 		} else {
 			log.Info("Writing custom genesis block")
 		}
@@ -259,7 +259,7 @@ func SetupGenesisBlockWithOverride(db ethdb.Database, genesis *Genesis, override
 	header := rawdb.ReadHeader(db, stored, 0)
 	if _, err := state.New(header.Root, state.NewDatabaseWithConfig(db, nil), nil); err != nil {
 		if genesis == nil {
-			genesis = DefaultGenesisBlock()
+			genesis = DefaultSafeGenesisBlock()
 		}
 		// Ensure the stored genesis matches with the given one.
 		hash := genesis.ToBlock(nil).Hash()
@@ -501,15 +501,12 @@ func DefaultSepoliaGenesisBlock() *Genesis {
 
 // DefaultSafeGenesisBlock returns the safe network genesis block.
 func DefaultSafeGenesisBlock() *Genesis {
-	return &Genesis{
-		Config:     params.SafeChainConfig,
-		Nonce:      0,
-		//ExtraData:  hexutil.MustDecode("xxxxxx"), //49 signatures of super bookkeepers
-		GasLimit:   10485760,
-		Difficulty: big.NewInt(0),
-		Timestamp:  1660183213,
-		//Alloc:      decodePrealloc(mainnetAllocData), //mainnetAllocData is SAFE reserved account
+	g := new(Genesis)
+	reader := strings.NewReader(SafeAllocData)
+	if err := json.NewDecoder(reader).Decode(g); err != nil {
+		panic(err)
 	}
+	return g
 }
 
 func DefaultKilnGenesisBlock() *Genesis {

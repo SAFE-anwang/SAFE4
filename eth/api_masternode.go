@@ -26,7 +26,8 @@ func (api *PublicMasterNodeAPI) Start(ctx context.Context, addr common.Address) 
 	if err != nil {
 		return false, err
 	}
-	api.e.eventMux.Post(core.NewNodePingEvent{Id: info.Id, NodeType: types.MasterNodeType, PrivateKey: api.e.p2pServer.Config.PrivateKey})
+	curBlock := api.e.blockchain.CurrentBlock()
+	api.e.eventMux.Post(core.NodePingEvent{Ping: types.NewNodePing(info.Id, types.MasterNodeType, curBlock.Hash(), curBlock.Number(), api.e.p2pServer.Config.PrivateKey)})
 	return true, nil
 }
 

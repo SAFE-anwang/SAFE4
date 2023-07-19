@@ -27,7 +27,8 @@ func (api *PublicSuperNodeAPI) Start(ctx context.Context, addr common.Address) (
 		log.Info(err.Error())
 		return false, err
 	}
-	api.e.EventMux().Post(core.NewNodePingEvent{Id: info.Id, NodeType: types.SuperNodeType, PrivateKey: api.e.p2pServer.PrivateKey})
+	curBlock := api.e.blockchain.CurrentBlock()
+	api.e.eventMux.Post(core.NodePingEvent{Ping: types.NewNodePing(info.Id, types.SuperNodeType, curBlock.Hash(), curBlock.Number(), api.e.p2pServer.Config.PrivateKey)})
 	return true, nil
 }
 

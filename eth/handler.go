@@ -539,7 +539,7 @@ func (h *handler) Start(maxPeers int) {
 
 	// broadcast mnp
 	h.wg.Add(1)
-	h.nodePingSub = h.eventMux.Subscribe(core.NewNodePingEvent{}, core.RecvNodePingEvent{})
+	h.nodePingSub = h.eventMux.Subscribe(core.NodePingEvent{})
 	go h.nodePingBroadcastLoop()
 }
 
@@ -688,9 +688,7 @@ func (h *handler) nodePingBroadcastLoop() {
 	defer h.wg.Done()
 	for obj := range h.nodePingSub.Chan() {
 		switch ev := obj.Data.(type) {
-		case core.NewNodePingEvent:
-			h.BroadcastNodePing(types.NewNodePing(ev.Id, ev.NodeType, h.chain.CurrentBlock().Hash(), h.chain.CurrentBlock().Number(), ev.PrivateKey))
-		case core.RecvNodePingEvent:
+		case core.NodePingEvent:
 			h.BroadcastNodePing(ev.Ping)
 		}
 	}

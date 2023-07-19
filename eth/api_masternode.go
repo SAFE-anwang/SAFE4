@@ -26,7 +26,7 @@ func (api *PublicMasterNodeAPI) Start(ctx context.Context, addr common.Address) 
 	if err != nil {
 		return false, err
 	}
-	api.e.eventMux.Post(core.NewMasterNodeEvent{MasterNodeInfo: info, Operator: core.NODE_START})
+	api.e.eventMux.Post(core.NewNodePingEvent{Id: info.Id, NodeType: types.MasterNodeType, PrivateKey: api.e.p2pServer.Config.PrivateKey})
 	return true, nil
 }
 

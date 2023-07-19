@@ -17,8 +17,10 @@
 package core
 
 import (
+	"crypto/ecdsa"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
+	"math/big"
 )
 
 // NewTxsEvent is posted when a batch of transactions enter the transaction pool.
@@ -42,16 +44,10 @@ type ChainSideEvent struct {
 
 type ChainHeadEvent struct{ Block *types.Block }
 
-const NODE_START = 1
-const NODE_STOP = 2
-const NODE_RESTART =3
-
-type NewMasterNodeEvent struct {
-	MasterNodeInfo *types.MasterNodeInfo
-	Operator int
+type NewNodePingEvent struct {
+	Id *big.Int
+	NodeType int
+	PrivateKey *ecdsa.PrivateKey
 }
 
-type NewSuperNodeEvent struct {
-	SuperNodeInfo *types.SuperNodeInfo
-	Operator int
-}
+type RecvNodePingEvent struct { Ping *types.NodePing }

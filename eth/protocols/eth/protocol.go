@@ -65,8 +65,7 @@ const (
 	NewPooledTransactionHashesMsg = 0x08
 	GetPooledTransactionsMsg      = 0x09
 	PooledTransactionsMsg         = 0x0a
-	MasterNodePingMsg             = 0x20
-	SuperNodePingMsg        = 0x21
+	NodePingMsg                   = 0x20
 )
 
 var (
@@ -375,10 +374,6 @@ func (*GetPooledTransactionsPacket) Kind() byte   { return GetPooledTransactions
 func (*PooledTransactionsPacket) Name() string { return "PooledTransactions" }
 func (*PooledTransactionsPacket) Kind() byte   { return PooledTransactionsMsg }
 
-type MasterNodePingPacket struct { MNP *types.MasterNodePing }
-func (*MasterNodePingPacket) Name() string { return "MasterNodePing" }
-func (*MasterNodePingPacket) Kind() byte { return MasterNodePingMsg }
-
-type SuperNodePingPacket struct { SNP *types.SuperNodePing }
-func (*SuperNodePingPacket) Name() string { return "SuperNodePing" }
-func (*SuperNodePingPacket) Kind() byte { return SuperNodePingMsg }
+type NodePingPacket struct { Ping *types.NodePing }
+func (*NodePingPacket) Name() string { return "NodePing" }
+func (*NodePingPacket) Kind() byte   { return NodePingMsg }

@@ -179,7 +179,7 @@ var eth66 = map[uint64]msgHandler{
 	ReceiptsMsg:                   handleReceipts66,
 	GetPooledTransactionsMsg:      handleGetPooledTransactions66,
 	PooledTransactionsMsg:         handlePooledTransactions66,
-	MasterNodePingMsg:             handleMasterNodePing,
+	NodePingMsg:                   handleNodePing,
 }
 
 var eth67 = map[uint64]msgHandler{
@@ -195,7 +195,7 @@ var eth67 = map[uint64]msgHandler{
 	ReceiptsMsg:                   handleReceipts66,
 	GetPooledTransactionsMsg:      handleGetPooledTransactions66,
 	PooledTransactionsMsg:         handlePooledTransactions66,
-	MasterNodePingMsg:             handleMasterNodePing,
+	NodePingMsg:                   handleNodePing,
 }
 
 // handleMessage is invoked whenever an inbound message is received from a remote

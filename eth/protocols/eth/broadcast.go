@@ -193,33 +193,3 @@ func (p *Peer) announceTransactions() {
 		}
 	}
 }
-
-func (p *Peer) broadcastMasterNodePing() {
-	for {
-		select {
-		case mnp := <-p.queuedMasterNodePing:
-			if err := p.SendMasterNodePing(mnp); err != nil {
-				return
-			}
-			p.Log().Trace("Announced mnp", "hash", mnp.Hash())
-
-		case <-p.term:
-			return
-		}
-	}
-}
-
-func (p *Peer) broadcastSuperNodePing() {
-	for {
-		select {
-		case snp := <-p.queuedSuperNodePing:
-			if err := p.SendSuperNodePing(snp); err != nil {
-				return
-			}
-			p.Log().Trace("Announced snp", "hash", snp.Hash())
-
-		case <-p.term:
-			return
-		}
-	}
-}

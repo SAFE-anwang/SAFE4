@@ -3,8 +3,6 @@ package types
 import (
 	"github.com/ethereum/go-ethereum/common"
 	"math/big"
-	"sync/atomic"
-	"time"
 )
 
 type SuperNodeMemberInfo struct {
@@ -49,36 +47,4 @@ type SuperNodeInfo struct {
 	LastRewardHeight  *big.Int                  `json:"lastRewardHeight" gencodec:"required"`
 	CreateHeight  *big.Int                      `json:"createHeight"  gencodec:"required"`
 	UpdateHeight  *big.Int                      `json:"updateHeight"  gencodec:"required"`
-}
-
-// SuperNodePing is a supernode ping.
-type SuperNodePing struct {
-	Version int             `json:"version"        gencodec:"required"`
-	SignTime time.Time      `json:"signTime"       gencodec:"required"`
-	Sign []byte             `json:"sign"           gencodec:"required"`
-	BlockHash common.Hash   `json:"blockhash"      gencodec:"required"`
-
-	// caches
-	hash atomic.Value
-	size atomic.Value
-}
-
-const SnpVersion = 1001
-
-func NewSuperNodePing(superNodeInfo *SuperNodeInfo) *SuperNodePing {
-	snp := &SuperNodePing{}
-	snp.Version = SnpVersion
-	snp.SignTime = time.Now()
-	snp.Sign = nil
-	return snp
-}
-
-// Hash returns the transaction hash.
-func (snp *SuperNodePing) Hash() common.Hash {
-	if hash := snp.hash.Load(); hash != nil {
-		return hash.(common.Hash)
-	}
-	h := rlpHash(snp)
-	snp.hash.Store(h)
-	return h
 }

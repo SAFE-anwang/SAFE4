@@ -114,8 +114,7 @@ type handler struct {
 	txsCh         chan core.NewTxsEvent
 	txsSub        event.Subscription
 	minedBlockSub *event.TypeMuxSubscription
-	masterNodeSub *event.TypeMuxSubscription
-	superNodeSub *event.TypeMuxSubscription
+	nodePingSub *event.TypeMuxSubscription
 
 	requiredBlocks map[uint64]common.Hash
 
@@ -540,20 +539,14 @@ func (h *handler) Start(maxPeers int) {
 
 	// broadcast mnp
 	h.wg.Add(1)
-	h.masterNodeSub = h.eventMux.Subscribe(core.NewMasterNodeEvent{})
-	go h.masterNodeBroadcastLoop()
-
-	// broadcast snp
-	h.wg.Add(1)
-	h.superNodeSub = h.eventMux.Subscribe(core.NewSuperNodeEvent{})
-	go h.superNodeBroadcastLoop()
+	h.nodePingSub = h.eventMux.Subscribe(core.NewNodePingEvent{}, core.RecvNodePingEvent{})
+	go h.nodePingBroadcastLoop()
 }
 
 func (h *handler) Stop() {
 	h.txsSub.Unsubscribe()        // quits txBroadcastLoop
 	h.minedBlockSub.Unsubscribe() // quits blockBroadcastLoop
-	h.masterNodeSub.Unsubscribe() // quits masterNodeBroadcastLoop
-	h.superNodeSub.Unsubscribe() // quits superNodeBroadcastLoop
+	h.nodePingSub.Unsubscribe() // quits nodePingBroadcastLoop
 
 	// Quit chainSync and txsync64.
 	// After this is done, no new peers will be accepted.
@@ -682,42 +675,23 @@ func (h *handler) txBroadcastLoop() {
 	}
 }
 
-func (h *handler) BroadcastMasterNode(masterNodeInfo *types.MasterNodeInfo) {
-	mnp := types.NewMasterNodePing(masterNodeInfo, h.chain.CurrentBlock().Hash())
-	hash := mnp.Hash()
-	peers := h.peers.peersWithoutMnp(hash)
-
+func (h *handler) BroadcastNodePing(ping *types.NodePing) {
+	hash := ping.Hash()
+	peers := h.peers.peersWithoutNodePing(hash)
 	for _, peer := range peers {
-		peer.SendMasterNodePing(mnp)
+		peer.SendNodePing(ping)
 	}
-	log.Trace("Announced mnp", "hash", hash, "recipients", len(peers))
+	log.Trace("Announced node-ping", "hash", hash, "recipients", len(peers))
 }
 
-func (h *handler) masterNodeBroadcastLoop() {
+func (h *handler) nodePingBroadcastLoop() {
 	defer h.wg.Done()
-	for obj := range h.masterNodeSub.Chan() {
-		if ev, ok := obj.Data.(core.NewMasterNodeEvent); ok {
-			h.BroadcastMasterNode(ev.MasterNodeInfo)
-		}
-	}
-}
-
-func (h *handler) BroadcastSuperNode(superNodeInfo *types.SuperNodeInfo) {
-	snp := types.NewSuperNodePing(superNodeInfo)
-	hash := snp.Hash()
-	peers := h.peers.peersWithoutSnp(hash)
-
-	for _, peer := range peers {
-		peer.SendSuperNodePing(snp)
-	}
-	log.Trace("Announced snp", "hash", hash, "recipients", len(peers))
-}
-
-func (h *handler) superNodeBroadcastLoop() {
-	defer h.wg.Done()
-	for obj := range h.superNodeSub.Chan() {
-		if ev, ok := obj.Data.(core.NewSuperNodeEvent); ok {
-			h.BroadcastSuperNode(ev.SuperNodeInfo)
+	for obj := range h.nodePingSub.Chan() {
+		switch ev := obj.Data.(type) {
+		case core.NewNodePingEvent:
+			h.BroadcastNodePing(types.NewNodePing(ev.Id, ev.NodeType, h.chain.CurrentBlock().Hash(), h.chain.CurrentBlock().Number(), ev.PrivateKey))
+		case core.RecvNodePingEvent:
+			h.BroadcastNodePing(ev.Ping)
 		}
 	}
 }

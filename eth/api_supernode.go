@@ -24,11 +24,14 @@ func NewPublicSuperNodeAPI(e *Ethereum, blockChainAPI *ethapi.PublicBlockChainAP
 func (api *PublicSuperNodeAPI) Start(ctx context.Context, addr common.Address) (bool, error) {
 	info, err := api.GetInfo(ctx, addr)
 	if err != nil {
-		log.Info(err.Error())
 		return false, err
 	}
 	curBlock := api.e.blockchain.CurrentBlock()
-	api.e.eventMux.Post(core.NodePingEvent{Ping: types.NewNodePing(info.Id, types.SuperNodeType, curBlock.Hash(), curBlock.Number(), api.e.p2pServer.Config.PrivateKey)})
+	ping, err := types.NewNodePing(info.Id, types.SuperNodeType, curBlock.Hash(), curBlock.Number(), api.e.p2pServer.Config.PrivateKey)
+	if err != nil {
+		return false, err
+	}
+	api.e.eventMux.Post(core.NodePingEvent{Ping: ping})
 	return true, nil
 }
 

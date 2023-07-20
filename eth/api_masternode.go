@@ -27,7 +27,11 @@ func (api *PublicMasterNodeAPI) Start(ctx context.Context, addr common.Address) 
 		return false, err
 	}
 	curBlock := api.e.blockchain.CurrentBlock()
-	api.e.eventMux.Post(core.NodePingEvent{Ping: types.NewNodePing(info.Id, types.MasterNodeType, curBlock.Hash(), curBlock.Number(), api.e.p2pServer.Config.PrivateKey)})
+	ping, err := types.NewNodePing(info.Id, types.MasterNodeType, curBlock.Hash(), curBlock.Number(), api.e.p2pServer.Config.PrivateKey)
+	if err != nil {
+		return false, err
+	}
+	api.e.eventMux.Post(core.NodePingEvent{Ping: ping})
 	return true, nil
 }
 

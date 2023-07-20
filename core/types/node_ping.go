@@ -14,7 +14,7 @@ import (
 const NodePingVersion int = 1001
 
 const (
-	MasterNodeType int = 1
+	MasterNodeType int = iota + 1
 	SuperNodeType
 )
 
@@ -43,15 +43,15 @@ type NodePing struct {
 	size atomic.Value
 }
 
-func NewNodePing(id *big.Int, nodeType int, blockHash common.Hash, height *big.Int, privateKey *ecdsa.PrivateKey) *NodePing {
-	base := &NodePingBase{big.NewInt(int64(NodePingVersion)), id, big.NewInt(int64(nodeType)), blockHash, height, big.NewInt(time.Now().Unix())}
+func NewNodePing(id *big.Int, nodeType int, blockHash common.Hash, height *big.Int, privateKey *ecdsa.PrivateKey) (*NodePing, error) {
+	base := &NodePingBase{ big.NewInt(int64(NodePingVersion)), id, big.NewInt(int64(nodeType)), blockHash, height, big.NewInt(time.Now().Unix())}
 	h := rlpHash(base)
 	sig, err := crypto.Sign(h.Bytes(), privateKey)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 	r, s, v := decodeSignature(sig)
-	return &NodePing{Version: base.Version, Id: base.Id, NodeType: base.NodeType, CurBlock: base.CurBlock, Time: base.Time, V: v, R: r, S: s}
+	return &NodePing{Version: base.Version, Id: base.Id, NodeType: base.NodeType, CurBlock: base.CurBlock, Time: base.Time, V: v, R: r, S: s}, nil
 }
 
 // Hash returns the transaction hash.

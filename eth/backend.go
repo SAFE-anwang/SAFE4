@@ -105,6 +105,8 @@ type Ethereum struct {
 	shutdownTracker *shutdowncheck.ShutdownTracker // Tracks if and when the node has shutdown ungracefully
 
 	//etherbaseprivatekey *ecdsa.PrivateKey
+
+	nodeStateMonitor *NodeStateMonitor
 }
 
 // New creates a new Ethereum object (including the
@@ -279,6 +281,10 @@ func New(stack *node.Node, config *ethconfig.Config) (*Ethereum, error) {
 
 	// Start the RPC service
 	eth.netRPCService = ethapi.NewPublicNetAPI(eth.p2pServer, config.NetworkId)
+
+	if eth.nodeStateMonitor, err = newNodeStateMonitor(eth); err != nil {
+		return nil, err
+	}
 
 	// Register the backend on the node
 	stack.RegisterAPIs(eth.APIs())
@@ -647,6 +653,7 @@ func (s *Ethereum) Start() error {
 	}
 	// Start the networking layer and the light server if requested
 	s.handler.Start(maxPeers)
+	s.nodeStateMonitor.Start()
 	return nil
 }
 
@@ -657,6 +664,7 @@ func (s *Ethereum) Stop() error {
 	s.ethDialCandidates.Close()
 	s.snapDialCandidates.Close()
 	s.handler.Stop()
+	s.nodeStateMonitor.Stop()
 
 	// Then stop everything else.
 	s.bloomIndexer.Close()

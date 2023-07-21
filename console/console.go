@@ -364,33 +364,33 @@ func (c *Console) initProposal(vm *goja.Runtime, bridge *bridge) {
 }
 
 func (c *Console) initMasterNodeState(vm *goja.Runtime, bridge *bridge) {
-	proposal := getObject(vm, "masternodestate")
-	if proposal == nil || c.prompter == nil {
+	masternodestate := getObject(vm, "masternodestate")
+	if masternodestate == nil || c.prompter == nil {
 		return
 	}
 
-	getJeth(vm).Set("uploadMasterNodeState", proposal.Get("upload"))
-	getJeth(vm).Set("getAllMasterNodeState", proposal.Get("getAll"))
-	getJeth(vm).Set("getMasterNodeEntries", proposal.Get("getEntries"))
+	getJeth(vm).Set("uploadMasterNodeState", masternodestate.Get("upload"))
+	getJeth(vm).Set("getAllMasterNodeState", masternodestate.Get("getAll"))
+	getJeth(vm).Set("getMasterNodeEntries", masternodestate.Get("getEntries"))
 
-	proposal.Set("upload", jsre.MakeCallback(vm, bridge.UploadMasterNodeState))
-	proposal.Set("getAll", jsre.MakeCallback(vm, bridge.GetAllMasterNodeState))
-	proposal.Set("getEntries", jsre.MakeCallback(vm, bridge.GetMasterNodeEntries))
+	masternodestate.Set("upload", jsre.MakeCallback(vm, bridge.UploadMasterNodeState))
+	masternodestate.Set("getAll", jsre.MakeCallback(vm, bridge.GetAllMasterNodeState))
+	masternodestate.Set("getEntries", jsre.MakeCallback(vm, bridge.GetMasterNodeEntries))
 }
 
 func (c *Console) initSuperNodeState(vm *goja.Runtime, bridge *bridge) {
-	proposal := getObject(vm, "supernodestate")
-	if proposal == nil || c.prompter == nil {
+	supernodestate := getObject(vm, "supernodestate")
+	if supernodestate == nil || c.prompter == nil {
 		return
 	}
 
-	getJeth(vm).Set("uploadSuperNodeState", proposal.Get("upload"))
-	getJeth(vm).Set("getAllSuperNodeState", proposal.Get("getAll"))
-	getJeth(vm).Set("getSuperNodeEntries", proposal.Get("getEntries"))
+	getJeth(vm).Set("uploadSuperNodeState", supernodestate.Get("upload"))
+	getJeth(vm).Set("getAllSuperNodeState", supernodestate.Get("getAll"))
+	getJeth(vm).Set("getSuperNodeEntries", supernodestate.Get("getEntries"))
 
-	proposal.Set("upload", jsre.MakeCallback(vm, bridge.UploadSuperNodeState))
-	proposal.Set("getAll", jsre.MakeCallback(vm, bridge.GetAllSuperNodeState))
-	proposal.Set("getEntries", jsre.MakeCallback(vm, bridge.GetSuperNodeEntries))
+	supernodestate.Set("upload", jsre.MakeCallback(vm, bridge.UploadSuperNodeState))
+	supernodestate.Set("getAll", jsre.MakeCallback(vm, bridge.GetAllSuperNodeState))
+	supernodestate.Set("getEntries", jsre.MakeCallback(vm, bridge.GetSuperNodeEntries))
 }
 
 func (c *Console) clearHistory() {

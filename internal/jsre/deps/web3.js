@@ -14008,8 +14008,8 @@ module.exports = XMLHttpRequest;
     var upload = new Method({
       name: 'create',
       call: 'masternodestate_upload',
-      params: 8,
-      inputFormatter: [formatters.inputArrayFormatter, formatters.inputArrayFormatter]
+      params: 3,
+      inputFormatter: [formatters.inputAddressFormatter, formatters.inputArrayFormatter, formatters.inputArrayFormatter]
     });
 
     var getAll = new Method({
@@ -14063,8 +14063,8 @@ module.exports = XMLHttpRequest;
     var upload = new Method({
       name: 'create',
       call: 'supernodestate_upload',
-      params: 8,
-      inputFormatter: [formatters.inputArrayFormatter, formatters.inputArrayFormatter]
+      params: 3,
+      inputFormatter: [formatters.inputAddressFormatter, formatters.inputArrayFormatter, formatters.inputArrayFormatter]
     });
 
     var getAll = new Method({

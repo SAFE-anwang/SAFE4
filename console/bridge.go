@@ -730,7 +730,7 @@ func (b *bridge) UploadMasterNodeState(call jsre.Call) (goja.Value, error) {
 	if !callable {
 		return nil, fmt.Errorf("jeth.uploadMasterNodeState is not callable")
 	}
-	return uploadMasterNodeState(goja.Null(), call.Argument(0), call.Argument(1))
+	return uploadMasterNodeState(goja.Null(), call.Argument(0), call.Argument(1), call.Argument(2))
 }
 
 func (b *bridge) GetAllMasterNodeState(call jsre.Call) (goja.Value, error) {
@@ -754,7 +754,7 @@ func (b *bridge) UploadSuperNodeState(call jsre.Call) (goja.Value, error) {
 	if !callable {
 		return nil, fmt.Errorf("jeth.uploadSuperNodeState is not callable")
 	}
-	return uploadSuperNodeState(goja.Null(), call.Argument(0), call.Argument(1))
+	return uploadSuperNodeState(goja.Null(), call.Argument(0), call.Argument(1), call.Argument(2))
 }
 
 func (b *bridge) GetAllSuperNodeState(call jsre.Call) (goja.Value, error) {

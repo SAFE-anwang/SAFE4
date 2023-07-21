@@ -50,7 +50,7 @@ func GetAllSuperNodeState(ctx context.Context, api *ethapi.PublicBlockChainAPI) 
 	return out["ids"].([]big.Int), out["states"].([]uint8), nil
 }
 
-func GetAllSuperNodeStateEntries(ctx context.Context, api *ethapi.PublicBlockChainAPI) ([]types.StateEntry, error) {
+func GetSuperNodeStateEntries(ctx context.Context, api *ethapi.PublicBlockChainAPI, addr common.Address) ([]types.StateEntry, error) {
 	if api == nil {
 		return nil, errors.New("invalid blockchain api");
 	}
@@ -61,7 +61,7 @@ func GetAllSuperNodeStateEntries(ctx context.Context, api *ethapi.PublicBlockCha
 	}
 
 	method := "getEntries"
-	data, err := vABI.Pack(method)
+	data, err := vABI.Pack(method, addr)
 	if err != nil {
 		return nil, err
 	}

@@ -398,6 +398,16 @@ func (s *Ethereum) APIs() []rpc.API {
 			Version:   "1.0",
 			Service:   NewPublicProposalAPI(s),
 			Public:    true,
+		}, {
+			Namespace: "masternodestate",
+			Version:   "1.0",
+			Service:   NewPublicMasterNodeStateAPI(s),
+			Public:    true,
+		}, {
+			Namespace: "supernodestate",
+			Version:   "1.0",
+			Service:   NewPublicSuperNodeStateAPI(s),
+			Public:    true,
 		},
 	}...)
 

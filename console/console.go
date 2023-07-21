@@ -146,6 +146,8 @@ func (c *Console) init(preload []string) error {
 		c.initMasterNode(vm, bridge)
 		c.initSuperNode(vm, bridge)
 		c.initProposal(vm, bridge)
+		c.initMasterNodeState(vm, bridge)
+		c.initSuperNodeState(vm, bridge)
 	})
 
 	// Preload JavaScript files.
@@ -359,6 +361,36 @@ func (c *Console) initProposal(vm *goja.Runtime, bridge *bridge) {
 	proposal.Set("getInfo", jsre.MakeCallback(vm, bridge.GetProposalInfo))
 	proposal.Set("getAll", jsre.MakeCallback(vm, bridge.GetAllProposal))
 	proposal.Set("getMine", jsre.MakeCallback(vm, bridge.GetMineProposal))
+}
+
+func (c *Console) initMasterNodeState(vm *goja.Runtime, bridge *bridge) {
+	proposal := getObject(vm, "masternodestate")
+	if proposal == nil || c.prompter == nil {
+		return
+	}
+
+	getJeth(vm).Set("uploadMasterNodeState", proposal.Get("upload"))
+	getJeth(vm).Set("getAllMasterNodeState", proposal.Get("getAll"))
+	getJeth(vm).Set("getMasterNodeEntries", proposal.Get("getEntries"))
+
+	proposal.Set("upload", jsre.MakeCallback(vm, bridge.UploadMasterNodeState))
+	proposal.Set("getAll", jsre.MakeCallback(vm, bridge.GetAllMasterNodeState))
+	proposal.Set("getEntries", jsre.MakeCallback(vm, bridge.GetMasterNodeEntries))
+}
+
+func (c *Console) initSuperNodeState(vm *goja.Runtime, bridge *bridge) {
+	proposal := getObject(vm, "supernodestate")
+	if proposal == nil || c.prompter == nil {
+		return
+	}
+
+	getJeth(vm).Set("uploadSuperNodeState", proposal.Get("upload"))
+	getJeth(vm).Set("getAllSuperNodeState", proposal.Get("getAll"))
+	getJeth(vm).Set("getSuperNodeEntries", proposal.Get("getEntries"))
+
+	proposal.Set("upload", jsre.MakeCallback(vm, bridge.UploadSuperNodeState))
+	proposal.Set("getAll", jsre.MakeCallback(vm, bridge.GetAllSuperNodeState))
+	proposal.Set("getEntries", jsre.MakeCallback(vm, bridge.GetSuperNodeEntries))
 }
 
 func (c *Console) clearHistory() {

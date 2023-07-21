@@ -99,7 +99,7 @@ func (monitor *NodeStateMonitor) timerLoop() {
 		select {
 		case <- monitor.ticker.C:
 			if monitor.isSuperNode() {
-				monitor.lock.Unlock()
+				monitor.lock.Lock()
 				mnIDs, mnStates := monitor.collectMasterNodes()
 				snIDs, snStates := monitor.collectSuperNodes()
 				monitor.lock.Unlock()

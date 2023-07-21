@@ -79,7 +79,7 @@ func (monitor *NodeStateMonitor) loop() {
 		case core.NodePingEvent:
 			if monitor.isSuperNode() {
 				ping := ev.Ping
-				log.Info("node-monitor", "ping", ping)
+				log.Info("node-state-monitor", "ping", ping)
 				nodeType := ping.NodeType.Int64()
 				monitor.lock.Lock()
 				if nodeType == int64(types.MasterNodeType) {
@@ -105,10 +105,12 @@ func (monitor *NodeStateMonitor) timerLoop() {
 				monitor.lock.Unlock()
 
 				if len(mnIDs) != 0 && len(mnIDs) == len(mnStates) {
-					monitor.uploadMasterNodes(mnIDs, mnStates)
+					hash, err := monitor.uploadMasterNodes(mnIDs, mnStates)
+					log.Info("masternode-state", "hash", hash.Hex(), "error", err)
 				}
 				if len(snIDs) != 0 && len(snIDs) == len(snStates) {
-					monitor.uploadSuperNodes(snIDs, snStates)
+					hash, err := monitor.uploadSuperNodes(snIDs, snStates)
+					log.Info("supernode-state", "hash", hash.Hex(), "error", err)
 				}
 			}
 		}
@@ -132,9 +134,9 @@ func (monitor *NodeStateMonitor) isSuperNode() bool {
 		}
 	}
 	flag := false
-	//log.Info("node-monitor", "coinbase", monitor.e.etherbase, "enode", monitor.e.p2pServer.NodeInfo().Enode)
+	//log.Info("node-state-monitor", "coinbase", monitor.e.etherbase, "enode", monitor.e.p2pServer.NodeInfo().Enode)
 	for _, info := range infos {
-		//log.Info("node-monitor", "addr", info.Addr, "enode", info.Enode)
+		//log.Info("node-state-monitor", "addr", info.Addr, "enode", info.Enode)
 		if info.Addr == monitor.e.etherbase /*&& info.Enode == monitor.e.p2pServer.NodeInfo().Enode*/ {
 			flag = true
 			break
@@ -177,8 +179,9 @@ func (monitor *NodeStateMonitor) collectMasterNodes() ([]int64, []uint8) {
 	return ids, states
 }
 
-func (monitor *NodeStateMonitor) uploadMasterNodes(ids []int64, states []uint8) {
+func (monitor *NodeStateMonitor) uploadMasterNodes(ids []int64, states []uint8) (common.Hash, error) {
 	log.Info("masternode-upload", "ids", ids, "stats", states)
+	return systemcontracts.UploadMasterNodeStates(monitor.ctx, monitor.blockChainAPI, monitor.transactionPoolAPI, monitor.e.etherbase, ids, states)
 }
 
 func (monitor *NodeStateMonitor) collectSuperNodes() ([]int64, []uint8) {
@@ -215,6 +218,7 @@ func (monitor *NodeStateMonitor) collectSuperNodes() ([]int64, []uint8) {
 	return ids, states
 }
 
-func (monitor *NodeStateMonitor) uploadSuperNodes(ids []int64, states []uint8) {
+func (monitor *NodeStateMonitor) uploadSuperNodes(ids []int64, states []uint8) (common.Hash, error) {
 	log.Info("supernode-upload", "ids", ids, "stats", states)
+	return systemcontracts.UploadSuperNodeStates(monitor.ctx, monitor.blockChainAPI, monitor.transactionPoolAPI, monitor.e.etherbase, ids, states)
 }

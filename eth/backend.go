@@ -263,6 +263,9 @@ func New(stack *node.Node, config *ethconfig.Config) (*Ethereum, error) {
 	}
 	eth.APIBackend.gpo = gasprice.NewOracle(eth.APIBackend, gpoParams)
 
+	// Start the RPC service
+	eth.netRPCService = ethapi.NewPublicNetAPI(eth.p2pServer, config.NetworkId)
+
 	apis := eth.APIs()
 	if s, ok := eth.engine.(*spos2.Spos); ok {
 		s.SetChain(eth.blockchain)
@@ -281,8 +284,6 @@ func New(stack *node.Node, config *ethconfig.Config) (*Ethereum, error) {
 		return nil, err
 	}
 
-	// Start the RPC service
-	eth.netRPCService = ethapi.NewPublicNetAPI(eth.p2pServer, config.NetworkId)
 
 	if eth.nodeStateMonitor, err = newNodeStateMonitor(eth); err != nil {
 		return nil, err

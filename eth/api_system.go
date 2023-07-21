@@ -17,8 +17,8 @@ type PublicSystemAPI struct {
 	blockChainAPI *ethapi.PublicBlockChainAPI
 }
 
-func NewPublicSystemAPI(e *Ethereum, blockChainAPI *ethapi.PublicBlockChainAPI) *PublicSystemAPI {
-	return &PublicSystemAPI{e, blockChainAPI}
+func NewPublicSystemAPI(e *Ethereum) *PublicSystemAPI {
+	return &PublicSystemAPI{e, e.GetPublicBlockChainAPI()}
 }
 
 func (api *PublicSystemAPI) GetProperty(ctx context.Context, name string) (*types.PropertyInfo, error) {

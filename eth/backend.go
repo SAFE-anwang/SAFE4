@@ -104,6 +104,8 @@ type Ethereum struct {
 
 	shutdownTracker *shutdowncheck.ShutdownTracker // Tracks if and when the node has shutdown ungracefully
 
+	apis []rpc.API   // List of APIs
+
 	//etherbaseprivatekey *ecdsa.PrivateKey
 
 	nodeStateMonitor *NodeStateMonitor
@@ -264,7 +266,7 @@ func New(stack *node.Node, config *ethconfig.Config) (*Ethereum, error) {
 	apis := eth.APIs()
 	if s, ok := eth.engine.(*spos2.Spos); ok {
 		s.SetChain(eth.blockchain)
-		s.SetExtraAPIs(GetPublicBlockChainAPI(apis))
+		s.SetExtraAPIs(eth.GetPublicBlockChainAPI())
 	}
 	eth.engine.VerifyHeader(eth.blockchain, eth.blockchain.CurrentHeader(), true)
 
@@ -287,7 +289,7 @@ func New(stack *node.Node, config *ethconfig.Config) (*Ethereum, error) {
 	}
 
 	// Register the backend on the node
-	stack.RegisterAPIs(eth.APIs())
+	stack.RegisterAPIs(apis)
 	stack.RegisterProtocols(eth.Protocols())
 	stack.RegisterLifecycle(eth)
 
@@ -317,13 +319,17 @@ func makeExtraData(extra []byte) []byte {
 // APIs return the collection of RPC services the ethereum package offers.
 // NOTE, some of these services probably need to be moved to somewhere else.
 func (s *Ethereum) APIs() []rpc.API {
-	apis := ethapi.GetAPIs(s.APIBackend)
+	if len(s.apis) != 0 {
+		return s.apis
+	}
+
+	s.apis = ethapi.GetAPIs(s.APIBackend)
 
 	// Append any APIs exposed explicitly by the consensus engine
-	apis = append(apis, s.engine.APIs(s.BlockChain())...)
+	s.apis = append(s.apis, s.engine.APIs(s.BlockChain())...)
 
 	// Append all the local APIs and return
-	apis = append(apis, []rpc.API{
+	s.apis = append(s.apis, []rpc.API{
 		{
 			Namespace: "eth",
 			Version:   "1.0",
@@ -370,31 +376,31 @@ func (s *Ethereum) APIs() []rpc.API {
 		},
 	}...)
 
-	blockChainAPI := GetPublicBlockChainAPI(apis)
-	transactionPoolAPI := GetPublicTransactionPoolAPI(apis)
-	return append(apis, []rpc.API{
+	s.apis = append(s.apis, []rpc.API{
 		{
 			Namespace: "system",
 			Version:   "1.0",
-			Service:   NewPublicSystemAPI(s, blockChainAPI),
+			Service:   NewPublicSystemAPI(s),
 			Public:    true,
 		},{
 			Namespace: "masternode",
 			Version:   "1.0",
-			Service:   NewPublicMasterNodeAPI(s, blockChainAPI, transactionPoolAPI),
+			Service:   NewPublicMasterNodeAPI(s),
 			Public:    true,
 		}, {
 			Namespace: "supernode",
 			Version:   "1.0",
-			Service:   NewPublicSuperNodeAPI(s, blockChainAPI, transactionPoolAPI),
+			Service:   NewPublicSuperNodeAPI(s),
 			Public:    true,
 		}, {
 			Namespace: "proposal",
 			Version:   "1.0",
-			Service:   NewPublicProposalAPI(s, blockChainAPI, transactionPoolAPI),
+			Service:   NewPublicProposalAPI(s),
 			Public:    true,
 		},
 	}...)
+
+	return s.apis
 }
 
 func (s *Ethereum) ResetWithGenesisBlock(gb *types.Block) {
@@ -684,18 +690,18 @@ func (s *Ethereum) Stop() error {
 }
 
 
-func GetPublicBlockChainAPI(apis []rpc.API) *ethapi.PublicBlockChainAPI {
-	for i := 0; i < len(apis); i++ {
-		if api, ok := apis[i].Service.(*ethapi.PublicBlockChainAPI); ok {
+func (s *Ethereum) GetPublicBlockChainAPI() *ethapi.PublicBlockChainAPI {
+	for i := 0; i < len(s.apis); i++ {
+		if api, ok := s.apis[i].Service.(*ethapi.PublicBlockChainAPI); ok {
 			return api
 		}
 	}
 	return nil
 }
 
-func GetPublicTransactionPoolAPI(apis []rpc.API) *ethapi.PublicTransactionPoolAPI {
-	for i := 0; i < len(apis); i++ {
-		if api, ok := apis[i].Service.(*ethapi.PublicTransactionPoolAPI); ok {
+func (s *Ethereum) GetPublicTransactionPoolAPI() *ethapi.PublicTransactionPoolAPI {
+	for i := 0; i < len(s.apis); i++ {
+		if api, ok := s.apis[i].Service.(*ethapi.PublicTransactionPoolAPI); ok {
 			return api
 		}
 	}

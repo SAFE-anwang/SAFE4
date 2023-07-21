@@ -32,6 +32,7 @@ type NodeStateMonitor struct {
 
 	e           *Ethereum
 	blockChainAPI *ethapi.PublicBlockChainAPI
+	transactionPoolAPI *ethapi.PublicTransactionPoolAPI
 
 	eventSub    *event.TypeMuxSubscription
 	ticker      *time.Ticker
@@ -46,7 +47,8 @@ func newNodeStateMonitor(e *Ethereum) (*NodeStateMonitor, error) {
 	monitor := &NodeStateMonitor{}
 	monitor.ctx, monitor.cancelCtx = context.WithCancel(context.Background())
 	monitor.e = e
-	monitor.blockChainAPI = GetPublicBlockChainAPI(monitor.e.APIs())
+	monitor.blockChainAPI = monitor.e.GetPublicBlockChainAPI()
+	monitor.transactionPoolAPI = monitor.e.GetPublicTransactionPoolAPI()
 	monitor.mnMonitorInfos = make(map[int64]MonitorInfo)
 	monitor.snMonitorInfos = make(map[int64]MonitorInfo)
 	return monitor, nil

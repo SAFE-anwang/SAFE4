@@ -17,8 +17,8 @@ type PublicSuperNodeAPI struct {
 	transactionPoolAPI *ethapi.PublicTransactionPoolAPI
 }
 
-func NewPublicSuperNodeAPI(e *Ethereum, blockChainAPI *ethapi.PublicBlockChainAPI, transactionPoolAPI *ethapi.PublicTransactionPoolAPI) *PublicSuperNodeAPI {
-	return &PublicSuperNodeAPI{e, blockChainAPI, transactionPoolAPI}
+func NewPublicSuperNodeAPI(e *Ethereum) *PublicSuperNodeAPI {
+	return &PublicSuperNodeAPI{e, e.GetPublicBlockChainAPI(), e.GetPublicTransactionPoolAPI()}
 }
 
 func (api *PublicSuperNodeAPI) Start(ctx context.Context, addr common.Address) (bool, error) {

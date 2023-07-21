@@ -17,8 +17,8 @@ type PublicMasterNodeAPI struct {
 	transactionPoolAPI *ethapi.PublicTransactionPoolAPI
 }
 
-func NewPublicMasterNodeAPI(e *Ethereum, blockChainAPI *ethapi.PublicBlockChainAPI, transactionPoolAPI *ethapi.PublicTransactionPoolAPI) *PublicMasterNodeAPI {
-	return &PublicMasterNodeAPI{e, blockChainAPI, transactionPoolAPI}
+func NewPublicMasterNodeAPI(e *Ethereum) *PublicMasterNodeAPI {
+	return &PublicMasterNodeAPI{e, e.GetPublicBlockChainAPI(), e.GetPublicTransactionPoolAPI()}
 }
 
 func (api *PublicMasterNodeAPI) Start(ctx context.Context, addr common.Address) (bool, error) {

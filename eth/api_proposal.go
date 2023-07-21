@@ -19,8 +19,8 @@ type PublicProposalAPI struct {
 	transactionPoolAPI *ethapi.PublicTransactionPoolAPI
 }
 
-func NewPublicProposalAPI(e *Ethereum, blockChainAPI *ethapi.PublicBlockChainAPI, transactionPoolAPI *ethapi.PublicTransactionPoolAPI) *PublicProposalAPI {
-	return &PublicProposalAPI{e, blockChainAPI, transactionPoolAPI}
+func NewPublicProposalAPI(e *Ethereum) *PublicProposalAPI {
+	return &PublicProposalAPI{e, e.GetPublicBlockChainAPI(), e.GetPublicTransactionPoolAPI()}
 }
 
 func (api *PublicProposalAPI) Create(ctx context.Context, creatorAddr common.Address, title string, payAmount *big.Int, payTimes *big.Int, startPayTime *big.Int, endPayTime *big.Int, description string, detail string) (*big.Int, error) {

@@ -573,6 +573,14 @@ func (b *bridge) GetMasterNodeInfo(call jsre.Call) (goja.Value, error) {
 	return getMasterNodeInfo(goja.Null(), call.Argument(0))
 }
 
+func (b *bridge) GetMasterNodeInfoByID(call jsre.Call) (goja.Value, error) {
+	getMasterNodeInfoByID, callable := goja.AssertFunction(getJeth(call.VM).Get("getMasterNodeInfoByID"))
+	if !callable {
+		return nil, fmt.Errorf("jeth.getMasterNodeInfoByID is not callable")
+	}
+	return getMasterNodeInfoByID(goja.Null(), call.Argument(0))
+}
+
 func (b *bridge) GetNextMasterNode(call jsre.Call) (goja.Value, error) {
 	getNextMasterNode, callable := goja.AssertFunction(getJeth(call.VM).Get("getNextMasterNode"))
 	if !callable {
@@ -643,6 +651,14 @@ func (b *bridge) GetSuperNodeInfo(call jsre.Call) (goja.Value, error) {
 		return nil, fmt.Errorf("jeth.getSuperNodeInfo is not callable")
 	}
 	return getSuperNodeInfo(goja.Null(), call.Argument(0))
+}
+
+func (b *bridge) GetSuperNodeInfoByID(call jsre.Call) (goja.Value, error) {
+	getSuperNodeInfoByID, callable := goja.AssertFunction(getJeth(call.VM).Get("getSuperNodeInfoByID"))
+	if !callable {
+		return nil, fmt.Errorf("jeth.getSuperNodeInfoByID is not callable")
+	}
+	return getSuperNodeInfoByID(goja.Null(), call.Argument(0))
 }
 
 func (b *bridge) GetAllSuperNode(call jsre.Call) (goja.Value, error) {
@@ -741,12 +757,20 @@ func (b *bridge) GetAllMasterNodeState(call jsre.Call) (goja.Value, error) {
 	return getAllMasterNodeState(goja.Null())
 }
 
-func (b *bridge) GetMasterNodeEntries(call jsre.Call) (goja.Value, error) {
-	getMasterNodeEntries, callable := goja.AssertFunction(getJeth(call.VM).Get("getMasterNodeEntries"))
+func (b *bridge) GetMasterNodeEntriesByAddr(call jsre.Call) (goja.Value, error) {
+	getMasterNodeEntriesByAddr, callable := goja.AssertFunction(getJeth(call.VM).Get("getMasterNodeEntriesByAddr"))
 	if !callable {
-		return nil, fmt.Errorf("jeth.getMasterNodeEntries is not callable")
+		return nil, fmt.Errorf("jeth.getMasterNodeEntriesByAddr is not callable")
 	}
-	return getMasterNodeEntries(goja.Null(), call.Argument(0))
+	return getMasterNodeEntriesByAddr(goja.Null(), call.Argument(0))
+}
+
+func (b *bridge) GetMasterNodeEntriesByID(call jsre.Call) (goja.Value, error) {
+	getMasterNodeEntriesByID, callable := goja.AssertFunction(getJeth(call.VM).Get("getMasterNodeEntriesByID"))
+	if !callable {
+		return nil, fmt.Errorf("jeth.getMasterNodeEntriesByID is not callable")
+	}
+	return getMasterNodeEntriesByID(goja.Null(), call.Argument(0))
 }
 
 func (b *bridge) UploadSuperNodeState(call jsre.Call) (goja.Value, error) {
@@ -765,10 +789,18 @@ func (b *bridge) GetAllSuperNodeState(call jsre.Call) (goja.Value, error) {
 	return getAllSuperNodeState(goja.Null())
 }
 
-func (b *bridge) GetSuperNodeEntries(call jsre.Call) (goja.Value, error) {
-	getSuperNodeEntries, callable := goja.AssertFunction(getJeth(call.VM).Get("getSuperNodeEntries"))
+func (b *bridge) GetSuperNodeEntriesByAddr(call jsre.Call) (goja.Value, error) {
+	getSuperNodeEntriesByAddr, callable := goja.AssertFunction(getJeth(call.VM).Get("getSuperNodeEntriesByAddr"))
 	if !callable {
-		return nil, fmt.Errorf("jeth.getSuperNodeEntries is not callable")
+		return nil, fmt.Errorf("jeth.getSuperNodeEntriesByAddr is not callable")
 	}
-	return getSuperNodeEntries(goja.Null(), call.Argument(0))
+	return getSuperNodeEntriesByAddr(goja.Null(), call.Argument(0))
+}
+
+func (b *bridge) GetSuperNodeEntriesByID(call jsre.Call) (goja.Value, error) {
+	getSuperNodeEntriesByID, callable := goja.AssertFunction(getJeth(call.VM).Get("getSuperNodeEntriesByID"))
+	if !callable {
+		return nil, fmt.Errorf("jeth.getSuperNodeEntriesByID is not callable")
+	}
+	return getSuperNodeEntriesByID(goja.Null(), call.Argument(0))
 }

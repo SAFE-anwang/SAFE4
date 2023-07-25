@@ -24,4 +24,4 @@ var SystemRewardContractAddr = common.HexToAddress("0x00000000000000000000000000
 
 var Safe3ContractAddr = common.HexToAddress("0x0000000000000000000000000000000000001092")
 
-var MultiCallContractAddr = common.HexToAddress("0x0000000000000000000000000000000000001102")
+var MulticallContractAddr = common.HexToAddress("0x0000000000000000000000000000000000001102")

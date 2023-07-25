@@ -3979,11 +3979,11 @@ var outputSyncingFormatter = function(result) {
 
 var inputArrayFormatter = function(arr) {
     return utils.isArray(arr)
-}
+};
 
 var outputArrayFormatter = function(result) {
     return utils.isArray(result)
-}
+};
 
 module.exports = {
     inputDefaultBlockNumberFormatter: inputDefaultBlockNumberFormatter,
@@ -13761,6 +13761,13 @@ module.exports = XMLHttpRequest;
       inputFormatter: [formatters.inputAddressFormatter]
     });
 
+    var getInfoByID = new Method({
+      name: 'getInfoByID',
+      call: 'masternode_getInfoByID',
+      params: 1,
+      inputFormatter: [formatters.formatInputInt]
+    });
+
     var getNext = new Method({
       name: 'getNext',
       call: 'masternode_getNext',
@@ -13798,6 +13805,7 @@ module.exports = XMLHttpRequest;
       stop,
       restart,
       getInfo,
+      getInfoByID,
       getNext,
       getAll,
       getNum,
@@ -13862,6 +13870,13 @@ module.exports = XMLHttpRequest;
       inputFormatter: [formatters.inputAddressFormatter]
     });
 
+    var getInfoByID = new Method({
+      name: 'getInfoByID',
+      call: 'supernode_getInfoByID',
+      params: 1,
+      inputFormatter: [formatters.formatInputInt]
+    });
+
     var getAll = new Method({
       name: 'getAll',
       call: 'supernode_getAll',
@@ -13899,6 +13914,7 @@ module.exports = XMLHttpRequest;
       stop,
       restart,
       getInfo,
+      getInfoByID,
       getAll,
       getTop,
       getNum,
@@ -14005,7 +14021,7 @@ module.exports = XMLHttpRequest;
 
   var methods = function () {
     var upload = new Method({
-      name: 'create',
+      name: 'upload',
       call: 'masternodestate_upload',
       params: 3,
       inputFormatter: [formatters.inputAddressFormatter, formatters.inputArrayFormatter, formatters.inputArrayFormatter]
@@ -14017,9 +14033,16 @@ module.exports = XMLHttpRequest;
       params: 0
     });
 
-    var getEntries = new Method({
-      name: 'getEntries',
-      call: 'masternodestate_getEntries',
+    var getEntriesByAddr = new Method({
+      name: 'getEntriesByAddr',
+      call: 'masternodestate_getEntriesByAddr',
+      params: 1,
+      inputFormatter: [formatters.inputAddressFormatter]
+    });
+
+    var getEntriesByID = new Method({
+      name: 'getEntriesByID',
+      call: 'masternodestate_getEntriesByID',
       params: 1,
       inputFormatter: [formatters.formatInputInt]
     });
@@ -14027,7 +14050,8 @@ module.exports = XMLHttpRequest;
     return [
       upload,
       getAll,
-      getEntries
+      getEntriesByAddr,
+      getEntriesByID
     ];
   };
 
@@ -14060,7 +14084,7 @@ module.exports = XMLHttpRequest;
 
   var methods = function () {
     var upload = new Method({
-      name: 'create',
+      name: 'upload',
       call: 'supernodestate_upload',
       params: 3,
       inputFormatter: [formatters.inputAddressFormatter, formatters.inputArrayFormatter, formatters.inputArrayFormatter]
@@ -14072,9 +14096,16 @@ module.exports = XMLHttpRequest;
       params: 0
     });
 
-    var getEntries = new Method({
-      name: 'getEntries',
-      call: 'supernodestate_getEntries',
+    var getEntriesByAddr = new Method({
+      name: 'getEntriesByAddr',
+      call: 'supernodestate_getEntriesByAddr',
+      params: 1,
+      inputFormatter: [formatters.inputAddressFormatter]
+    });
+
+    var getEntriesByID = new Method({
+      name: 'getEntriesByID',
+      call: 'supernodestate_getEntriesByID',
       params: 1,
       inputFormatter: [formatters.formatInputInt]
     });
@@ -14082,7 +14113,8 @@ module.exports = XMLHttpRequest;
     return [
       upload,
       getAll,
-      getEntries
+      getEntriesByAddr,
+      getEntriesByID
     ];
   };
 

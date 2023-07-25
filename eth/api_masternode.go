@@ -49,6 +49,10 @@ func (api *PublicMasterNodeAPI) GetInfo(ctx context.Context, addr common.Address
 	return systemcontracts.GetMasterNodeInfo(ctx, api.blockChainAPI, addr)
 }
 
+func (api *PublicMasterNodeAPI) GetInfoByID(ctx context.Context, id *big.Int) (*types.MasterNodeInfo, error) {
+	return systemcontracts.GetMasterNodeInfoByID(ctx, api.blockChainAPI, id)
+}
+
 func (api *PublicMasterNodeAPI) GetNext(ctx context.Context) (*common.Address, error) {
 	return systemcontracts.GetNextMasterNode(ctx, api.blockChainAPI)
 }

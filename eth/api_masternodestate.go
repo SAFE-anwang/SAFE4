@@ -19,12 +19,20 @@ func NewPublicMasterNodeStateAPI(e *Ethereum) *PublicMasterNodeStateAPI {
 	return &PublicMasterNodeStateAPI{e, e.GetPublicBlockChainAPI(), e.GetPublicTransactionPoolAPI()}
 }
 
-func (api *PublicMasterNodeStateAPI) GetAll(ctx context.Context) ([]big.Int, []uint8, error) {
+func (api *PublicMasterNodeStateAPI) GetAll(ctx context.Context) ([]types.StateInfo, error) {
 	return systemcontracts.GetAllMasterNodeState(ctx, api.blockChainAPI)
 }
 
-func (api *PublicMasterNodeStateAPI) GetEntries(ctx context.Context, addr common.Address) ([]types.StateEntry, error) {
-	return systemcontracts.GetMasterNodeStateEntries(ctx, api.blockChainAPI, addr)
+func (api *PublicMasterNodeStateAPI) GetEntriesByAddr(ctx context.Context, addr common.Address) ([]types.StateEntry, error) {
+	info, err := systemcontracts.GetMasterNodeInfo(ctx, api.blockChainAPI, addr)
+	if err != nil {
+		return nil, err
+	}
+	return systemcontracts.GetMasterNodeStateEntries(ctx, api.blockChainAPI, info.Id)
+}
+
+func (api *PublicMasterNodeStateAPI) GetEntriesByID(ctx context.Context, id *big.Int) ([]types.StateEntry, error) {
+	return systemcontracts.GetMasterNodeStateEntries(ctx, api.blockChainAPI, id)
 }
 
 func (api *PublicMasterNodeStateAPI) Upload(ctx context.Context, from common.Address, ids []int64, states []uint8) (common.Hash, error) {

@@ -49,6 +49,10 @@ func (api *PublicSuperNodeAPI) GetInfo(ctx context.Context, addr common.Address)
 	return systemcontracts.GetSuperNodeInfo(ctx, api.blockChainAPI, addr)
 }
 
+func (api *PublicSuperNodeAPI) GetInfoByID(ctx context.Context, id *big.Int) (*types.SuperNodeInfo, error) {
+	return systemcontracts.GetSuperNodeInfoByID(ctx, api.blockChainAPI, id)
+}
+
 func (api *PublicSuperNodeAPI) GetAll(ctx context.Context) ([]types.SuperNodeInfo, error) {
 	return systemcontracts.GetAllSuperNode(ctx, api.blockChainAPI)
 }

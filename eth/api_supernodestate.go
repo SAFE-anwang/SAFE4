@@ -19,12 +19,24 @@ func NewPublicSuperNodeStateAPI(e *Ethereum) *PublicSuperNodeStateAPI {
 	return &PublicSuperNodeStateAPI{e, e.GetPublicBlockChainAPI(), e.GetPublicTransactionPoolAPI()}
 }
 
-func (api *PublicSuperNodeStateAPI) GetAll(ctx context.Context) ([]big.Int, []uint8, error) {
+func (api *PublicSuperNodeStateAPI) GetAll(ctx context.Context) ([]types.StateInfo, error) {
 	return systemcontracts.GetAllSuperNodeState(ctx, api.blockChainAPI)
 }
 
-func (api *PublicSuperNodeStateAPI) GetEntries(ctx context.Context, addr common.Address) ([]types.StateEntry, error) {
-	return systemcontracts.GetSuperNodeStateEntries(ctx, api.blockChainAPI, addr)
+func (api *PublicSuperNodeStateAPI) GetEntries(ctx context.Context, id *big.Int) ([]types.StateEntry, error) {
+	return systemcontracts.GetSuperNodeStateEntries(ctx, api.blockChainAPI, id)
+}
+
+func (api *PublicSuperNodeStateAPI) GetEntriesByAddr(ctx context.Context, addr common.Address) ([]types.StateEntry, error) {
+	info, err := systemcontracts.GetSuperNodeInfo(ctx, api.blockChainAPI, addr)
+	if err != nil {
+		return nil, err
+	}
+	return systemcontracts.GetSuperNodeStateEntries(ctx, api.blockChainAPI, info.Id)
+}
+
+func (api *PublicSuperNodeStateAPI) GetEntriesByID(ctx context.Context, id *big.Int) ([]types.StateEntry, error) {
+	return systemcontracts.GetSuperNodeStateEntries(ctx, api.blockChainAPI, id)
 }
 
 func (api *PublicSuperNodeStateAPI) Upload(ctx context.Context, from common.Address, ids []int64, states []uint8) (common.Hash, error) {

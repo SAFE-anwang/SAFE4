@@ -300,6 +300,7 @@ func (c *Console) initMasterNode(vm *goja.Runtime, bridge *bridge) {
 	getJeth(vm).Set("stopMasterNode", masternode.Get("stop"))
 	getJeth(vm).Set("restartMasterNode", masternode.Get("restart"))
 	getJeth(vm).Set("getMasterNodeInfo", masternode.Get("getInfo"))
+	getJeth(vm).Set("getMasterNodeInfoByID", masternode.Get("getInfoByID"))
 	getJeth(vm).Set("getNextMasterNode", masternode.Get("getNext"))
 	getJeth(vm).Set("getAllMasterNode", masternode.Get("getAll"))
 	getJeth(vm).Set("getMasterNodeNum", masternode.Get("getNum"))
@@ -310,6 +311,7 @@ func (c *Console) initMasterNode(vm *goja.Runtime, bridge *bridge) {
 	masternode.Set("stop", jsre.MakeCallback(vm, bridge.StopMasterNode))
 	masternode.Set("restart", jsre.MakeCallback(vm, bridge.RestartMasterNode))
 	masternode.Set("getInfo", jsre.MakeCallback(vm, bridge.GetMasterNodeInfo))
+	masternode.Set("getInfoByID", jsre.MakeCallback(vm, bridge.GetMasterNodeInfoByID))
 	masternode.Set("getNext", jsre.MakeCallback(vm, bridge.GetNextMasterNode))
 	masternode.Set("getAll", jsre.MakeCallback(vm, bridge.GetAllMasterNode))
 	masternode.Set("getNum", jsre.MakeCallback(vm, bridge.GetMasterNodeNum))
@@ -327,6 +329,7 @@ func (c *Console) initSuperNode(vm *goja.Runtime, bridge *bridge) {
 	getJeth(vm).Set("stopSuperNode", supernode.Get("stop"))
 	getJeth(vm).Set("restartSuperNode", supernode.Get("restart"))
 	getJeth(vm).Set("getSuperNodeInfo", supernode.Get("getInfo"))
+	getJeth(vm).Set("getSuperNodeInfoByID", supernode.Get("getInfoByID"))
 	getJeth(vm).Set("getAllSuperNode", supernode.Get("getAll"))
 	getJeth(vm).Set("getTopSuperNode", supernode.Get("getTop"))
 	getJeth(vm).Set("getSuperNodeNum", supernode.Get("getNum"))
@@ -337,6 +340,7 @@ func (c *Console) initSuperNode(vm *goja.Runtime, bridge *bridge) {
 	supernode.Set("stop", jsre.MakeCallback(vm, bridge.StopSuperNode))
 	supernode.Set("restart", jsre.MakeCallback(vm, bridge.RestartSuperNode))
 	supernode.Set("getInfo", jsre.MakeCallback(vm, bridge.GetSuperNodeInfo))
+	supernode.Set("getInfoByID", jsre.MakeCallback(vm, bridge.GetSuperNodeInfoByID))
 	supernode.Set("getAll", jsre.MakeCallback(vm, bridge.GetAllSuperNode))
 	supernode.Set("getTop", jsre.MakeCallback(vm, bridge.GetTopSuperNode))
 	supernode.Set("getNum", jsre.MakeCallback(vm, bridge.GetSuperNodeNum))
@@ -371,11 +375,13 @@ func (c *Console) initMasterNodeState(vm *goja.Runtime, bridge *bridge) {
 
 	getJeth(vm).Set("uploadMasterNodeState", masternodestate.Get("upload"))
 	getJeth(vm).Set("getAllMasterNodeState", masternodestate.Get("getAll"))
-	getJeth(vm).Set("getMasterNodeEntries", masternodestate.Get("getEntries"))
+	getJeth(vm).Set("getMasterNodeEntriesByAddr", masternodestate.Get("getEntriesByAddr"))
+	getJeth(vm).Set("getMasterNodeEntriesByID", masternodestate.Get("getEntriesByID"))
 
 	masternodestate.Set("upload", jsre.MakeCallback(vm, bridge.UploadMasterNodeState))
 	masternodestate.Set("getAll", jsre.MakeCallback(vm, bridge.GetAllMasterNodeState))
-	masternodestate.Set("getEntries", jsre.MakeCallback(vm, bridge.GetMasterNodeEntries))
+	masternodestate.Set("getEntriesByAddr", jsre.MakeCallback(vm, bridge.GetMasterNodeEntriesByAddr))
+	masternodestate.Set("getEntriesByID", jsre.MakeCallback(vm, bridge.GetMasterNodeEntriesByID))
 }
 
 func (c *Console) initSuperNodeState(vm *goja.Runtime, bridge *bridge) {
@@ -386,11 +392,13 @@ func (c *Console) initSuperNodeState(vm *goja.Runtime, bridge *bridge) {
 
 	getJeth(vm).Set("uploadSuperNodeState", supernodestate.Get("upload"))
 	getJeth(vm).Set("getAllSuperNodeState", supernodestate.Get("getAll"))
-	getJeth(vm).Set("getSuperNodeEntries", supernodestate.Get("getEntries"))
+	getJeth(vm).Set("getSuperNodeEntriesByAddr", supernodestate.Get("getEntriesByAddr"))
+	getJeth(vm).Set("getSuperNodeEntriesByID", supernodestate.Get("getEntriesByID"))
 
 	supernodestate.Set("upload", jsre.MakeCallback(vm, bridge.UploadSuperNodeState))
 	supernodestate.Set("getAll", jsre.MakeCallback(vm, bridge.GetAllSuperNodeState))
-	supernodestate.Set("getEntries", jsre.MakeCallback(vm, bridge.GetSuperNodeEntries))
+	supernodestate.Set("getEntriesByAddr", jsre.MakeCallback(vm, bridge.GetSuperNodeEntriesByAddr))
+	supernodestate.Set("getEntriesByID", jsre.MakeCallback(vm, bridge.GetSuperNodeEntriesByID))
 }
 
 func (c *Console) clearHistory() {

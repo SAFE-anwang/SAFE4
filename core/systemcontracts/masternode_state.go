@@ -14,20 +14,20 @@ import (
 	"strings"
 )
 
-func GetAllMasterNodeState(ctx context.Context, api *ethapi.PublicBlockChainAPI) ([]big.Int, []uint8, error) {
+func GetAllMasterNodeState(ctx context.Context, api *ethapi.PublicBlockChainAPI) ([]types.StateInfo, error) {
 	if api == nil {
-		return nil, nil, errors.New("invalid blockchain api")
+		return nil, errors.New("invalid blockchain api")
 	}
 
 	vABI, err := abi.JSON(strings.NewReader(MasterNodeStateABI))
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	method := "getAllState"
 	data, err := vABI.Pack(method)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	msgData := (hexutil.Bytes)(data)
@@ -37,20 +37,18 @@ func GetAllMasterNodeState(ctx context.Context, api *ethapi.PublicBlockChainAPI)
 	}
 	result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
-	out := make(map[string]interface{})
-	if err := vABI.UnpackIntoMap(out, method, result); err != nil {
-		return nil, nil, err
+	infos := new([]types.StateInfo)
+	err = vABI.UnpackIntoInterface(infos, method, result)
+	if err != nil {
+		return nil, err
 	}
-	if _, ok := out["ids"]; !ok {
-		return nil, nil, nil
-	}
-	return out["ids"].([]big.Int), out["states"].([]uint8), nil
+	return *infos, nil
 }
 
-func GetMasterNodeStateEntries(ctx context.Context, api *ethapi.PublicBlockChainAPI, addr common.Address) ([]types.StateEntry, error) {
+func GetMasterNodeStateEntries(ctx context.Context, api *ethapi.PublicBlockChainAPI, id *big.Int) ([]types.StateEntry, error) {
 	if api == nil {
 		return nil, errors.New("invalid blockchain api");
 	}
@@ -61,7 +59,7 @@ func GetMasterNodeStateEntries(ctx context.Context, api *ethapi.PublicBlockChain
 	}
 
 	method := "getEntries"
-	data, err := vABI.Pack(method, addr)
+	data, err := vABI.Pack(method, id)
 	if err != nil {
 		return nil, err
 	}
@@ -76,19 +74,11 @@ func GetMasterNodeStateEntries(ctx context.Context, api *ethapi.PublicBlockChain
 		return nil, err
 	}
 
-	var (
-		ret0 = new([]types.StateEntry)
-	)
-	out := ret0
-	if err := vABI.UnpackIntoInterface(out, method, result); err != nil {
+	entries := new([]types.StateEntry)
+	if err := vABI.UnpackIntoInterface(entries, method, result); err != nil {
 		return nil, err
 	}
-
-	entries := make([]types.StateEntry, len(*ret0))
-	for i, sn := range *ret0 {
-		entries[i] = sn
-	}
-	return entries, nil
+	return *entries, nil
 }
 
 func UploadMasterNodeStates(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, transactionPoolAPI *ethapi.PublicTransactionPoolAPI, from common.Address, ids []int64, states []uint8) (common.Hash, error) {

@@ -47,6 +47,39 @@ func GetMasterNodeInfo(ctx context.Context, api *ethapi.PublicBlockChainAPI, add
 	return info, nil
 }
 
+func GetMasterNodeInfoByID(ctx context.Context, api *ethapi.PublicBlockChainAPI, id *big.Int) (*types.MasterNodeInfo, error) {
+	if api == nil {
+		return nil, errors.New("invalid blockchain api")
+	}
+
+	vABI, err := abi.JSON(strings.NewReader(MasterNodeABI))
+	if err != nil {
+		return nil, err
+	}
+
+	method := "getInfoByID"
+	data, err := vABI.Pack(method, id)
+	if err != nil {
+		return nil, err
+	}
+
+	msgData := (hexutil.Bytes)(data)
+	args := ethapi.TransactionArgs{
+		To: &MasterNodeContractAddr,
+		Data: &msgData,
+	}
+	result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	info := new(types.MasterNodeInfo)
+	if err := vABI.UnpackIntoInterface(&info, method, result); err != nil {
+		return nil, err
+	}
+	return info, nil
+}
+
 func GetNextMasterNode(ctx context.Context, api *ethapi.PublicBlockChainAPI) (*common.Address, error) {
 	if api == nil {
 		return nil, errors.New("invalid blockchain api")
@@ -106,19 +139,11 @@ func GetAllMasterNode(ctx context.Context, api *ethapi.PublicBlockChainAPI) ([]t
 		return nil, err
 	}
 
-	var (
-		ret0 = new([]types.MasterNodeInfo)
-	)
-	out := ret0
-	if err := vABI.UnpackIntoInterface(out, method, result); err != nil {
+	infos := new([]types.MasterNodeInfo)
+	if err := vABI.UnpackIntoInterface(infos, method, result); err != nil {
 		return nil, err
 	}
-
-	mnList := make([]types.MasterNodeInfo, len(*ret0))
-	for i, mn := range *ret0 {
-		mnList[i] = mn
-	}
-	return mnList, nil
+	return *infos, nil
 }
 
 func GetMasterNodeNum(ctx context.Context, api *ethapi.PublicBlockChainAPI) (*big.Int, error) {

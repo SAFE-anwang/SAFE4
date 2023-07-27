@@ -1082,11 +1082,6 @@ func (s *Spos) Reward(snAddr common.Address, snCount *big.Int, mnAddr common.Add
 	value := new(big.Int)
 	value.Add(snCount, mnCount)
 	msgData := (hexutil.Bytes)(data)
-	gasPrice := big.NewInt(params.GWei)
-	gasPrice, err = contract_api.GetPropertyValue(s.ctx, s.blockChainAPI, "gas_price")
-	if err != nil {
-		gasPrice = big.NewInt(params.GWei / 100)
-	}
 	nonce := state.GetNonce(snAddr)
 
 	args := ethapi.TransactionArgs{
@@ -1094,7 +1089,7 @@ func (s *Spos) Reward(snAddr common.Address, snCount *big.Int, mnAddr common.Add
 		To:       &systemcontracts.SystemRewardContractAddr,
 		Data:     &msgData,
 		Value:    (*hexutil.Big)(value),
-		GasPrice: (*hexutil.Big)(gasPrice),
+		GasPrice: (*hexutil.Big)(common.Big0),
 		Nonce:    (*hexutil.Uint64)(&nonce),
 	}
 	gas, err := s.blockChainAPI.EstimateGas(ctx, args, nil)

@@ -4,7 +4,7 @@ import (
 	"context"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core"
-	"github.com/ethereum/go-ethereum/core/systemcontracts"
+	"github.com/ethereum/go-ethereum/core/systemcontracts/contract_api"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/internal/ethapi"
 	"github.com/ethereum/go-ethereum/log"
@@ -46,29 +46,29 @@ func (api *PublicMasterNodeAPI) Restart(ctx context.Context, addr common.Address
 }
 
 func (api *PublicMasterNodeAPI) GetInfo(ctx context.Context, addr common.Address) (*types.MasterNodeInfo, error) {
-	return systemcontracts.GetMasterNodeInfo(ctx, api.blockChainAPI, addr)
+	return contract_api.GetMasterNodeInfo(ctx, api.blockChainAPI, addr)
 }
 
 func (api *PublicMasterNodeAPI) GetInfoByID(ctx context.Context, id *big.Int) (*types.MasterNodeInfo, error) {
-	return systemcontracts.GetMasterNodeInfoByID(ctx, api.blockChainAPI, id)
+	return contract_api.GetMasterNodeInfoByID(ctx, api.blockChainAPI, id)
 }
 
 func (api *PublicMasterNodeAPI) GetNext(ctx context.Context) (*common.Address, error) {
-	return systemcontracts.GetNextMasterNode(ctx, api.blockChainAPI)
+	return contract_api.GetNextMasterNode(ctx, api.blockChainAPI)
 }
 
 func (api *PublicMasterNodeAPI) GetAll(ctx context.Context) ([]types.MasterNodeInfo, error) {
-	return systemcontracts.GetAllMasterNode(ctx, api.blockChainAPI)
+	return contract_api.GetAllMasterNode(ctx, api.blockChainAPI)
 }
 
 func (api *PublicMasterNodeAPI) GetNum(ctx context.Context) (*big.Int, error) {
-	return systemcontracts.GetMasterNodeNum(ctx, api.blockChainAPI)
+	return contract_api.GetMasterNodeNum(ctx, api.blockChainAPI)
 }
 
 func (api *PublicMasterNodeAPI) Register(ctx context.Context, from common.Address, amount *big.Int, isUnion bool, mnAddr common.Address, lockDay *big.Int, enode string, description string, creatorIncentive *big.Int, partnerIncentive *big.Int) (common.Hash, error) {
-	return systemcontracts.RegisterMasterNode(ctx, api.blockChainAPI, api.transactionPoolAPI, from, amount, isUnion, mnAddr, lockDay, enode, description, creatorIncentive, partnerIncentive)
+	return contract_api.RegisterMasterNode(ctx, api.blockChainAPI, api.transactionPoolAPI, from, amount, isUnion, mnAddr, lockDay, enode, description, creatorIncentive, partnerIncentive)
 }
 
 func (api *PublicMasterNodeAPI) AppendRegister(ctx context.Context, from common.Address, amount *big.Int, mnAddr common.Address, lockDay *big.Int) (common.Hash, error) {
-	return systemcontracts.AppendRegisterMasterNode(ctx, api.blockChainAPI, api.transactionPoolAPI, from, amount, mnAddr, lockDay)
+	return contract_api.AppendRegisterMasterNode(ctx, api.blockChainAPI, api.transactionPoolAPI, from, amount, mnAddr, lockDay)
 }

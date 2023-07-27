@@ -1,4 +1,4 @@
-package systemcontracts
+package contract_api
 
 import (
 	"context"
@@ -6,6 +6,7 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/ethereum/go-ethereum/core/systemcontracts"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/internal/ethapi"
 	"github.com/ethereum/go-ethereum/params"
@@ -19,7 +20,7 @@ func GetAllMasterNodeState(ctx context.Context, api *ethapi.PublicBlockChainAPI)
 		return nil, errors.New("invalid blockchain api")
 	}
 
-	vABI, err := abi.JSON(strings.NewReader(MasterNodeStateABI))
+	vABI, err := abi.JSON(strings.NewReader(systemcontracts.MasterNodeStateABI))
 	if err != nil {
 		return nil, err
 	}
@@ -32,7 +33,7 @@ func GetAllMasterNodeState(ctx context.Context, api *ethapi.PublicBlockChainAPI)
 
 	msgData := (hexutil.Bytes)(data)
 	args := ethapi.TransactionArgs{
-		To: &MasterNodeStateContractAddr,
+		To: &systemcontracts.MasterNodeStateContractAddr,
 		Data: &msgData,
 	}
 	result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
@@ -53,7 +54,7 @@ func GetMasterNodeStateEntries(ctx context.Context, api *ethapi.PublicBlockChain
 		return nil, errors.New("invalid blockchain api");
 	}
 
-	vABI, err := abi.JSON(strings.NewReader(MasterNodeStateABI))
+	vABI, err := abi.JSON(strings.NewReader(systemcontracts.MasterNodeStateABI))
 	if err != nil {
 		return nil, err
 	}
@@ -66,7 +67,7 @@ func GetMasterNodeStateEntries(ctx context.Context, api *ethapi.PublicBlockChain
 
 	msgData := (hexutil.Bytes)(data)
 	args := ethapi.TransactionArgs{
-		To: &MasterNodeStateContractAddr,
+		To: &systemcontracts.MasterNodeStateContractAddr,
 		Data: &msgData,
 	}
 	result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
@@ -82,7 +83,7 @@ func GetMasterNodeStateEntries(ctx context.Context, api *ethapi.PublicBlockChain
 }
 
 func UploadMasterNodeStates(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, transactionPoolAPI *ethapi.PublicTransactionPoolAPI, from common.Address, ids []int64, states []uint8) (common.Hash, error) {
-	vABI, err := abi.JSON(strings.NewReader(MasterNodeStateABI))
+	vABI, err := abi.JSON(strings.NewReader(systemcontracts.MasterNodeStateABI))
 	if err != nil {
 		return common.Hash{}, err
 	}
@@ -105,7 +106,7 @@ func UploadMasterNodeStates(ctx context.Context, blockChainAPI *ethapi.PublicBlo
 
 	args := ethapi.TransactionArgs{
 		From:     &from,
-		To:       &MasterNodeStateContractAddr,
+		To:       &systemcontracts.MasterNodeStateContractAddr,
 		Data:     &msgData,
 		GasPrice: (*hexutil.Big)(gasPrice),
 	}

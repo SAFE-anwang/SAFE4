@@ -1,10 +1,11 @@
-package systemcontracts
+package contract_api
 
 import (
 	"context"
 	"errors"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/ethereum/go-ethereum/core/systemcontracts"
 	"github.com/ethereum/go-ethereum/internal/ethapi"
 	"github.com/ethereum/go-ethereum/rpc"
 	"math/big"
@@ -16,7 +17,7 @@ func GetPropertyValue(ctx context.Context, api *ethapi.PublicBlockChainAPI, key 
 		return nil, errors.New("invalid blockchain api")
 	}
 
-	vABI, err := abi.JSON(strings.NewReader(PropertyABI))
+	vABI, err := abi.JSON(strings.NewReader(systemcontracts.PropertyABI))
 	if err != nil {
 		return nil, err
 	}
@@ -29,7 +30,7 @@ func GetPropertyValue(ctx context.Context, api *ethapi.PublicBlockChainAPI, key 
 
 	msgData := (hexutil.Bytes)(data)
 	args := ethapi.TransactionArgs{
-		To: &PropertyContractAddr,
+		To: &systemcontracts.PropertyContractAddr,
 		Data: &msgData,
 	}
 	result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)

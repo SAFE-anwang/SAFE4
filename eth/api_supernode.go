@@ -4,7 +4,7 @@ import (
 	"context"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core"
-	"github.com/ethereum/go-ethereum/core/systemcontracts"
+	"github.com/ethereum/go-ethereum/core/systemcontracts/contract_api"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/internal/ethapi"
 	"github.com/ethereum/go-ethereum/log"
@@ -46,29 +46,29 @@ func (api *PublicSuperNodeAPI) Restart(ctx context.Context, addr common.Address)
 }
 
 func (api *PublicSuperNodeAPI) GetInfo(ctx context.Context, addr common.Address) (*types.SuperNodeInfo, error) {
-	return systemcontracts.GetSuperNodeInfo(ctx, api.blockChainAPI, addr)
+	return contract_api.GetSuperNodeInfo(ctx, api.blockChainAPI, addr)
 }
 
 func (api *PublicSuperNodeAPI) GetInfoByID(ctx context.Context, id *big.Int) (*types.SuperNodeInfo, error) {
-	return systemcontracts.GetSuperNodeInfoByID(ctx, api.blockChainAPI, id)
+	return contract_api.GetSuperNodeInfoByID(ctx, api.blockChainAPI, id)
 }
 
 func (api *PublicSuperNodeAPI) GetAll(ctx context.Context) ([]types.SuperNodeInfo, error) {
-	return systemcontracts.GetAllSuperNode(ctx, api.blockChainAPI)
+	return contract_api.GetAllSuperNode(ctx, api.blockChainAPI)
 }
 
 func (api *PublicSuperNodeAPI) GetTop(ctx context.Context) ([]types.SuperNodeInfo, error) {
-	return systemcontracts.GetTopSuperNode(ctx, api.blockChainAPI)
+	return contract_api.GetTopSuperNode(ctx, api.blockChainAPI)
 }
 
 func (api *PublicSuperNodeAPI) GetNum(ctx context.Context) (*big.Int, error) {
-	return systemcontracts.GetSuperNodeNum(ctx, api.blockChainAPI)
+	return contract_api.GetSuperNodeNum(ctx, api.blockChainAPI)
 }
 
 func (api *PublicSuperNodeAPI) RegisterSuperNode(ctx context.Context, from common.Address, amount *big.Int, isUnion bool, snAddr common.Address, lockDay *big.Int, name string, enode string, description string, creatorIncentive *big.Int, partnerIncentive *big.Int, voterIncentive *big.Int) (common.Hash, error) {
-	return systemcontracts.RegisterSuperNode(ctx, api.blockChainAPI, api.transactionPoolAPI, from, amount, isUnion, snAddr, lockDay, name, enode, description, creatorIncentive, partnerIncentive, voterIncentive)
+	return contract_api.RegisterSuperNode(ctx, api.blockChainAPI, api.transactionPoolAPI, from, amount, isUnion, snAddr, lockDay, name, enode, description, creatorIncentive, partnerIncentive, voterIncentive)
 }
 
 func (api *PublicSuperNodeAPI) AppendRegisterSuperNode(ctx context.Context, from common.Address, amount *big.Int, snAddr common.Address, lockDay *big.Int) (common.Hash, error) {
-	return systemcontracts.AppendRegisterSuperNode(ctx, api.blockChainAPI, api.transactionPoolAPI, from, amount, snAddr, lockDay)
+	return contract_api.AppendRegisterSuperNode(ctx, api.blockChainAPI, api.transactionPoolAPI, from, amount, snAddr, lockDay)
 }

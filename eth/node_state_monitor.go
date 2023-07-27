@@ -4,7 +4,7 @@ import (
 	"context"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core"
-	"github.com/ethereum/go-ethereum/core/systemcontracts"
+	"github.com/ethereum/go-ethereum/core/systemcontracts/contract_api"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/event"
 	"github.com/ethereum/go-ethereum/internal/ethapi"
@@ -118,7 +118,7 @@ func (monitor *NodeStateMonitor) timerLoop() {
 }
 
 func (monitor *NodeStateMonitor) isSuperNode() bool {
-	infos, err := systemcontracts.GetTopSuperNode(monitor.ctx, monitor.blockChainAPI)
+	infos, err := contract_api.GetTopSuperNode(monitor.ctx, monitor.blockChainAPI)
 	if err != nil {
 		return false
 	}
@@ -148,7 +148,7 @@ func (monitor *NodeStateMonitor) isSuperNode() bool {
 func (monitor *NodeStateMonitor) collectMasterNodes() ([]int64, []uint8) {
 	var ids []int64
 	var states []uint8
-	infos, err := systemcontracts.GetAllMasterNode(monitor.ctx, monitor.blockChainAPI)
+	infos, err := contract_api.GetAllMasterNode(monitor.ctx, monitor.blockChainAPI)
 	if err != nil {
 		return ids, states
 	}
@@ -181,13 +181,13 @@ func (monitor *NodeStateMonitor) collectMasterNodes() ([]int64, []uint8) {
 
 func (monitor *NodeStateMonitor) uploadMasterNodes(ids []int64, states []uint8) (common.Hash, error) {
 	log.Info("masternode-upload", "ids", ids, "stats", states)
-	return systemcontracts.UploadMasterNodeStates(monitor.ctx, monitor.blockChainAPI, monitor.transactionPoolAPI, monitor.e.etherbase, ids, states)
+	return contract_api.UploadMasterNodeStates(monitor.ctx, monitor.blockChainAPI, monitor.transactionPoolAPI, monitor.e.etherbase, ids, states)
 }
 
 func (monitor *NodeStateMonitor) collectSuperNodes() ([]int64, []uint8) {
 	var ids []int64
 	var states []uint8
-	infos, err := systemcontracts.GetAllSuperNode(monitor.ctx, monitor.blockChainAPI)
+	infos, err := contract_api.GetAllSuperNode(monitor.ctx, monitor.blockChainAPI)
 	if err != nil {
 		return ids, states
 	}
@@ -220,5 +220,5 @@ func (monitor *NodeStateMonitor) collectSuperNodes() ([]int64, []uint8) {
 
 func (monitor *NodeStateMonitor) uploadSuperNodes(ids []int64, states []uint8) (common.Hash, error) {
 	log.Info("supernode-upload", "ids", ids, "stats", states)
-	return systemcontracts.UploadSuperNodeStates(monitor.ctx, monitor.blockChainAPI, monitor.transactionPoolAPI, monitor.e.etherbase, ids, states)
+	return contract_api.UploadSuperNodeStates(monitor.ctx, monitor.blockChainAPI, monitor.transactionPoolAPI, monitor.e.etherbase, ids, states)
 }

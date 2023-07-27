@@ -40,6 +40,7 @@ import (
 	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/core/state"
 	"github.com/ethereum/go-ethereum/core/systemcontracts"
+	"github.com/ethereum/go-ethereum/core/systemcontracts/contract_api"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethdb"
@@ -540,7 +541,7 @@ func (s *Spos) snapshot(chain consensus.ChainHeaderReader, number uint64, hash c
 						signersmap[signer] = struct{}{}
 					}
 				}else { //TODO Call the contract to get the super node list
-					superNodeInfos, err := systemcontracts.GetTopSuperNode(s.ctx, s.blockChainAPI)
+					superNodeInfos, err := contract_api.GetTopSuperNode(s.ctx, s.blockChainAPI)
 					if err != nil {
 						log.Error("Failed to GetTopSN", "error", err)
 						return nil, err
@@ -1056,7 +1057,7 @@ func (s *Spos) distributeReward(header *types.Header, state *state.StateDB, txs 
 	totalReward := getBlockSubsidy(number, false)
 	masterNodePayment := getMasternodePayment(totalReward)
 	superNodeReward := new(big.Int).Sub(totalReward, masterNodePayment)
-	mnAddr, err := systemcontracts.GetNextMasterNode(s.ctx, s.blockChainAPI)
+	mnAddr, err := contract_api.GetNextMasterNode(s.ctx, s.blockChainAPI)
 	if err != nil {
 		return nil, err
 	}
@@ -1082,7 +1083,7 @@ func (s *Spos) Reward(snAddr common.Address, snCount *big.Int, mnAddr common.Add
 	value.Add(snCount, mnCount)
 	msgData := (hexutil.Bytes)(data)
 	gasPrice := big.NewInt(params.GWei)
-	gasPrice, err = systemcontracts.GetPropertyValue(s.ctx, s.blockChainAPI, "gas_price")
+	gasPrice, err = contract_api.GetPropertyValue(s.ctx, s.blockChainAPI, "gas_price")
 	if err != nil {
 		gasPrice = big.NewInt(params.GWei / 100)
 	}

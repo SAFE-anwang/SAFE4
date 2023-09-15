@@ -36,6 +36,7 @@ type NodeStateMonitor struct {
 
 	eventSub    *event.TypeMuxSubscription
 	ticker      *time.Ticker
+	tickerStopCh chan struct{}
 	wg          sync.WaitGroup
 	lock        sync.RWMutex
 
@@ -61,11 +62,13 @@ func (monitor *NodeStateMonitor) Start() {
 
 	monitor.wg.Add(1)
 	monitor.ticker = time.NewTicker(StateTickerDuration)
+	monitor.tickerStopCh = make(chan struct{})
 	go monitor.timerLoop()
 }
 
 func (monitor *NodeStateMonitor) Stop() {
 	monitor.eventSub.Unsubscribe()
+	monitor.tickerStopCh <- struct{}{}
 	monitor.ticker.Stop()
 	monitor.wg.Wait()
 	monitor.cancelCtx()
@@ -97,6 +100,8 @@ func (monitor *NodeStateMonitor) timerLoop() {
 	defer monitor.wg.Done()
 	for {
 		select {
+		case <- monitor.tickerStopCh:
+			return
 		case <- monitor.ticker.C:
 			if monitor.isSuperNode() {
 				monitor.lock.Lock()

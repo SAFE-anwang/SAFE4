@@ -18,7 +18,8 @@ const (
 	StateStop
 )
 
-const StateTickerDuration = time.Second * 60
+const StateBroadcastDuration = time.Second * 20
+const StateUploadDuration    = time.Second * 60
 const MaxMissNum = 3
 
 type MonitorInfo struct {
@@ -35,8 +36,13 @@ type NodeStateMonitor struct {
 	transactionPoolAPI *ethapi.PublicTransactionPoolAPI
 
 	eventSub    *event.TypeMuxSubscription
-	ticker      *time.Ticker
-	tickerStopCh chan struct{}
+
+	broadcastTicker        *time.Ticker
+	broadcastTickerStopCh  chan struct{}
+
+	uploadTicker      *time.Ticker
+	uploadTickerStopCh chan struct{}
+
 	wg          sync.WaitGroup
 	lock        sync.RWMutex
 
@@ -61,15 +67,22 @@ func (monitor *NodeStateMonitor) Start() {
 	go monitor.loop()
 
 	monitor.wg.Add(1)
-	monitor.ticker = time.NewTicker(StateTickerDuration)
-	monitor.tickerStopCh = make(chan struct{})
-	go monitor.timerLoop()
+	monitor.uploadTicker = time.NewTicker(StateUploadDuration)
+	monitor.uploadTickerStopCh = make(chan struct{})
+	go monitor.uploadLoop()
+
+	monitor.wg.Add(1)
+	monitor.broadcastTicker = time.NewTicker(StateBroadcastDuration)
+	monitor.broadcastTickerStopCh = make(chan struct{})
+	go monitor.broadcastLoop()
 }
 
 func (monitor *NodeStateMonitor) Stop() {
 	monitor.eventSub.Unsubscribe()
-	monitor.tickerStopCh <- struct{}{}
-	monitor.ticker.Stop()
+	monitor.uploadTickerStopCh <- struct{}{}
+	monitor.uploadTicker.Stop()
+	monitor.broadcastTickerStopCh <- struct{}{}
+	monitor.broadcastTicker.Stop()
 	monitor.wg.Wait()
 	monitor.cancelCtx()
 	log.Info("Node monitor stopped")
@@ -82,7 +95,7 @@ func (monitor *NodeStateMonitor) loop() {
 		case core.NodePingEvent:
 			if monitor.isSuperNode() {
 				ping := ev.Ping
-				log.Info("node-state-monitor", "ping", ping)
+				//log.Info("node-state-monitor", "ping", ping)
 				nodeType := ping.NodeType.Int64()
 				monitor.lock.Lock()
 				if nodeType == int64(types.MasterNodeType) {
@@ -96,13 +109,13 @@ func (monitor *NodeStateMonitor) loop() {
 	}
 }
 
-func (monitor *NodeStateMonitor) timerLoop() {
+func (monitor *NodeStateMonitor) uploadLoop() {
 	defer monitor.wg.Done()
 	for {
 		select {
-		case <- monitor.tickerStopCh:
+		case <- monitor.uploadTickerStopCh:
 			return
-		case <- monitor.ticker.C:
+		case <- monitor.uploadTicker.C:
 			if monitor.isSuperNode() {
 				monitor.lock.Lock()
 				mnIDs, mnStates := monitor.collectMasterNodes()
@@ -110,12 +123,38 @@ func (monitor *NodeStateMonitor) timerLoop() {
 				monitor.lock.Unlock()
 
 				if len(mnIDs) != 0 && len(mnIDs) == len(mnStates) {
-					hash, err := monitor.uploadMasterNodes(mnIDs, mnStates)
-					log.Info("masternode-state", "hash", hash.Hex(), "error", err)
+					hash, err := contract_api.UploadMasterNodeStates(monitor.ctx, monitor.blockChainAPI, monitor.transactionPoolAPI, monitor.e.etherbase, mnIDs, mnStates)
+					log.Info("upload-masternode-state", "ids", mnIDs, "states", mnStates, "hash", hash.Hex(), "error", err)
 				}
 				if len(snIDs) != 0 && len(snIDs) == len(snStates) {
-					hash, err := monitor.uploadSuperNodes(snIDs, snStates)
-					log.Info("supernode-state", "hash", hash.Hex(), "error", err)
+					hash, err := contract_api.UploadSuperNodeStates(monitor.ctx, monitor.blockChainAPI, monitor.transactionPoolAPI, monitor.e.etherbase, snIDs, snStates)
+					log.Info("upload-supernode-state", "ids", snIDs, "states", snStates, "hash", hash.Hex(), "error", err)
+				}
+			}
+		}
+	}
+}
+
+func (monitor *NodeStateMonitor) broadcastLoop() {
+	defer monitor.wg.Done()
+	for {
+		select {
+		case <- monitor.broadcastTickerStopCh:
+			return
+		case <- monitor.broadcastTicker.C:
+			addr := monitor.e.etherbase
+			curBlock := monitor.e.blockchain.CurrentBlock()
+			info1, err := contract_api.GetSuperNodeInfo(monitor.ctx, monitor.blockChainAPI, addr)
+			if err == nil {
+				log.Info("broadcast-supernode-state", "id", info1.Id, "block hash", curBlock.Hash(), "block number", curBlock.Number())
+				ping, _ := types.NewNodePing(info1.Id, types.SuperNodeType, curBlock.Hash(), curBlock.Number(), monitor.e.p2pServer.Config.PrivateKey)
+				monitor.e.eventMux.Post(core.NodePingEvent{Ping: ping})
+			} else {
+				info2, err := contract_api.GetMasterNodeInfo(monitor.ctx, monitor.blockChainAPI, addr)
+				if err == nil {
+					log.Info("broadcast-masternode-state", "id", info2.Id, "block hash", curBlock.Hash(), "block number", curBlock.Number())
+					ping, _ := types.NewNodePing(info2.Id, types.MasterNodeType, curBlock.Hash(), curBlock.Number(), monitor.e.p2pServer.Config.PrivateKey)
+					monitor.e.eventMux.Post(core.NodePingEvent{Ping: ping})
 				}
 			}
 		}
@@ -184,11 +223,6 @@ func (monitor *NodeStateMonitor) collectMasterNodes() ([]int64, []uint8) {
 	return ids, states
 }
 
-func (monitor *NodeStateMonitor) uploadMasterNodes(ids []int64, states []uint8) (common.Hash, error) {
-	log.Info("masternode-upload", "ids", ids, "stats", states)
-	return contract_api.UploadMasterNodeStates(monitor.ctx, monitor.blockChainAPI, monitor.transactionPoolAPI, monitor.e.etherbase, ids, states)
-}
-
 func (monitor *NodeStateMonitor) collectSuperNodes() ([]int64, []uint8) {
 	var ids []int64
 	var states []uint8
@@ -221,9 +255,4 @@ func (monitor *NodeStateMonitor) collectSuperNodes() ([]int64, []uint8) {
 		}
 	}
 	return ids, states
-}
-
-func (monitor *NodeStateMonitor) uploadSuperNodes(ids []int64, states []uint8) (common.Hash, error) {
-	log.Info("supernode-upload", "ids", ids, "stats", states)
-	return contract_api.UploadSuperNodeStates(monitor.ctx, monitor.blockChainAPI, monitor.transactionPoolAPI, monitor.e.etherbase, ids, states)
 }

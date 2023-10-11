@@ -82,7 +82,7 @@ func GetMasterNodeStateEntries(ctx context.Context, api *ethapi.PublicBlockChain
 	return *entries, nil
 }
 
-func UploadMasterNodeStates(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, transactionPoolAPI *ethapi.PublicTransactionPoolAPI, from common.Address, ids []int64, states []uint8) (common.Hash, error) {
+func UploadMasterNodeStates(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, transactionPoolAPI *ethapi.PublicTransactionPoolAPI, from common.Address, ids []*big.Int, states []uint8) (common.Hash, error) {
 	vABI, err := abi.JSON(strings.NewReader(systemcontracts.MasterNodeStateABI))
 	if err != nil {
 		return common.Hash{}, err

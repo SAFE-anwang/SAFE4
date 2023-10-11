@@ -35,6 +35,6 @@ func (api *PublicMasterNodeStateAPI) GetEntriesByID(ctx context.Context, id *big
 	return contract_api.GetMasterNodeStateEntries(ctx, api.blockChainAPI, id)
 }
 
-func (api *PublicMasterNodeStateAPI) Upload(ctx context.Context, from common.Address, ids []int64, states []uint8) (common.Hash, error) {
+func (api *PublicMasterNodeStateAPI) Upload(ctx context.Context, from common.Address, ids []*big.Int, states []uint8) (common.Hash, error) {
 	return contract_api.UploadMasterNodeStates(ctx, api.blockChainAPI, api.transactionPoolAPI, from, ids, states)
 }

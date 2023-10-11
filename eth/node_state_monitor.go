@@ -9,6 +9,8 @@ import (
 	"github.com/ethereum/go-ethereum/event"
 	"github.com/ethereum/go-ethereum/internal/ethapi"
 	"github.com/ethereum/go-ethereum/log"
+	"math/big"
+	"strings"
 	"sync"
 	"time"
 )
@@ -48,6 +50,8 @@ type NodeStateMonitor struct {
 
 	mnMonitorInfos    map[int64]MonitorInfo
 	snMonitorInfos    map[int64]MonitorInfo
+
+	enode       string
 }
 
 func newNodeStateMonitor(e *Ethereum) (*NodeStateMonitor, error) {
@@ -62,6 +66,14 @@ func newNodeStateMonitor(e *Ethereum) (*NodeStateMonitor, error) {
 }
 
 func (monitor *NodeStateMonitor) Start() {
+	temp := monitor.e.p2pServer.NodeInfo().Enode
+	arr := strings.Split(temp, "?")
+	if len(arr) == 0 {
+		log.Error("invalid local enode")
+		return
+	}
+	monitor.enode = arr[0]
+
 	monitor.wg.Add(1)
 	monitor.eventSub = monitor.e.eventMux.Subscribe(core.NodePingEvent{})
 	go monitor.loop()
@@ -93,7 +105,8 @@ func (monitor *NodeStateMonitor) loop() {
 	for obj := range monitor.eventSub.Chan() {
 		switch ev := obj.Data.(type) {
 		case core.NodePingEvent:
-			if monitor.isSuperNode() {
+			addr, err := monitor.e.Etherbase()
+			if err == nil && monitor.isSuperNode(addr) {
 				ping := ev.Ping
 				//log.Info("node-state-monitor", "ping", ping)
 				nodeType := ping.NodeType.Int64()
@@ -116,18 +129,19 @@ func (monitor *NodeStateMonitor) uploadLoop() {
 		case <- monitor.uploadTickerStopCh:
 			return
 		case <- monitor.uploadTicker.C:
-			if monitor.isSuperNode() {
+			addr, err := monitor.e.Etherbase()
+			if err == nil && monitor.isSuperNode(addr) {
 				monitor.lock.Lock()
 				mnIDs, mnStates := monitor.collectMasterNodes()
 				snIDs, snStates := monitor.collectSuperNodes()
 				monitor.lock.Unlock()
 
 				if len(mnIDs) != 0 && len(mnIDs) == len(mnStates) {
-					hash, err := contract_api.UploadMasterNodeStates(monitor.ctx, monitor.blockChainAPI, monitor.transactionPoolAPI, monitor.e.etherbase, mnIDs, mnStates)
+					hash, err := contract_api.UploadMasterNodeStates(monitor.ctx, monitor.blockChainAPI, monitor.transactionPoolAPI, addr, mnIDs, mnStates)
 					log.Info("upload-masternode-state", "ids", mnIDs, "states", mnStates, "hash", hash.Hex(), "error", err)
 				}
 				if len(snIDs) != 0 && len(snIDs) == len(snStates) {
-					hash, err := contract_api.UploadSuperNodeStates(monitor.ctx, monitor.blockChainAPI, monitor.transactionPoolAPI, monitor.e.etherbase, snIDs, snStates)
+					hash, err := contract_api.UploadSuperNodeStates(monitor.ctx, monitor.blockChainAPI, monitor.transactionPoolAPI, addr, snIDs, snStates)
 					log.Info("upload-supernode-state", "ids", snIDs, "states", snStates, "hash", hash.Hex(), "error", err)
 				}
 			}
@@ -137,22 +151,40 @@ func (monitor *NodeStateMonitor) uploadLoop() {
 
 func (monitor *NodeStateMonitor) broadcastLoop() {
 	defer monitor.wg.Done()
+	lastAddr := common.Address{}
 	for {
 		select {
 		case <- monitor.broadcastTickerStopCh:
 			return
 		case <- monitor.broadcastTicker.C:
-			addr := monitor.e.etherbase
+			addr, err := monitor.e.Etherbase()
+			if err != nil {
+				break
+			}
 			curBlock := monitor.e.blockchain.CurrentBlock()
 			info1, err := contract_api.GetSuperNodeInfo(monitor.ctx, monitor.blockChainAPI, addr)
 			if err == nil {
-				log.Info("broadcast-supernode-state", "id", info1.Id, "block hash", curBlock.Hash(), "block number", curBlock.Number())
+				if monitor.enode != info1.Enode {
+					if lastAddr != addr {
+						log.Error("incompatible supernode enode", "local", monitor.enode, "state", info1.Enode)
+						lastAddr = addr
+					}
+					break
+				}
+				//log.Info("broadcast-supernode-state", "id", info1.Id, "block hash", curBlock.Hash(), "block number", curBlock.Number())
 				ping, _ := types.NewNodePing(info1.Id, types.SuperNodeType, curBlock.Hash(), curBlock.Number(), monitor.e.p2pServer.Config.PrivateKey)
 				monitor.e.eventMux.Post(core.NodePingEvent{Ping: ping})
 			} else {
 				info2, err := contract_api.GetMasterNodeInfo(monitor.ctx, monitor.blockChainAPI, addr)
 				if err == nil {
-					log.Info("broadcast-masternode-state", "id", info2.Id, "block hash", curBlock.Hash(), "block number", curBlock.Number())
+					if monitor.enode != info2.Enode {
+						if lastAddr != addr {
+							log.Error("incompatible masternode enode", "local", monitor.enode, "state", info2.Enode)
+							lastAddr = addr
+						}
+						break
+					}
+					//log.Info("broadcast-masternode-state", "id", info2.Id, "block hash", curBlock.Hash(), "block number", curBlock.Number())
 					ping, _ := types.NewNodePing(info2.Id, types.MasterNodeType, curBlock.Hash(), curBlock.Number(), monitor.e.p2pServer.Config.PrivateKey)
 					monitor.e.eventMux.Post(core.NodePingEvent{Ping: ping})
 				}
@@ -161,27 +193,16 @@ func (monitor *NodeStateMonitor) broadcastLoop() {
 	}
 }
 
-func (monitor *NodeStateMonitor) isSuperNode() bool {
+func (monitor *NodeStateMonitor) isSuperNode(addr common.Address) bool {
 	infos, err := contract_api.GetTopSuperNode(monitor.ctx, monitor.blockChainAPI)
 	if err != nil {
 		return false
 	}
-	if monitor.e.etherbase == (common.Address{}) {
-		if wallets := monitor.e.AccountManager().Wallets(); len(wallets) > 0 {
-			if accounts := wallets[0].Accounts(); len(accounts) > 0 {
-				etherbase := accounts[0].Address
-				monitor.e.lock.Lock()
-				monitor.e.etherbase = etherbase
-				monitor.e.lock.Unlock()
-				log.Info("Etherbase automatically configured", "address", etherbase)
-			}
-		}
-	}
 	flag := false
-	//log.Info("node-state-monitor", "coinbase", monitor.e.etherbase, "enode", monitor.e.p2pServer.NodeInfo().Enode)
+	//log.Info("node-state-monitor", "coinbase", addr, "enode", monitor.enode)
 	for _, info := range infos {
 		//log.Info("node-state-monitor", "addr", info.Addr, "enode", info.Enode)
-		if info.Addr == monitor.e.etherbase /*&& info.Enode == monitor.e.p2pServer.NodeInfo().Enode*/ {
+		if info.Addr == addr && info.Enode == monitor.enode {
 			flag = true
 			break
 		}
@@ -189,8 +210,8 @@ func (monitor *NodeStateMonitor) isSuperNode() bool {
 	return flag
 }
 
-func (monitor *NodeStateMonitor) collectMasterNodes() ([]int64, []uint8) {
-	var ids []int64
+func (monitor *NodeStateMonitor) collectMasterNodes() ([]*big.Int, []uint8) {
+	var ids []*big.Int
 	var states []uint8
 	infos, err := contract_api.GetAllMasterNode(monitor.ctx, monitor.blockChainAPI)
 	if err != nil {
@@ -203,6 +224,7 @@ func (monitor *NodeStateMonitor) collectMasterNodes() ([]int64, []uint8) {
 			if v.curState != StateRunning {
 				v.curState = StateStop
 				v.missNum++
+				monitor.mnMonitorInfos[id] = v
 			}
 		} else {
 			monitor.mnMonitorInfos[id] = MonitorInfo{StateStop, 1}
@@ -213,9 +235,9 @@ func (monitor *NodeStateMonitor) collectMasterNodes() ([]int64, []uint8) {
 		if v, ok := monitor.mnMonitorInfos[id]; ok {
 			if v.curState != info.StateInfo.State {
 				if v.curState == StateRunning || (v.curState == StateStop && v.missNum >= MaxMissNum) {
-					ids = append(ids, id)
+					ids = append(ids, info.Id)
 					states = append(states, v.curState)
-					delete(monitor.snMonitorInfos, id)
+					delete(monitor.mnMonitorInfos, id)
 				}
 			}
 		}
@@ -223,8 +245,8 @@ func (monitor *NodeStateMonitor) collectMasterNodes() ([]int64, []uint8) {
 	return ids, states
 }
 
-func (monitor *NodeStateMonitor) collectSuperNodes() ([]int64, []uint8) {
-	var ids []int64
+func (monitor *NodeStateMonitor) collectSuperNodes() ([]*big.Int, []uint8) {
+	var ids []*big.Int
 	var states []uint8
 	infos, err := contract_api.GetAllSuperNode(monitor.ctx, monitor.blockChainAPI)
 	if err != nil {
@@ -237,6 +259,7 @@ func (monitor *NodeStateMonitor) collectSuperNodes() ([]int64, []uint8) {
 			if v.curState != StateRunning {
 				v.curState = StateStop
 				v.missNum++
+				monitor.snMonitorInfos[id] = v
 			}
 		} else {
 			monitor.snMonitorInfos[id] = MonitorInfo{StateStop, 1}
@@ -247,7 +270,7 @@ func (monitor *NodeStateMonitor) collectSuperNodes() ([]int64, []uint8) {
 		if v, ok := monitor.snMonitorInfos[id]; ok {
 			if v.curState != info.StateInfo.State {
 				if v.curState == StateRunning || (v.curState == StateStop && v.missNum >= MaxMissNum) {
-					ids = append(ids, id)
+					ids = append(ids, info.Id)
 					states = append(states, v.curState)
 					delete(monitor.snMonitorInfos, id)
 				}

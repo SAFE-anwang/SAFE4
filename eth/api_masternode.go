@@ -2,6 +2,7 @@ package eth
 
 import (
 	"context"
+	"errors"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/core/systemcontracts/contract_api"
@@ -9,23 +10,38 @@ import (
 	"github.com/ethereum/go-ethereum/internal/ethapi"
 	"github.com/ethereum/go-ethereum/log"
 	"math/big"
+	"strings"
 )
 
 type PublicMasterNodeAPI struct {
 	e *Ethereum
 	blockChainAPI *ethapi.PublicBlockChainAPI
 	transactionPoolAPI *ethapi.PublicTransactionPoolAPI
+	enode string
 }
 
 func NewPublicMasterNodeAPI(e *Ethereum) *PublicMasterNodeAPI {
-	return &PublicMasterNodeAPI{e, e.GetPublicBlockChainAPI(), e.GetPublicTransactionPoolAPI()}
+	return &PublicMasterNodeAPI{e, e.GetPublicBlockChainAPI(), e.GetPublicTransactionPoolAPI(), ""}
 }
 
 func (api *PublicMasterNodeAPI) Start(ctx context.Context, addr common.Address) (bool, error) {
+	if len(api.enode) == 0 {
+		temp := api.e.p2pServer.NodeInfo().Enode
+		arr := strings.Split(temp, "?")
+		if len(arr) == 0 {
+			return false, errors.New("start masternode failed, invalid local enode")
+		}
+		api.enode = arr[0]
+	}
+
 	info, err := api.GetInfo(ctx, addr)
 	if err != nil {
 		return false, err
 	}
+	if api.enode != info.Enode {
+		return false, errors.New("start failed, incompatible masternode enode, local: [" + api.enode + "], state: [" + info.Enode + "]")
+	}
+
 	curBlock := api.e.blockchain.CurrentBlock()
 	ping, err := types.NewNodePing(info.Id, types.MasterNodeType, curBlock.Hash(), curBlock.Number(), api.e.p2pServer.Config.PrivateKey)
 	if err != nil {

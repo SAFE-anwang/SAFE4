@@ -537,7 +537,7 @@ func handleNodePing(backend Backend, msg Decoder, peer *Peer) error {
 
 	// check node type
 	nodeType := packet.Ping.NodeType.Int64()
-	if nodeType == int64(types.MasterNodeType) || nodeType != int64(types.SuperNodeType) {
+	if nodeType != int64(types.MasterNodeType) && nodeType != int64(types.SuperNodeType) {
 		return fmt.Errorf("%w: unknown node type: %v", errDecode, nodeType)
 	}
 

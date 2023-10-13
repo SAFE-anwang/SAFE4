@@ -23,6 +23,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/log"
 	"github.com/ethereum/go-ethereum/rlp"
 	"github.com/ethereum/go-ethereum/trie"
@@ -533,11 +534,40 @@ func handleNodePing(backend Backend, msg Decoder, peer *Peer) error {
 	if err := msg.Decode(&packet); err != nil {
 		return fmt.Errorf("%w: message %v: %v", errDecode, msg, err)
 	}
+
+	// check node type
+	nodeType := packet.Ping.NodeType.Int64()
+	if nodeType == int64(types.MasterNodeType) || nodeType != int64(types.SuperNodeType) {
+		return fmt.Errorf("%w: unknown node type: %v", errDecode, nodeType)
+	}
+
+	// check block height
+	localHeight := backend.Chain().CurrentHeader().Number.Uint64()
+	remoteHeight := packet.Ping.CurHeight.Uint64()
+	if remoteHeight <=  localHeight - 20 || remoteHeight > localHeight {
+		log.Warn("incompatible block height",  "local-height", localHeight, "remote-height", remoteHeight)
+		return nil
+	}
+
+	// check block hash
+	localHash := backend.Chain().GetBlockByNumber(remoteHeight).Hash()
+	if localHash != packet.Ping.CurBlock {
+		return fmt.Errorf("%w: incompatible block hash, local-hash: %v, remote-hash: %v", errDecode, localHash, packet.Ping.CurBlock)
+	}
+
+	// check signature
+	if packet.Ping.V.BitLen() > 8 {
+		return fmt.Errorf("%w: invalid signature, V-BitLen: %v", errDecode, packet.Ping.V.BitLen())
+	}
+	if !crypto.ValidateSignatureValues(byte(packet.Ping.V.Uint64() - 27), packet.Ping.R, packet.Ping.S, false) {
+		return fmt.Errorf("%w: validate signature failed, message: %v", errDecode, msg)
+	}
+
 	h := packet.Ping.Hash()
 	if peer.KnownNodePing(h) {
 		return nil
 	}
-	log.Info("handleNodePing", "peer", peer.id, "hash", h.Hex())
+	log.Trace("handleNodePing", "peer", peer.id, "hash", h.Hex())
 	peer.markNodePing(h)
 	return backend.Handle(peer, &packet)
 }

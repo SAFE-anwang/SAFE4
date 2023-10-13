@@ -51,7 +51,7 @@ func NewNodePing(id *big.Int, nodeType int, blockHash common.Hash, height *big.I
 		return nil, err
 	}
 	r, s, v := decodeSignature(sig)
-	return &NodePing{Version: base.Version, Id: base.Id, NodeType: base.NodeType, CurBlock: base.CurBlock, Time: base.Time, V: v, R: r, S: s}, nil
+	return &NodePing{Version: base.Version, Id: base.Id, NodeType: base.NodeType, CurBlock: base.CurBlock, CurHeight: base.CurHeight, Time: base.Time, V: v, R: r, S: s}, nil
 }
 
 // Hash returns the transaction hash.
@@ -59,7 +59,14 @@ func (ping *NodePing) Hash() common.Hash {
 	if hash := ping.hash.Load(); hash != nil {
 		return hash.(common.Hash)
 	}
-	h := rlpHash(ping)
+	h := rlpHash([]interface{}{
+		ping.Version,
+		ping.Id,
+		ping.NodeType,
+		ping.CurBlock,
+		ping.CurHeight,
+		ping.Time,
+	})
 	ping.hash.Store(h)
 	return h
 }
@@ -95,6 +102,7 @@ func (ping *NodePing) DecodeRLP(s *rlp.Stream) error {
 	ping.Id = extPing.Id
 	ping.NodeType = extPing.NodeType
 	ping.CurBlock = extPing.CurBlock
+	ping.CurHeight = extPing.CurHeight
 	ping.Time = extPing.Time
 	ping.V = extPing.V
 	ping.R = extPing.R

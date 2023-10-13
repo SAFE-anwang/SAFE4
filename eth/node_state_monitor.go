@@ -6,9 +6,11 @@ import (
 	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/core/systemcontracts/contract_api"
 	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/event"
 	"github.com/ethereum/go-ethereum/internal/ethapi"
 	"github.com/ethereum/go-ethereum/log"
+	"github.com/status-im/keycard-go/hexutils"
 	"math/big"
 	"strings"
 	"sync"
@@ -105,18 +107,48 @@ func (monitor *NodeStateMonitor) loop() {
 	for obj := range monitor.eventSub.Chan() {
 		switch ev := obj.Data.(type) {
 		case core.NodePingEvent:
+			if monitor.isSyncing() {
+				break
+			}
+
 			addr, err := monitor.e.Etherbase()
 			if err == nil && monitor.isSuperNode(addr) {
 				ping := ev.Ping
-				//log.Info("node-state-monitor", "ping", ping)
-				nodeType := ping.NodeType.Int64()
-				monitor.lock.Lock()
-				if nodeType == int64(types.MasterNodeType) {
-					monitor.mnMonitorInfos[ping.Id.Int64()] = MonitorInfo{StateRunning, 0}
-				} else if nodeType == int64(types.SuperNodeType) {
-					monitor.snMonitorInfos[ping.Id.Int64()] = MonitorInfo{StateRunning, 0}
+				log.Trace("node-state-monitor", "ping", ping)
+
+				// recover the public key from the signature
+				r, s := ping.R.Bytes(), ping.S.Bytes()
+				v := byte(ping.V.Uint64() - 27)
+				sig := make([]byte, crypto.SignatureLength)
+				copy(sig[32-len(r):32], r)
+				copy(sig[64-len(s):64], s)
+				sig[64] = v
+				pub, err := crypto.Ecrecover(ping.Hash().Bytes(), sig)
+				if err != nil || len(pub) == 0 || pub[0] != 4 {
+					log.Warn("node-state-monitor", "ping", ping, "error", "recover public key failed")
+					break
 				}
-				monitor.lock.Unlock()
+
+				nodeType := ping.NodeType.Int64()
+				if nodeType == int64(types.MasterNodeType) {
+					monitor.lock.Lock()
+					monitor.mnMonitorInfos[ping.Id.Int64()] = MonitorInfo{StateRunning, 0}
+					monitor.lock.Unlock()
+					info, err := contract_api.GetMasterNodeInfoByID(monitor.ctx, monitor.blockChainAPI, ping.Id)
+					if err != nil || hexutils.BytesToHex(pub)[1:] == GetPubKeyFromEnode(info.Enode) {
+						log.Warn("node-state-monitor", "ping", ping, "error", "verify signature failed")
+						break
+					}
+				} else if nodeType == int64(types.SuperNodeType) {
+					monitor.lock.Lock()
+					monitor.snMonitorInfos[ping.Id.Int64()] = MonitorInfo{StateRunning, 0}
+					monitor.lock.Unlock()
+					info, err := contract_api.GetSuperNodeInfoByID(monitor.ctx, monitor.blockChainAPI, ping.Id)
+					if err != nil || hexutils.BytesToHex(pub)[1:] == GetPubKeyFromEnode(info.Enode) {
+						log.Warn("node-state-monitor", "ping", ping, "error", "verify signature failed")
+						break
+					}
+				}
 			}
 		}
 	}
@@ -161,32 +193,45 @@ func (monitor *NodeStateMonitor) broadcastLoop() {
 			if err != nil {
 				break
 			}
+
+			if monitor.isSyncing() {
+				if lastAddr != addr {
+					log.Warn("syncing now, wait...")
+					lastAddr = addr
+				}
+				break
+			}
+
 			curBlock := monitor.e.blockchain.CurrentBlock()
 			info1, err := contract_api.GetSuperNodeInfo(monitor.ctx, monitor.blockChainAPI, addr)
 			if err == nil {
 				if monitor.enode != info1.Enode {
 					if lastAddr != addr {
-						log.Error("incompatible supernode enode", "local", monitor.enode, "state", info1.Enode)
+						log.Error("broadcast-supernode-state", "local", monitor.enode, "state", info1.Enode, "error", "incompatible enode")
 						lastAddr = addr
 					}
 					break
 				}
-				//log.Info("broadcast-supernode-state", "id", info1.Id, "block hash", curBlock.Hash(), "block number", curBlock.Number())
 				ping, _ := types.NewNodePing(info1.Id, types.SuperNodeType, curBlock.Hash(), curBlock.Number(), monitor.e.p2pServer.Config.PrivateKey)
 				monitor.e.eventMux.Post(core.NodePingEvent{Ping: ping})
+				monitor.lock.Lock()
+				monitor.snMonitorInfos[ping.Id.Int64()] = MonitorInfo{StateRunning, 0}
+				monitor.lock.Unlock()
 			} else {
 				info2, err := contract_api.GetMasterNodeInfo(monitor.ctx, monitor.blockChainAPI, addr)
 				if err == nil {
 					if monitor.enode != info2.Enode {
 						if lastAddr != addr {
-							log.Error("incompatible masternode enode", "local", monitor.enode, "state", info2.Enode)
+							log.Error("broadcast-masternode-state", "local", monitor.enode, "state", info2.Enode, "error", "incompatible enode")
 							lastAddr = addr
 						}
 						break
 					}
-					//log.Info("broadcast-masternode-state", "id", info2.Id, "block hash", curBlock.Hash(), "block number", curBlock.Number())
 					ping, _ := types.NewNodePing(info2.Id, types.MasterNodeType, curBlock.Hash(), curBlock.Number(), monitor.e.p2pServer.Config.PrivateKey)
 					monitor.e.eventMux.Post(core.NodePingEvent{Ping: ping})
+					monitor.lock.Lock()
+					monitor.mnMonitorInfos[ping.Id.Int64()] = MonitorInfo{StateRunning, 0}
+					monitor.lock.Unlock()
 				}
 			}
 		}
@@ -199,9 +244,7 @@ func (monitor *NodeStateMonitor) isSuperNode(addr common.Address) bool {
 		return false
 	}
 	flag := false
-	//log.Info("node-state-monitor", "coinbase", addr, "enode", monitor.enode)
 	for _, info := range infos {
-		//log.Info("node-state-monitor", "addr", info.Addr, "enode", info.Enode)
 		if info.Addr == addr && info.Enode == monitor.enode {
 			flag = true
 			break
@@ -278,4 +321,20 @@ func (monitor *NodeStateMonitor) collectSuperNodes() ([]*big.Int, []uint8) {
 		}
 	}
 	return ids, states
+}
+
+func (monitor *NodeStateMonitor) isSyncing() bool {
+	progress := monitor.e.APIBackend.SyncProgress()
+	return progress.CurrentBlock < progress.HighestBlock
+}
+
+func GetPubKeyFromEnode(enode string) string {
+	ret := ""
+	pos1 := strings.Index(enode, "enode://")
+	pos2 := strings.Index(enode, "@")
+	if pos1 == -1 || pos2 == -1 {
+		return ret
+	}
+	ret = enode[pos1 + len("enode://") : pos2]
+	return ret
 }

@@ -22,13 +22,14 @@ const (
 	StateStop
 )
 
-const StateBroadcastDuration = time.Second * 20
-const StateUploadDuration    = time.Second * 60
+const StateBroadcastDuration = 20
+const StateUploadDuration    = 60
 const MaxMissNum = 3
 
 type MonitorInfo struct {
 	curState uint8
 	missNum  int // no node-ping msg
+	lastTime int64
 }
 
 type NodeStateMonitor struct {
@@ -81,12 +82,12 @@ func (monitor *NodeStateMonitor) Start() {
 	go monitor.loop()
 
 	monitor.wg.Add(1)
-	monitor.uploadTicker = time.NewTicker(StateUploadDuration)
+	monitor.uploadTicker = time.NewTicker(StateUploadDuration * time.Second)
 	monitor.uploadTickerStopCh = make(chan struct{})
 	go monitor.uploadLoop()
 
 	monitor.wg.Add(1)
-	monitor.broadcastTicker = time.NewTicker(StateBroadcastDuration)
+	monitor.broadcastTicker = time.NewTicker(StateBroadcastDuration * time.Second)
 	monitor.broadcastTickerStopCh = make(chan struct{})
 	go monitor.broadcastLoop()
 }
@@ -129,10 +130,11 @@ func (monitor *NodeStateMonitor) loop() {
 					break
 				}
 
+				curTime := time.Now().Unix()
 				nodeType := ping.NodeType.Int64()
 				if nodeType == int64(types.MasterNodeType) {
 					monitor.lock.Lock()
-					monitor.mnMonitorInfos[ping.Id.Int64()] = MonitorInfo{StateRunning, 0}
+					monitor.mnMonitorInfos[ping.Id.Int64()] = MonitorInfo{StateRunning, 0, curTime}
 					monitor.lock.Unlock()
 					info, err := contract_api.GetMasterNodeInfoByID(monitor.ctx, monitor.blockChainAPI, ping.Id)
 					if err != nil || hexutils.BytesToHex(pub)[1:] == GetPubKeyFromEnode(info.Enode) {
@@ -141,7 +143,7 @@ func (monitor *NodeStateMonitor) loop() {
 					}
 				} else if nodeType == int64(types.SuperNodeType) {
 					monitor.lock.Lock()
-					monitor.snMonitorInfos[ping.Id.Int64()] = MonitorInfo{StateRunning, 0}
+					monitor.snMonitorInfos[ping.Id.Int64()] = MonitorInfo{StateRunning, 0, curTime}
 					monitor.lock.Unlock()
 					info, err := contract_api.GetSuperNodeInfoByID(monitor.ctx, monitor.blockChainAPI, ping.Id)
 					if err != nil || hexutils.BytesToHex(pub)[1:] == GetPubKeyFromEnode(info.Enode) {
@@ -202,6 +204,7 @@ func (monitor *NodeStateMonitor) broadcastLoop() {
 				break
 			}
 
+			curTime := time.Now().Unix()
 			curBlock := monitor.e.blockchain.CurrentBlock()
 			info1, err := contract_api.GetSuperNodeInfo(monitor.ctx, monitor.blockChainAPI, addr)
 			if err == nil {
@@ -215,7 +218,7 @@ func (monitor *NodeStateMonitor) broadcastLoop() {
 				ping, _ := types.NewNodePing(info1.Id, types.SuperNodeType, curBlock.Hash(), curBlock.Number(), monitor.e.p2pServer.Config.PrivateKey)
 				monitor.e.eventMux.Post(core.NodePingEvent{Ping: ping})
 				monitor.lock.Lock()
-				monitor.snMonitorInfos[ping.Id.Int64()] = MonitorInfo{StateRunning, 0}
+				monitor.snMonitorInfos[ping.Id.Int64()] = MonitorInfo{StateRunning, 0, curTime}
 				monitor.lock.Unlock()
 			} else {
 				info2, err := contract_api.GetMasterNodeInfo(monitor.ctx, monitor.blockChainAPI, addr)
@@ -230,7 +233,7 @@ func (monitor *NodeStateMonitor) broadcastLoop() {
 					ping, _ := types.NewNodePing(info2.Id, types.MasterNodeType, curBlock.Hash(), curBlock.Number(), monitor.e.p2pServer.Config.PrivateKey)
 					monitor.e.eventMux.Post(core.NodePingEvent{Ping: ping})
 					monitor.lock.Lock()
-					monitor.mnMonitorInfos[ping.Id.Int64()] = MonitorInfo{StateRunning, 0}
+					monitor.mnMonitorInfos[ping.Id.Int64()] = MonitorInfo{StateRunning, 0, curTime}
 					monitor.lock.Unlock()
 				}
 			}
@@ -260,17 +263,19 @@ func (monitor *NodeStateMonitor) collectMasterNodes() ([]*big.Int, []uint8) {
 	if err != nil {
 		return ids, states
 	}
+	curTime := time.Now().Unix()
 	var info types.MasterNodeInfo
 	for _, info = range infos {
 		id := info.Id.Int64()
 		if v, ok := monitor.mnMonitorInfos[id]; ok {
-			if v.curState != StateRunning {
+			if v.curState != StateRunning || curTime > v.lastTime + StateUploadDuration {
 				v.curState = StateStop
 				v.missNum++
+				v.lastTime = curTime
 				monitor.mnMonitorInfos[id] = v
 			}
 		} else {
-			monitor.mnMonitorInfos[id] = MonitorInfo{StateStop, 1}
+			monitor.mnMonitorInfos[id] = MonitorInfo{StateStop, 1, curTime}
 		}
 	}
 	for _, info = range infos {
@@ -295,17 +300,19 @@ func (monitor *NodeStateMonitor) collectSuperNodes() ([]*big.Int, []uint8) {
 	if err != nil {
 		return ids, states
 	}
+	curTime := time.Now().Unix()
 	var info types.SuperNodeInfo
 	for _, info = range infos {
 		id := info.Id.Int64()
 		if v, ok := monitor.snMonitorInfos[id]; ok {
-			if v.curState != StateRunning {
+			if v.curState != StateRunning || curTime > v.lastTime + StateUploadDuration {
 				v.curState = StateStop
 				v.missNum++
+				v.lastTime = curTime
 				monitor.snMonitorInfos[id] = v
 			}
 		} else {
-			monitor.snMonitorInfos[id] = MonitorInfo{StateStop, 1}
+			monitor.snMonitorInfos[id] = MonitorInfo{StateStop, 1, curTime}
 		}
 	}
 	for _, info = range infos {

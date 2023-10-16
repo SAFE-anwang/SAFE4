@@ -280,6 +280,7 @@ func (monitor *NodeStateMonitor) collectMasterNodes() ([]*big.Int, []uint8) {
 	}
 	for _, info = range infos {
 		id := info.Id.Int64()
+		log.Trace("collect-masternode-state", "id", id, "global-state", info.StateInfo.State, "local-state", monitor.mnMonitorInfos[id].curState, "missNum", monitor.mnMonitorInfos[id].missNum)
 		if v, ok := monitor.mnMonitorInfos[id]; ok {
 			if v.curState != info.StateInfo.State {
 				if v.curState == StateRunning || (v.curState == StateStop && v.missNum >= MaxMissNum) {
@@ -317,6 +318,7 @@ func (monitor *NodeStateMonitor) collectSuperNodes() ([]*big.Int, []uint8) {
 	}
 	for _, info = range infos {
 		id := info.Id.Int64()
+		log.Trace("collect-supernode-state", "id", id, "global-state", info.StateInfo.State, "local-state", monitor.snMonitorInfos[id].curState, "missNum", monitor.snMonitorInfos[id].missNum)
 		if v, ok := monitor.snMonitorInfos[id]; ok {
 			if v.curState != info.StateInfo.State {
 				if v.curState == StateRunning || (v.curState == StateStop && v.missNum >= MaxMissNum) {

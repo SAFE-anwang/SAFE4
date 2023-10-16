@@ -22,9 +22,9 @@ const (
 	StateStop
 )
 
-const StateBroadcastDuration = 20
-const StateUploadDuration    = 60
-const MaxMissNum = 3
+const StateBroadcastDuration = 60
+const StateUploadDuration    = 120
+const MaxMissNum = 5
 
 type MonitorInfo struct {
 	curState uint8

@@ -542,15 +542,15 @@ func handleNodePing(backend Backend, msg Decoder, peer *Peer) error {
 	}
 
 	// check block height
-	localHeight := backend.Chain().CurrentHeader().Number.Int64()
-	remoteHeight := packet.Ping.CurHeight.Int64()
+	localHeight := backend.Chain().CurrentBlock().NumberU64()
+	remoteHeight := packet.Ping.CurHeight.Uint64()
 	if remoteHeight + 20 < localHeight || remoteHeight > localHeight {
 		log.Warn("incompatible block height",  "local-height", localHeight, "remote-height", remoteHeight)
 		return nil
 	}
 
 	// check block hash
-	localHash := backend.Chain().GetBlockByNumber(uint64(remoteHeight)).Hash()
+	localHash := backend.Chain().GetBlockByNumber(remoteHeight).Hash()
 	if localHash != packet.Ping.CurBlock {
 		return fmt.Errorf("%w: incompatible block hash, local-hash: %v, remote-hash: %v", errDecode, localHash, packet.Ping.CurBlock)
 	}

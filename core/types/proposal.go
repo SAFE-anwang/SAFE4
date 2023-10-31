@@ -14,7 +14,6 @@ type ProposalInfo struct {
 	StartPayTime *big.Int           `json:"startPayTime"    gencodec:"required"`
 	EndPayTime   *big.Int           `json:"endPayTime"      gencodec:"required"`
 	Description  string             `json:"description"     gencodec:"required"`
-	Detail       string             `json:"detail"          gencodec:"required"`
 	Voters       []common.Address   `json:"voters,omitempty"`
 	VoteResults  []*big.Int         `json:"voteResults,omitempty"`
 	State        *big.Int           `json:"state"           gencodec:"required"`

@@ -18,7 +18,7 @@ import (
 )
 
 const (
-	StateRunning uint8 = iota + 1
+	StateRunning = iota + 1
 	StateStop
 )
 
@@ -27,8 +27,8 @@ const StateUploadDuration    = 120
 const MaxMissNum = 5
 
 type MonitorInfo struct {
-	curState uint8
-	missNum  int // no node-ping msg
+	curState int64
+	missNum  int64 // no node-ping msg
 	lastTime int64
 }
 
@@ -256,9 +256,9 @@ func (monitor *NodeStateMonitor) isSuperNode(addr common.Address) bool {
 	return flag
 }
 
-func (monitor *NodeStateMonitor) collectMasterNodes() ([]*big.Int, []uint8) {
+func (monitor *NodeStateMonitor) collectMasterNodes() ([]*big.Int, []*big.Int) {
 	var ids []*big.Int
-	var states []uint8
+	var states []*big.Int
 	infos, err := contract_api.GetAllMasterNode(monitor.ctx, monitor.blockChainAPI)
 	if err != nil {
 		return ids, states
@@ -282,10 +282,10 @@ func (monitor *NodeStateMonitor) collectMasterNodes() ([]*big.Int, []uint8) {
 		id := info.Id.Int64()
 		log.Trace("collect-masternode-state", "id", id, "global-state", info.StateInfo.State, "local-state", monitor.mnMonitorInfos[id].curState, "missNum", monitor.mnMonitorInfos[id].missNum)
 		if v, ok := monitor.mnMonitorInfos[id]; ok {
-			if v.curState != info.StateInfo.State {
+			if v.curState != info.StateInfo.State.Int64() {
 				if v.curState == StateRunning || (v.curState == StateStop && v.missNum >= MaxMissNum) {
 					ids = append(ids, info.Id)
-					states = append(states, v.curState)
+					states = append(states, big.NewInt(v.curState))
 					delete(monitor.mnMonitorInfos, id)
 				}
 			}
@@ -294,9 +294,9 @@ func (monitor *NodeStateMonitor) collectMasterNodes() ([]*big.Int, []uint8) {
 	return ids, states
 }
 
-func (monitor *NodeStateMonitor) collectSuperNodes() ([]*big.Int, []uint8) {
+func (monitor *NodeStateMonitor) collectSuperNodes() ([]*big.Int, []*big.Int) {
 	var ids []*big.Int
-	var states []uint8
+	var states []*big.Int
 	infos, err := contract_api.GetAllSuperNode(monitor.ctx, monitor.blockChainAPI)
 	if err != nil {
 		return ids, states
@@ -320,10 +320,10 @@ func (monitor *NodeStateMonitor) collectSuperNodes() ([]*big.Int, []uint8) {
 		id := info.Id.Int64()
 		log.Trace("collect-supernode-state", "id", id, "global-state", info.StateInfo.State, "local-state", monitor.snMonitorInfos[id].curState, "missNum", monitor.snMonitorInfos[id].missNum)
 		if v, ok := monitor.snMonitorInfos[id]; ok {
-			if v.curState != info.StateInfo.State {
+			if v.curState != info.StateInfo.State.Int64() {
 				if v.curState == StateRunning || (v.curState == StateStop && v.missNum >= MaxMissNum) {
 					ids = append(ids, info.Id)
-					states = append(states, v.curState)
+					states = append(states, big.NewInt(v.curState))
 					delete(monitor.snMonitorInfos, id)
 				}
 			}

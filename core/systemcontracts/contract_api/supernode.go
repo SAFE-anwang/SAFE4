@@ -208,7 +208,7 @@ func RegisterSuperNode(ctx context.Context, blockChainAPI *ethapi.PublicBlockCha
 
 	args := ethapi.TransactionArgs{
 		From:     &from,
-		To:       &systemcontracts.MasterNodeContractAddr,
+		To:       &systemcontracts.SuperNodeContractAddr,
 		Data:     &msgData,
 		Value:    (*hexutil.Big)(amount),
 		GasPrice: (*hexutil.Big)(gasPrice),
@@ -223,7 +223,7 @@ func RegisterSuperNode(ctx context.Context, blockChainAPI *ethapi.PublicBlockCha
 }
 
 func AppendRegisterSuperNode(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, transactionPoolAPI *ethapi.PublicTransactionPoolAPI, from common.Address, amount *big.Int, mnAddr common.Address, lockDay *big.Int) (common.Hash, error) {
-	vABI, err := abi.JSON(strings.NewReader(systemcontracts.MasterNodeABI))
+	vABI, err := abi.JSON(strings.NewReader(systemcontracts.SuperNodeABI))
 	if err != nil {
 		return common.Hash{}, err
 	}
@@ -246,7 +246,7 @@ func AppendRegisterSuperNode(ctx context.Context, blockChainAPI *ethapi.PublicBl
 
 	args := ethapi.TransactionArgs{
 		From:     &from,
-		To:       &systemcontracts.MasterNodeContractAddr,
+		To:       &systemcontracts.SuperNodeContractAddr,
 		Data:     &msgData,
 		Value:    (*hexutil.Big)(amount),
 		GasPrice: (*hexutil.Big)(gasPrice),

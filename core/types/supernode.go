@@ -19,7 +19,7 @@ type SuperNodeIncentivePlan struct {
 }
 
 type SuperNodeStateInfo struct {
-	State  	uint8           `json:"state"     gencodec:"required"`
+	State  	*big.Int        `json:"state"     gencodec:"required"`
 	Height  *big.Int        `json:"height"    gencodec:"required"`
 }
 
@@ -37,7 +37,6 @@ type SuperNodeInfo struct {
 	Creator             common.Address          `json:"creator"       gencodec:"required"`
 	Amount              *big.Int                `json:"amount"        gencodec:"required"`
 	Enode               string                  `json:"enode"         gencodec:"required"`
-	Ip                  string                  `json:"ip"            gencodec:"required"`
 	Description         string                  `json:"description"   gencodec:"required"`
 	IsOfficial          bool                    `json:"isOfficial"    gencodec:"required"`
 	StateInfo           SuperNodeStateInfo      `json:"stateInfo"     gencodec:"required"`

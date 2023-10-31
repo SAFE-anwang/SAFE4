@@ -39,6 +39,6 @@ func (api *PublicSuperNodeStateAPI) GetEntriesByID(ctx context.Context, id *big.
 	return contract_api.GetSuperNodeStateEntries(ctx, api.blockChainAPI, id)
 }
 
-func (api *PublicSuperNodeStateAPI) Upload(ctx context.Context, from common.Address, ids []*big.Int, states []uint8) (common.Hash, error) {
+func (api *PublicSuperNodeStateAPI) Upload(ctx context.Context, from common.Address, ids []*big.Int, states []*big.Int) (common.Hash, error) {
 	return contract_api.UploadSuperNodeStates(ctx, api.blockChainAPI, api.transactionPoolAPI, from, ids, states)
 }

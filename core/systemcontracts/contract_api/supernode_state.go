@@ -81,7 +81,7 @@ func GetSuperNodeStateEntries(ctx context.Context, api *ethapi.PublicBlockChainA
 	return *entries, nil
 }
 
-func UploadSuperNodeStates(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, transactionPoolAPI *ethapi.PublicTransactionPoolAPI, from common.Address, ids []*big.Int, states []uint8) (common.Hash, error) {
+func UploadSuperNodeStates(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, transactionPoolAPI *ethapi.PublicTransactionPoolAPI, from common.Address, ids []*big.Int, states []*big.Int) (common.Hash, error) {
 	vABI, err := abi.JSON(strings.NewReader(systemcontracts.SuperNodeStateABI))
 	if err != nil {
 		return common.Hash{}, err

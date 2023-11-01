@@ -130,7 +130,7 @@ func Transfer(db vm.StateDB, sender, recipient common.Address, amount *big.Int) 
 }
 
 func IsSpecialContract(addr common.Address) bool {
-	return addr == systemcontracts.SystemRewardContractAddr ||
+	return addr == systemcontracts.SystemRewardContractAddr /* ||
 		addr == systemcontracts.MasterNodeStateContractAddr ||
-		addr == systemcontracts.SuperNodeStateContractAddr
+		addr == systemcontracts.SuperNodeStateContractAddr */
 }

@@ -1159,15 +1159,28 @@ func (s *Spos) CheckRewardTransaction(block *types.Block) error{
 			mnCount := inputsMap["_mnAmount"].(*big.Int)
 			ppCount := inputsMap["_ppAmount"].(*big.Int)
 			ppAddr := inputsMap["_ppAddr"].(common.Address)
+			snAddr := inputsMap["_snAddr"].(common.Address)
+			mnAddr := inputsMap["_mnAddr"].(common.Address)
+
+			signer := types.MakeSigner(s.chainConfig, block.Number())
+			from, err := signer.Sender(transaction)
+			if err != nil {
+				return err
+			}
 
 			totalReward := getBlockSubsidy(blocknumber, withoutSuperBlockPart)
 			masterNodePayment := getMasternodePayment(totalReward)
 			superNodeReward := new(big.Int).Sub(totalReward, masterNodePayment)
 			proposalReward := getBlockSubsidy(blocknumber, onlySuperBlockPart)
 
-			if snCount.Cmp(superNodeReward) != 0 || mnCount.Cmp(masterNodePayment) != 0 || ppCount.Cmp(proposalReward) != 0 || ppAddr != systemcontracts.ProposalContractAddr {
-				return fmt.Errorf("invalid greward (snCount: %d superNodeReward: %d mnCount:%d masterNodePayment:%d)", snCount, superNodeReward,
-					mnCount, masterNodePayment)
+			nextMNAddr, err := contract_api.GetNextMasterNode(s.ctx, s.blockChainAPI)
+			if err != nil {
+				return err
+			}
+
+			if snCount.Cmp(superNodeReward) != 0 || mnCount.Cmp(masterNodePayment) != 0 || ppCount.Cmp(proposalReward) != 0 || ppAddr != systemcontracts.ProposalContractAddr || &mnAddr != nextMNAddr || from != snAddr{
+				return fmt.Errorf("invalid greward (snCount: %d superNodeReward: %d mnCount:%d masterNodePayment:%d from:%s snAddr:%s mnAddr:%s nextMNAddr:%s ppAddr:%s)", snCount, superNodeReward,
+					mnCount, masterNodePayment, from.Hex(), snAddr.Hex(), mnAddr.Hex(), nextMNAddr.Hex(), ppAddr.Hex())
 			}
 		}
 	}

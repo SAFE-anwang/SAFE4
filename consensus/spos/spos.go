@@ -960,7 +960,7 @@ func encodeSigHeader(w io.Writer, header *types.Header) {
 func accumulateRewards(state *state.StateDB, header *types.Header) {
 	// Accumulate the rewards for the miner
 	number := header.Number.Uint64()
-	totalReward := getBlockSubsidy(number, false)
+	totalReward := getBlockSubsidy(number, withSuperBlockPart)
 	state.AddBalance(header.Coinbase, totalReward)
 }
 
@@ -1017,7 +1017,13 @@ func sortSupernode(Signers map[common.Address]struct{}, scoreTime uint64) []comm
 	return resultSuperNode
 }
 
-func getBlockSubsidy(nBlockNum uint64, fSuperblockPartOnly bool) *big.Int {
+const (
+	withSuperBlockPart = iota
+	withoutSuperBlockPart
+	onlySuperBlockPart
+)
+
+func getBlockSubsidy(nBlockNum uint64, flag uint64) *big.Int {
 	subsidy := BlockReward.Uint64()
 
 	// yearly decline of production by ~7.1% per year, projected ~18M coins max by year 2050+.
@@ -1027,10 +1033,15 @@ func getBlockSubsidy(nBlockNum uint64, fSuperblockPartOnly bool) *big.Int {
 
     superblockPart := subsidy / 10
 
-    if fSuperblockPartOnly {
-    	return new(big.Int).SetUint64(superblockPart)
-	}else{
+	switch flag {
+	case withSuperBlockPart:
+		return new(big.Int).SetUint64(subsidy)
+	case withoutSuperBlockPart:
 		return new(big.Int).SetUint64(subsidy - superblockPart)
+	case onlySuperBlockPart:
+		return new(big.Int).SetUint64(superblockPart)
+	default:
+		return big.NewInt(0)
 	}
 }
 
@@ -1054,17 +1065,19 @@ func getMasternodePayment(blockReward *big.Int) *big.Int {
 
 func (s *Spos) distributeReward(header *types.Header, state *state.StateDB, txs *[]*types.Transaction, receipts *[]*types.Receipt) (*types.Transaction, error) {
 	number := header.Number.Uint64()
-	totalReward := getBlockSubsidy(number, false)
+	totalReward := getBlockSubsidy(number, withoutSuperBlockPart)
 	masterNodePayment := getMasternodePayment(totalReward)
 	superNodeReward := new(big.Int).Sub(totalReward, masterNodePayment)
 	mnAddr, err := contract_api.GetNextMasterNode(s.ctx, s.blockChainAPI)
 	if err != nil {
 		return nil, err
 	}
-	return s.Reward(header.Coinbase, superNodeReward, *mnAddr, masterNodePayment, header, state, txs, receipts)
+	ppAddr := systemcontracts.ProposalContractAddr
+	ppAmount := getBlockSubsidy(number, onlySuperBlockPart)
+	return s.Reward(header.Coinbase, superNodeReward, *mnAddr, masterNodePayment, ppAddr, ppAmount, header, state, txs, receipts)
 }
 
-func (s *Spos) Reward(snAddr common.Address, snCount *big.Int, mnAddr common.Address, mnCount *big.Int, header *types.Header, state *state.StateDB, txs *[]*types.Transaction, receipts *[]*types.Receipt) (*types.Transaction, error){
+func (s *Spos) Reward(snAddr common.Address, snCount *big.Int, mnAddr common.Address, mnCount *big.Int, ppAddr common.Address, ppCount *big.Int, header *types.Header, state *state.StateDB, txs *[]*types.Transaction, receipts *[]*types.Receipt) (*types.Transaction, error){
 	vABI, err := abi.JSON(strings.NewReader(systemcontracts.SystemRewardABI))
 	if err != nil {
 		return nil, err
@@ -1074,13 +1087,14 @@ func (s *Spos) Reward(snAddr common.Address, snCount *big.Int, mnAddr common.Add
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	data, err := vABI.Pack(method, snAddr, snCount, mnAddr, mnCount)
+	data, err := vABI.Pack(method, snAddr, snCount, mnAddr, mnCount, ppAddr, ppCount)
 	if err != nil {
 		return nil, err
 	}
 
 	value := new(big.Int)
 	value.Add(snCount, mnCount)
+	value.Add(value, ppCount)
 	msgData := (hexutil.Bytes)(data)
 	nonce := state.GetNonce(snAddr)
 
@@ -1143,12 +1157,15 @@ func (s *Spos) CheckRewardTransaction(block *types.Block) error{
 
 			snCount := inputsMap["_snAmount"].(*big.Int)
 			mnCount := inputsMap["_mnAmount"].(*big.Int)
+			ppCount := inputsMap["_ppAmount"].(*big.Int)
+			ppAddr := inputsMap["_ppAddr"].(common.Address)
 
-			totalReward := getBlockSubsidy(blocknumber, false)
+			totalReward := getBlockSubsidy(blocknumber, withoutSuperBlockPart)
 			masterNodePayment := getMasternodePayment(totalReward)
 			superNodeReward := new(big.Int).Sub(totalReward, masterNodePayment)
+			proposalReward := getBlockSubsidy(blocknumber, onlySuperBlockPart)
 
-			if snCount.Cmp(superNodeReward) != 0 || mnCount.Cmp(masterNodePayment) != 0{
+			if snCount.Cmp(superNodeReward) != 0 || mnCount.Cmp(masterNodePayment) != 0 || ppCount.Cmp(proposalReward) != 0 || ppAddr != systemcontracts.ProposalContractAddr {
 				return fmt.Errorf("invalid greward (snCount: %d superNodeReward: %d mnCount:%d masterNodePayment:%d)", snCount, superNodeReward,
 					mnCount, masterNodePayment)
 			}

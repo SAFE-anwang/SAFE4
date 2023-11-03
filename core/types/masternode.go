@@ -29,7 +29,7 @@ type MasterNodeInfo struct {
 	Creator       common.Address            `json:"creator"       gencodec:"required"`
 	Amount        *big.Int                  `json:"amount"        gencodec:"required"`
 	Enode         string                    `json:"enode"         gencodec:"required"`
-	Description   string                    `json:"description,omitempty"`
+	Description   string                    `json:"description"   gencodec:"required"`
 	IsOfficial    bool                      `json:"isOfficial"    gencodec:"required"`
 	StateInfo     MasterNodeStateInfo       `json:"stateInfo"     gencodec:"required"`
 	Founders      []MasterNodeMemberInfo    `json:"founders"      gencodec:"required"`

@@ -81,10 +81,10 @@ func (api *PublicSuperNodeAPI) GetNum(ctx context.Context) (*big.Int, error) {
 	return contract_api.GetSuperNodeNum(ctx, api.blockChainAPI)
 }
 
-func (api *PublicSuperNodeAPI) RegisterSuperNode(ctx context.Context, from common.Address, amount *big.Int, isUnion bool, snAddr common.Address, lockDay *big.Int, name string, enode string, description string, creatorIncentive *big.Int, partnerIncentive *big.Int, voterIncentive *big.Int) (common.Hash, error) {
-	return contract_api.RegisterSuperNode(ctx, api.blockChainAPI, api.transactionPoolAPI, from, amount, isUnion, snAddr, lockDay, name, enode, description, creatorIncentive, partnerIncentive, voterIncentive)
+func (api *PublicSuperNodeAPI) RegisterSuperNode(ctx context.Context, from common.Address, amount *big.Int, isUnion bool, addr common.Address, lockDay *big.Int, name string, enode string, description string, creatorIncentive *big.Int, partnerIncentive *big.Int, voterIncentive *big.Int) (common.Hash, error) {
+	return contract_api.RegisterSuperNode(ctx, api.blockChainAPI, api.transactionPoolAPI, from, amount, isUnion, addr, lockDay, name, enode, description, creatorIncentive, partnerIncentive, voterIncentive)
 }
 
-func (api *PublicSuperNodeAPI) AppendRegisterSuperNode(ctx context.Context, from common.Address, amount *big.Int, snAddr common.Address, lockDay *big.Int) (common.Hash, error) {
-	return contract_api.AppendRegisterSuperNode(ctx, api.blockChainAPI, api.transactionPoolAPI, from, amount, snAddr, lockDay)
+func (api *PublicSuperNodeAPI) AppendRegisterSuperNode(ctx context.Context, from common.Address, amount *big.Int, addr common.Address, lockDay *big.Int) (common.Hash, error) {
+	return contract_api.AppendRegisterSuperNode(ctx, api.blockChainAPI, api.transactionPoolAPI, from, amount, addr, lockDay)
 }

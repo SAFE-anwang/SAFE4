@@ -2,7 +2,6 @@ package contract_api
 
 import (
 	"context"
-	"errors"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
@@ -15,11 +14,40 @@ import (
 	"strings"
 )
 
-func GetAllSuperNodeState(ctx context.Context, api *ethapi.PublicBlockChainAPI) ([]types.StateInfo, error) {
-	if api == nil {
-		return nil, errors.New("invalid blockchain api")
+func UploadSuperNodeStates(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, transactionPoolAPI *ethapi.PublicTransactionPoolAPI, from common.Address, ids []*big.Int, states []*big.Int) (common.Hash, error) {
+	vABI, err := abi.JSON(strings.NewReader(systemcontracts.SuperNodeStateABI))
+	if err != nil {
+		return common.Hash{}, err
 	}
 
+	method := "uploadState"
+	data, err := vABI.Pack(method, ids, states)
+	if err != nil {
+		return common.Hash{}, err
+	}
+
+	msgData := (hexutil.Bytes)(data)
+	gasPrice := big.NewInt(params.GWei)
+	gasPrice, err = GetPropertyValue(ctx, blockChainAPI, "gas_price")
+	if err != nil {
+		gasPrice = big.NewInt(params.GWei / 100)
+	}
+
+	args := ethapi.TransactionArgs{
+		From:     &from,
+		To:       &systemcontracts.SuperNodeStateContractAddr,
+		Data:     &msgData,
+		GasPrice: (*hexutil.Big)(gasPrice),
+	}
+	gas, err := blockChainAPI.EstimateGas(ctx, args, nil)
+	if err != nil {
+		return common.Hash{}, err
+	}
+	args.Gas = &gas
+	return transactionPoolAPI.SendTransaction(ctx, args)
+}
+
+func GetAllSuperNodeStates(ctx context.Context, api *ethapi.PublicBlockChainAPI) ([]types.StateInfo, error) {
 	vABI, err := abi.JSON(strings.NewReader(systemcontracts.SuperNodeStateABI))
 	if err != nil {
 		return nil, err
@@ -49,10 +77,6 @@ func GetAllSuperNodeState(ctx context.Context, api *ethapi.PublicBlockChainAPI) 
 }
 
 func GetSuperNodeStateEntries(ctx context.Context, api *ethapi.PublicBlockChainAPI, id *big.Int) ([]types.StateEntry, error) {
-	if api == nil {
-		return nil, errors.New("invalid blockchain api");
-	}
-
 	vABI, err := abi.JSON(strings.NewReader(systemcontracts.SuperNodeStateABI))
 	if err != nil {
 		return nil, err
@@ -79,41 +103,4 @@ func GetSuperNodeStateEntries(ctx context.Context, api *ethapi.PublicBlockChainA
 		return nil, err
 	}
 	return *entries, nil
-}
-
-func UploadSuperNodeStates(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, transactionPoolAPI *ethapi.PublicTransactionPoolAPI, from common.Address, ids []*big.Int, states []*big.Int) (common.Hash, error) {
-	vABI, err := abi.JSON(strings.NewReader(systemcontracts.SuperNodeStateABI))
-	if err != nil {
-		return common.Hash{}, err
-	}
-
-	method := "uploadState"
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	data, err := vABI.Pack(method, ids, states)
-	if err != nil {
-		return common.Hash{}, err
-	}
-
-	msgData := (hexutil.Bytes)(data)
-	gasPrice := big.NewInt(params.GWei)
-	gasPrice, err = GetPropertyValue(ctx, blockChainAPI, "gas_price")
-	if err != nil {
-		gasPrice = big.NewInt(params.GWei / 100)
-	}
-
-	args := ethapi.TransactionArgs{
-		From:     &from,
-		To:       &systemcontracts.SuperNodeStateContractAddr,
-		Data:     &msgData,
-		GasPrice: (*hexutil.Big)(gasPrice),
-	}
-	gas, err := blockChainAPI.EstimateGas(ctx, args, nil)
-	if err != nil {
-		return common.Hash{}, err
-	}
-	args.Gas = &gas
-
-	return transactionPoolAPI.SendTransaction(ctx, args)
 }

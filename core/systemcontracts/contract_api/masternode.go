@@ -2,7 +2,6 @@ package contract_api
 
 import (
 	"context"
-	"errors"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
@@ -15,11 +14,240 @@ import (
 	"strings"
 )
 
-func GetMasterNodeInfo(ctx context.Context, api *ethapi.PublicBlockChainAPI, addr common.Address) (*types.MasterNodeInfo, error) {
-	if api == nil {
-		return nil, errors.New("invalid blockchain api")
+func RegisterMasterNode(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, transactionPoolAPI *ethapi.PublicTransactionPoolAPI, from common.Address, amount *big.Int, isUnion bool, addr common.Address, lockDay *big.Int, enode string, description string, creatorIncentive *big.Int, partnerIncentive *big.Int) (common.Hash, error) {
+	vABI, err := abi.JSON(strings.NewReader(systemcontracts.MasterNodeABI))
+	if err != nil {
+		return common.Hash{}, err
 	}
 
+	method := "register"
+	data, err := vABI.Pack(method, isUnion, addr, lockDay, enode, description, creatorIncentive, partnerIncentive)
+	if err != nil {
+		return common.Hash{}, err
+	}
+
+	msgData := (hexutil.Bytes)(data)
+	gasPrice := big.NewInt(params.GWei)
+	gasPrice, err = GetPropertyValue(ctx, blockChainAPI, "gas_price")
+	if err != nil {
+		gasPrice = big.NewInt(params.GWei / 100)
+	}
+
+	args := ethapi.TransactionArgs{
+		From:     &from,
+		To:       &systemcontracts.MasterNodeContractAddr,
+		Data:     &msgData,
+		Value:    (*hexutil.Big)(amount),
+		GasPrice: (*hexutil.Big)(gasPrice),
+	}
+	gas, err := blockChainAPI.EstimateGas(ctx, args, nil)
+	if err != nil {
+		return common.Hash{}, err
+	}
+	args.Gas = &gas
+	return transactionPoolAPI.SendTransaction(ctx, args)
+}
+
+func AppendRegisterMasterNode(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, transactionPoolAPI *ethapi.PublicTransactionPoolAPI, from common.Address, amount *big.Int, addr common.Address, lockDay *big.Int) (common.Hash, error) {
+	vABI, err := abi.JSON(strings.NewReader(systemcontracts.MasterNodeABI))
+	if err != nil {
+		return common.Hash{}, err
+	}
+
+	method := "appendRegister"
+	data, err := vABI.Pack(method, addr, lockDay)
+	if err != nil {
+		return common.Hash{}, err
+	}
+
+	msgData := (hexutil.Bytes)(data)
+	gasPrice := big.NewInt(params.GWei)
+	gasPrice, err = GetPropertyValue(ctx, blockChainAPI, "gas_price")
+	if err != nil {
+		gasPrice = big.NewInt(params.GWei / 100)
+	}
+
+	args := ethapi.TransactionArgs{
+		From:     &from,
+		To:       &systemcontracts.MasterNodeContractAddr,
+		Data:     &msgData,
+		Value:    (*hexutil.Big)(amount),
+		GasPrice: (*hexutil.Big)(gasPrice),
+	}
+	gas, err := blockChainAPI.EstimateGas(ctx, args, nil)
+	if err != nil {
+		return common.Hash{}, err
+	}
+	args.Gas = &gas
+	return transactionPoolAPI.SendTransaction(ctx, args)
+}
+
+func TurnRegisterMasterNode(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, transactionPoolAPI *ethapi.PublicTransactionPoolAPI, from common.Address, addr common.Address, lockID *big.Int) (common.Hash, error) {
+	vABI, err := abi.JSON(strings.NewReader(systemcontracts.MasterNodeABI))
+	if err != nil {
+		return common.Hash{}, err
+	}
+
+	method := "turnRegister"
+	data, err := vABI.Pack(method, addr, lockID)
+	if err != nil {
+		return common.Hash{}, err
+	}
+
+	msgData := (hexutil.Bytes)(data)
+	gasPrice := big.NewInt(params.GWei)
+	gasPrice, err = GetPropertyValue(ctx, blockChainAPI, "gas_price")
+	if err != nil {
+		gasPrice = big.NewInt(params.GWei / 100)
+	}
+
+	args := ethapi.TransactionArgs{
+		From:     &from,
+		To:       &systemcontracts.MasterNodeContractAddr,
+		Data:     &msgData,
+		GasPrice: (*hexutil.Big)(gasPrice),
+	}
+	gas, err := blockChainAPI.EstimateGas(ctx, args, nil)
+	if err != nil {
+		return common.Hash{}, err
+	}
+	args.Gas = &gas
+	return transactionPoolAPI.SendTransaction(ctx, args)
+}
+
+func ChangeMasterNodeAddress(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, transactionPoolAPI *ethapi.PublicTransactionPoolAPI, from common.Address, addr common.Address, newAddr common.Address) (common.Hash, error) {
+	vABI, err := abi.JSON(strings.NewReader(systemcontracts.MasterNodeABI))
+	if err != nil {
+		return common.Hash{}, err
+	}
+
+	method := "changeAddress"
+	data, err := vABI.Pack(method, addr, newAddr)
+	if err != nil {
+		return common.Hash{}, err
+	}
+
+	msgData := (hexutil.Bytes)(data)
+	gasPrice := big.NewInt(params.GWei)
+	gasPrice, err = GetPropertyValue(ctx, blockChainAPI, "gas_price")
+	if err != nil {
+		gasPrice = big.NewInt(params.GWei / 100)
+	}
+
+	args := ethapi.TransactionArgs{
+		From:     &from,
+		To:       &systemcontracts.MasterNodeContractAddr,
+		Data:     &msgData,
+		GasPrice: (*hexutil.Big)(gasPrice),
+	}
+	gas, err := blockChainAPI.EstimateGas(ctx, args, nil)
+	if err != nil {
+		return common.Hash{}, err
+	}
+	args.Gas = &gas
+	return transactionPoolAPI.SendTransaction(ctx, args)
+}
+
+func ChangeMasterNodeEnode(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, transactionPoolAPI *ethapi.PublicTransactionPoolAPI, from common.Address, addr common.Address, enode string) (common.Hash, error) {
+	vABI, err := abi.JSON(strings.NewReader(systemcontracts.MasterNodeABI))
+	if err != nil {
+		return common.Hash{}, err
+	}
+
+	method := "changeEnode"
+	data, err := vABI.Pack(method, addr, enode)
+	if err != nil {
+		return common.Hash{}, err
+	}
+
+	msgData := (hexutil.Bytes)(data)
+	gasPrice := big.NewInt(params.GWei)
+	gasPrice, err = GetPropertyValue(ctx, blockChainAPI, "gas_price")
+	if err != nil {
+		gasPrice = big.NewInt(params.GWei / 100)
+	}
+
+	args := ethapi.TransactionArgs{
+		From:     &from,
+		To:       &systemcontracts.MasterNodeContractAddr,
+		Data:     &msgData,
+		GasPrice: (*hexutil.Big)(gasPrice),
+	}
+	gas, err := blockChainAPI.EstimateGas(ctx, args, nil)
+	if err != nil {
+		return common.Hash{}, err
+	}
+	args.Gas = &gas
+	return transactionPoolAPI.SendTransaction(ctx, args)
+}
+
+func ChangeMasterNodeDescription(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, transactionPoolAPI *ethapi.PublicTransactionPoolAPI, from common.Address, addr common.Address, description string) (common.Hash, error) {
+	vABI, err := abi.JSON(strings.NewReader(systemcontracts.MasterNodeABI))
+	if err != nil {
+		return common.Hash{}, err
+	}
+
+	method := "changeDescription"
+	data, err := vABI.Pack(method, addr, description)
+	if err != nil {
+		return common.Hash{}, err
+	}
+
+	msgData := (hexutil.Bytes)(data)
+	gasPrice := big.NewInt(params.GWei)
+	gasPrice, err = GetPropertyValue(ctx, blockChainAPI, "gas_price")
+	if err != nil {
+		gasPrice = big.NewInt(params.GWei / 100)
+	}
+
+	args := ethapi.TransactionArgs{
+		From:     &from,
+		To:       &systemcontracts.MasterNodeContractAddr,
+		Data:     &msgData,
+		GasPrice: (*hexutil.Big)(gasPrice),
+	}
+	gas, err := blockChainAPI.EstimateGas(ctx, args, nil)
+	if err != nil {
+		return common.Hash{}, err
+	}
+	args.Gas = &gas
+	return transactionPoolAPI.SendTransaction(ctx, args)
+}
+
+func ChangeMasterNodeOfficial(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, transactionPoolAPI *ethapi.PublicTransactionPoolAPI, from common.Address, addr common.Address, flag bool) (common.Hash, error) {
+	vABI, err := abi.JSON(strings.NewReader(systemcontracts.MasterNodeABI))
+	if err != nil {
+		return common.Hash{}, err
+	}
+
+	method := "changeOfficial"
+	data, err := vABI.Pack(method, addr, flag)
+	if err != nil {
+		return common.Hash{}, err
+	}
+
+	msgData := (hexutil.Bytes)(data)
+	gasPrice := big.NewInt(params.GWei)
+	gasPrice, err = GetPropertyValue(ctx, blockChainAPI, "gas_price")
+	if err != nil {
+		gasPrice = big.NewInt(params.GWei / 100)
+	}
+
+	args := ethapi.TransactionArgs{
+		From:     &from,
+		To:       &systemcontracts.MasterNodeContractAddr,
+		Data:     &msgData,
+		GasPrice: (*hexutil.Big)(gasPrice),
+	}
+	gas, err := blockChainAPI.EstimateGas(ctx, args, nil)
+	if err != nil {
+		return common.Hash{}, err
+	}
+	args.Gas = &gas
+	return transactionPoolAPI.SendTransaction(ctx, args)
+}
+
+func GetMasterNodeInfo(ctx context.Context, api *ethapi.PublicBlockChainAPI, addr common.Address) (*types.MasterNodeInfo, error) {
 	vABI, err := abi.JSON(strings.NewReader(systemcontracts.MasterNodeABI))
 	if err != nil {
 		return nil, err
@@ -49,10 +277,6 @@ func GetMasterNodeInfo(ctx context.Context, api *ethapi.PublicBlockChainAPI, add
 }
 
 func GetMasterNodeInfoByID(ctx context.Context, api *ethapi.PublicBlockChainAPI, id *big.Int) (*types.MasterNodeInfo, error) {
-	if api == nil {
-		return nil, errors.New("invalid blockchain api")
-	}
-
 	vABI, err := abi.JSON(strings.NewReader(systemcontracts.MasterNodeABI))
 	if err != nil {
 		return nil, err
@@ -82,10 +306,6 @@ func GetMasterNodeInfoByID(ctx context.Context, api *ethapi.PublicBlockChainAPI,
 }
 
 func GetNextMasterNode(ctx context.Context, api *ethapi.PublicBlockChainAPI) (*common.Address, error) {
-	if api == nil {
-		return nil, errors.New("invalid blockchain api")
-	}
-
 	vABI, err := abi.JSON(strings.NewReader(systemcontracts.MasterNodeABI))
 	if err != nil {
 		return nil, err
@@ -114,11 +334,7 @@ func GetNextMasterNode(ctx context.Context, api *ethapi.PublicBlockChainAPI) (*c
 	return addr, nil
 }
 
-func GetAllMasterNode(ctx context.Context, api *ethapi.PublicBlockChainAPI) ([]types.MasterNodeInfo, error) {
-	if api == nil {
-		return nil, errors.New("invalid blockchain api")
-	}
-
+func GetAllMasterNodes(ctx context.Context, api *ethapi.PublicBlockChainAPI) ([]types.MasterNodeInfo, error) {
 	vABI, err := abi.JSON(strings.NewReader(systemcontracts.MasterNodeABI))
 	if err != nil {
 		return nil, err
@@ -147,11 +363,36 @@ func GetAllMasterNode(ctx context.Context, api *ethapi.PublicBlockChainAPI) ([]t
 	return *infos, nil
 }
 
-func GetMasterNodeNum(ctx context.Context, api *ethapi.PublicBlockChainAPI) (*big.Int, error) {
-	if api == nil {
-		return nil, errors.New("invalid blockchain api")
+func GetOfficialMasterNodes(ctx context.Context, api *ethapi.PublicBlockChainAPI) ([]types.MasterNodeInfo, error) {
+	vABI, err := abi.JSON(strings.NewReader(systemcontracts.MasterNodeABI))
+	if err != nil {
+		return nil, err
 	}
 
+	method := "getOfficials"
+	data, err := vABI.Pack(method)
+	if err != nil {
+		return nil, err
+	}
+
+	msgData := (hexutil.Bytes)(data)
+	args := ethapi.TransactionArgs{
+		To: &systemcontracts.MasterNodeContractAddr,
+		Data: &msgData,
+	}
+	result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	infos := new([]types.MasterNodeInfo)
+	if err := vABI.UnpackIntoInterface(infos, method, result); err != nil {
+		return nil, err
+	}
+	return *infos, nil
+}
+
+func GetMasterNodeNum(ctx context.Context, api *ethapi.PublicBlockChainAPI) (*big.Int, error) {
 	vABI, err := abi.JSON(strings.NewReader(systemcontracts.MasterNodeABI))
 	if err != nil {
 		return nil, err
@@ -180,78 +421,118 @@ func GetMasterNodeNum(ctx context.Context, api *ethapi.PublicBlockChainAPI) (*bi
 	return count, nil
 }
 
-func RegisterMasterNode(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, transactionPoolAPI *ethapi.PublicTransactionPoolAPI, from common.Address, amount *big.Int, isUnion bool, mnAddr common.Address, lockDay *big.Int, enode string, description string, creatorIncentive *big.Int, partnerIncentive *big.Int) (common.Hash, error) {
+func ExistMasterNode(ctx context.Context, api *ethapi.PublicBlockChainAPI, addr common.Address) (bool, error) {
 	vABI, err := abi.JSON(strings.NewReader(systemcontracts.MasterNodeABI))
 	if err != nil {
-		return common.Hash{}, err
+		return false, err
 	}
 
-	method := "register"
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	data, err := vABI.Pack(method, isUnion, mnAddr, lockDay, enode, description, creatorIncentive, partnerIncentive)
+	method := "exist"
+	data, err := vABI.Pack(method, addr)
 	if err != nil {
-		return common.Hash{}, err
+		return false, err
 	}
 
 	msgData := (hexutil.Bytes)(data)
-	gasPrice := big.NewInt(params.GWei)
-	gasPrice, err = GetPropertyValue(ctx, blockChainAPI, "gas_price")
-	if err != nil {
-		gasPrice = big.NewInt(params.GWei / 100)
-	}
-
 	args := ethapi.TransactionArgs{
-		From:     &from,
-		To:       &systemcontracts.MasterNodeContractAddr,
-		Data:     &msgData,
-		Value:    (*hexutil.Big)(amount),
-		GasPrice: (*hexutil.Big)(gasPrice),
+		To: &systemcontracts.MasterNodeContractAddr,
+		Data: &msgData,
 	}
-	gas, err := blockChainAPI.EstimateGas(ctx, args, nil)
+	result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
 	if err != nil {
-		return common.Hash{}, err
+		return false, err
 	}
-	args.Gas = &gas
 
-	return transactionPoolAPI.SendTransaction(ctx, args)
+	value := new(bool)
+	if err := vABI.UnpackIntoInterface(&value, method, result); err != nil {
+		return false, err
+	}
+	return *value, nil
 }
 
-func AppendRegisterMasterNode(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, transactionPoolAPI *ethapi.PublicTransactionPoolAPI, from common.Address, amount *big.Int, mnAddr common.Address, lockDay *big.Int) (common.Hash, error) {
+func ExistMasterNodeID(ctx context.Context, api *ethapi.PublicBlockChainAPI, id *big.Int) (bool, error) {
 	vABI, err := abi.JSON(strings.NewReader(systemcontracts.MasterNodeABI))
 	if err != nil {
-		return common.Hash{}, err
+		return false, err
 	}
 
-	method := "appendRegister"
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	data, err := vABI.Pack(method, mnAddr, lockDay)
+	method := "existID"
+	data, err := vABI.Pack(method, id)
 	if err != nil {
-		return common.Hash{}, err
+		return false, err
 	}
 
 	msgData := (hexutil.Bytes)(data)
-	gasPrice := big.NewInt(params.GWei)
-	gasPrice, err = GetPropertyValue(ctx, blockChainAPI, "gas_price")
-	if err != nil {
-		gasPrice = big.NewInt(params.GWei / 100)
-	}
-
 	args := ethapi.TransactionArgs{
-		From:     &from,
-		To:       &systemcontracts.MasterNodeContractAddr,
-		Data:     &msgData,
-		Value:    (*hexutil.Big)(amount),
-		GasPrice: (*hexutil.Big)(gasPrice),
+		To: &systemcontracts.MasterNodeContractAddr,
+		Data: &msgData,
 	}
-	gas, err := blockChainAPI.EstimateGas(ctx, args, nil)
+	result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
 	if err != nil {
-		return common.Hash{}, err
+		return false, err
 	}
-	args.Gas = &gas
 
-	return transactionPoolAPI.SendTransaction(ctx, args)
+	value := new(bool)
+	if err := vABI.UnpackIntoInterface(&value, method, result); err != nil {
+		return false, err
+	}
+	return *value, nil
+}
+
+func ExistMasterNodeEnode(ctx context.Context, api *ethapi.PublicBlockChainAPI, enode string) (bool, error) {
+	vABI, err := abi.JSON(strings.NewReader(systemcontracts.MasterNodeABI))
+	if err != nil {
+		return false, err
+	}
+
+	method := "existEnode"
+	data, err := vABI.Pack(method, enode)
+	if err != nil {
+		return false, err
+	}
+
+	msgData := (hexutil.Bytes)(data)
+	args := ethapi.TransactionArgs{
+		To: &systemcontracts.MasterNodeContractAddr,
+		Data: &msgData,
+	}
+	result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
+	if err != nil {
+		return false, err
+	}
+
+	value := new(bool)
+	if err := vABI.UnpackIntoInterface(&value, method, result); err != nil {
+		return false, err
+	}
+	return *value, nil
+}
+
+func ExistMasterNodeLockID(ctx context.Context, api *ethapi.PublicBlockChainAPI, addr common.Address, lockID *big.Int) (bool, error) {
+	vABI, err := abi.JSON(strings.NewReader(systemcontracts.MasterNodeABI))
+	if err != nil {
+		return false, err
+	}
+
+	method := "existLockID"
+	data, err := vABI.Pack(method, addr, lockID)
+	if err != nil {
+		return false, err
+	}
+
+	msgData := (hexutil.Bytes)(data)
+	args := ethapi.TransactionArgs{
+		To: &systemcontracts.MasterNodeContractAddr,
+		Data: &msgData,
+	}
+	result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
+	if err != nil {
+		return false, err
+	}
+
+	value := new(bool)
+	if err := vABI.UnpackIntoInterface(&value, method, result); err != nil {
+		return false, err
+	}
+	return *value, nil
 }

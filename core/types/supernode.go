@@ -43,7 +43,7 @@ type SuperNodeInfo struct {
 	Founders            []SuperNodeMemberInfo   `json:"founders"      gencodec:"required"`
 	IncentivePlan       SuperNodeIncentivePlan  `json:"incentivePlan" gencodec:"required"`
 	VoteInfo            SuperVoteInfo           `json:"voteInfo"      gencodec:"required"`
-	LastRewardHeight  *big.Int                  `json:"lastRewardHeight" gencodec:"required"`
-	CreateHeight  *big.Int                      `json:"createHeight"  gencodec:"required"`
-	UpdateHeight  *big.Int                      `json:"updateHeight"  gencodec:"required"`
+	LastRewardHeight    *big.Int                `json:"lastRewardHeight" gencodec:"required"`
+	CreateHeight        *big.Int                `json:"createHeight"  gencodec:"required"`
+	UpdateHeight        *big.Int                `json:"updateHeight"  gencodec:"required"`
 }

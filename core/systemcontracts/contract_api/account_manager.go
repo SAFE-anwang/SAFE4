@@ -15,7 +15,7 @@ import (
 	"strings"
 )
 
-func DepositAccountWithDay(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, transactionPoolAPI *ethapi.PublicTransactionPoolAPI, from common.Address, amount *big.Int, to common.Address, lockDay *big.Int) (common.Hash, error) {
+func DepositAccount(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, transactionPoolAPI *ethapi.PublicTransactionPoolAPI, from common.Address, amount *big.Int, to common.Address, lockDay *big.Int) (common.Hash, error) {
 	vABI, err := abi.JSON(strings.NewReader(systemcontracts.AccountManagerABI))
 	if err != nil {
 		return common.Hash{}, err
@@ -218,15 +218,14 @@ func getAccountAmountInfo(ctx context.Context, api *ethapi.PublicBlockChainAPI, 
 		return nil, err
 	}
 
-	amount := new(big.Int)
-	ids := new([]big.Int)
-	if err := vABI.UnpackIntoInterface(&[]interface{}{amount, ids}, method, result); err != nil {
+	unpacked, err := vABI.Unpack(method, result)
+	if err != nil {
 		return nil, err
 	}
 
 	info := new(types.AccountAmountInfo)
-	info.Amount = amount
-	info.IDs = *ids
+	info.Amount = unpacked[0].(*big.Int)
+	info.IDs = unpacked[1].([]*big.Int)
 	return info, nil
 }
 

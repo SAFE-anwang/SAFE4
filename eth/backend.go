@@ -379,9 +379,14 @@ func (s *Ethereum) APIs() []rpc.API {
 
 	s.apis = append(s.apis, []rpc.API{
 		{
-			Namespace: "system",
+			Namespace: "sysproperty",
 			Version:   "1.0",
-			Service:   NewPublicSystemAPI(s),
+			Service:   NewPublicSysPropertyAPI(s),
+			Public:    true,
+		},{
+			Namespace: "account",
+			Version:   "1.0",
+			Service:   NewPublicAccountAPI(s),
 			Public:    true,
 		},{
 			Namespace: "masternode",
@@ -394,19 +399,14 @@ func (s *Ethereum) APIs() []rpc.API {
 			Service:   NewPublicSuperNodeAPI(s),
 			Public:    true,
 		}, {
+			Namespace: "snvote",
+			Version:   "1.0",
+			Service:   NewPublicSNVoteAPI(s),
+			Public:    true,
+		}, {
 			Namespace: "proposal",
 			Version:   "1.0",
 			Service:   NewPublicProposalAPI(s),
-			Public:    true,
-		}, {
-			Namespace: "masternodestate",
-			Version:   "1.0",
-			Service:   NewPublicMasterNodeStateAPI(s),
-			Public:    true,
-		}, {
-			Namespace: "supernodestate",
-			Version:   "1.0",
-			Service:   NewPublicSuperNodeStateAPI(s),
 			Public:    true,
 		},
 	}...)

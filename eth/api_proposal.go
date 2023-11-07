@@ -2,20 +2,16 @@ package eth
 
 import (
 	"context"
-	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/common/hexutil"
-	"github.com/ethereum/go-ethereum/core/systemcontracts"
+	"github.com/ethereum/go-ethereum/core/systemcontracts/contract_api"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/internal/ethapi"
-	"github.com/ethereum/go-ethereum/rpc"
 	"math/big"
-	"strings"
 )
 
 type PublicProposalAPI struct {
-	e *Ethereum
-	blockChainAPI *ethapi.PublicBlockChainAPI
+	e                  *Ethereum
+	blockChainAPI      *ethapi.PublicBlockChainAPI
 	transactionPoolAPI *ethapi.PublicTransactionPoolAPI
 }
 
@@ -23,161 +19,50 @@ func NewPublicProposalAPI(e *Ethereum) *PublicProposalAPI {
 	return &PublicProposalAPI{e, e.GetPublicBlockChainAPI(), e.GetPublicTransactionPoolAPI()}
 }
 
-func (api *PublicProposalAPI) Create(ctx context.Context, creatorAddr common.Address, title string, payAmount *big.Int, payTimes *big.Int, startPayTime *big.Int, endPayTime *big.Int, description string, detail string) (*big.Int, error) {
-	vABI, err := abi.JSON(strings.NewReader(systemcontracts.ProposalABI))
-	if err != nil {
-		return nil, err
-	}
-
-	method := "create"
-	data, err := vABI.Pack(method, creatorAddr)
-	if err != nil {
-		return nil, err
-	}
-
-	msgData := (hexutil.Bytes)(data)
-	args := ethapi.TransactionArgs{
-		From: &creatorAddr,
-		To: &systemcontracts.ProposalContractAddr,
-		Data: &msgData,
-	}
-	blockNrOrHash := rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber)
-	gas, err := ethapi.DoEstimateGas(ctx, api.e.APIBackend, args, blockNrOrHash, api.e.APIBackend.RPCGasCap())
-	if err != nil {
-		return nil, err
-	}
-	args.Gas = &gas
-	result, err := api.blockChainAPI.Call(ctx, args, blockNrOrHash, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	id := new(big.Int)
-	if err := vABI.UnpackIntoInterface(&id, method, result); err != nil {
-		return nil, err
-	}
-	return id, nil
+func (api *PublicProposalAPI) Create(ctx context.Context, from common.Address, title string, payAmount *big.Int, payTimes *big.Int, startPayTime *big.Int, endPayTime *big.Int, description string) (common.Hash, error) {
+	return contract_api.CreateProposal(ctx, api.blockChainAPI, api.transactionPoolAPI, from, title, payAmount, payTimes, startPayTime, endPayTime, description)
 }
 
-func (api *PublicProposalAPI) Vote(ctx context.Context, addr common.Address, id *big.Int, voteResult *big.Int) error {
-	vABI, err := abi.JSON(strings.NewReader(systemcontracts.ProposalABI))
-	if err != nil {
-		return err
-	}
-
-	method := "vote"
-	data, err := vABI.Pack(method, id, voteResult)
-	if err != nil {
-		return err
-	}
-
-	msgData := (hexutil.Bytes)(data)
-	args := ethapi.TransactionArgs{
-		From: &addr,
-		To: &systemcontracts.ProposalContractAddr,
-		Data: &msgData,
-	}
-	blockNrOrHash := rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(api.blockChainAPI.BlockNumber()))
-	gas, err := ethapi.DoEstimateGas(ctx, api.e.APIBackend, args, blockNrOrHash, api.e.APIBackend.RPCGasCap())
-	if err != nil {
-		return err
-	}
-	args.Gas = &gas
-
-	result, err := api.blockChainAPI.Call(ctx, args, blockNrOrHash, nil)
-	if err != nil {
-		return err
-	}
-
-	info := new([]common.Address)
-	return vABI.UnpackIntoInterface(&info, method, result)
+func (api *PublicProposalAPI) Vote(ctx context.Context, from common.Address, id *big.Int, voteResult *big.Int) (common.Hash, error) {
+	return contract_api.Vote4Proposal(ctx, api.blockChainAPI, api.transactionPoolAPI, from, id, voteResult)
 }
 
-func (api *PublicProposalAPI) GetInfo(ctx context.Context, id *big.Int) (*types.PropertyInfo, error) {
-	vABI, err := abi.JSON(strings.NewReader(systemcontracts.ProposalABI))
-	if err != nil {
-		return nil, err
-	}
-
-	method := "getInfo"
-	data, err := vABI.Pack(method, id)
-	if err != nil {
-		return nil, err
-	}
-
-	msgData := (hexutil.Bytes)(data)
-	args := ethapi.TransactionArgs{
-		To: &systemcontracts.ProposalContractAddr,
-		Data: &msgData,
-	}
-
-	result, err := api.blockChainAPI.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
-	if err != nil {
-		return nil, err
-	}
-
-	info := new(types.PropertyInfo)
-	if err := vABI.UnpackIntoInterface(&info, method, result); err != nil {
-		return nil, err
-	}
-	return info, nil
+func (api *PublicProposalAPI) ChangeTitle(ctx context.Context, from common.Address, id *big.Int, title string) (common.Hash, error) {
+	return contract_api.ChangeProposalTitle(ctx, api.blockChainAPI, api.transactionPoolAPI, from, id, title)
 }
 
-func (api *PublicProposalAPI) GetAll(ctx context.Context) ([]types.PropertyInfo, error) {
-	vABI, err := abi.JSON(strings.NewReader(systemcontracts.ProposalABI))
-	if err != nil {
-		return nil, err
-	}
-
-	method := "getAll"
-	data, err := vABI.Pack(method)
-	if err != nil {
-		return nil, err
-	}
-
-	msgData := (hexutil.Bytes)(data)
-	args := ethapi.TransactionArgs{
-		To: &systemcontracts.ProposalContractAddr,
-		Data: &msgData,
-	}
-	result, err := api.blockChainAPI.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
-	if err != nil {
-		return nil, err
-	}
-
-	info := new([]types.PropertyInfo)
-	if err := vABI.UnpackIntoInterface(&info, method, result); err != nil {
-		return nil, err
-	}
-	return *info, nil
+func (api *PublicProposalAPI) ChangePayAmount(ctx context.Context, from common.Address, id *big.Int, payAmount *big.Int) (common.Hash, error) {
+	return contract_api.ChangeProposalPayAmount(ctx, api.blockChainAPI, api.transactionPoolAPI, from, id, payAmount)
 }
 
-func (api *PublicProposalAPI) GetMine(ctx context.Context, addr common.Address) ([]types.PropertyInfo, error) {
-	vABI, err := abi.JSON(strings.NewReader(systemcontracts.ProposalABI))
-	if err != nil {
-		return nil, err
-	}
+func (api *PublicProposalAPI) ChangePayTimes(ctx context.Context, from common.Address, id *big.Int, payTimes *big.Int) (common.Hash, error) {
+	return contract_api.ChangeProposalPayTimes(ctx, api.blockChainAPI, api.transactionPoolAPI, from, id, payTimes)
+}
 
-	method := "getMine"
-	data, err := vABI.Pack(method)
-	if err != nil {
-		return nil, err
-	}
+func (api *PublicProposalAPI) ChangeStartPayTime(ctx context.Context, from common.Address, id *big.Int, startPayTime *big.Int) (common.Hash, error) {
+	return contract_api.ChangeProposalStartPayTime(ctx, api.blockChainAPI, api.transactionPoolAPI, from, id, startPayTime)
+}
 
-	msgData := (hexutil.Bytes)(data)
-	args := ethapi.TransactionArgs{
-		From: &addr,
-		To: &systemcontracts.ProposalContractAddr,
-		Data: &msgData,
-	}
-	result, err := api.blockChainAPI.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
-	if err != nil {
-		return nil, err
-	}
+func (api *PublicProposalAPI) ChangeEndPayTime(ctx context.Context, from common.Address, id *big.Int, endPayTime *big.Int) (common.Hash, error) {
+	return contract_api.ChangeProposalEndPayTime(ctx, api.blockChainAPI, api.transactionPoolAPI, from, id, endPayTime)
+}
 
-	info := new([]types.PropertyInfo)
-	if err := vABI.UnpackIntoInterface(&info, method, result); err != nil {
-		return nil, err
-	}
-	return *info, nil
+func (api *PublicProposalAPI) ChangeDescription(ctx context.Context, from common.Address, id *big.Int, description string) (common.Hash, error) {
+	return contract_api.ChangeProposalDescription(ctx, api.blockChainAPI, api.transactionPoolAPI, from, id, description)
+}
+
+func (api *PublicProposalAPI) GetInfo(ctx context.Context, id *big.Int) (*types.ProposalInfo, error) {
+	return contract_api.GetProposalInfo(ctx, api.blockChainAPI, id)
+}
+
+func (api *PublicProposalAPI) GetAll(ctx context.Context) ([]types.ProposalInfo, error) {
+	return contract_api.GetAllProposals(ctx, api.blockChainAPI)
+}
+
+func (api *PublicProposalAPI) GetMine(ctx context.Context, from common.Address) ([]types.ProposalInfo, error) {
+	return contract_api.GetMineProposals(ctx, api.blockChainAPI, from)
+}
+
+func (api *PublicProposalAPI) Exist(ctx context.Context, id *big.Int) (bool, error) {
+	return contract_api.ExistProposal(ctx, api.blockChainAPI, id)
 }

@@ -15,15 +15,15 @@ type AccountRecord struct {
 }
 
 type AccountRecordUseInfo struct {
-	SpecialAddr     *big.Int        `json:"specialAddr"     gencodec:"required"`
-	FreezeHeight    common.Address  `json:"freezeHeight"    gencodec:"required"`
+	SpecialAddr     common.Address  `json:"specialAddr"     gencodec:"required"`
+	FreezeHeight    *big.Int        `json:"freezeHeight"    gencodec:"required"`
 	UnfreezeHeight  *big.Int        `json:"unfreezeHeight"  gencodec:"required"`
-	VotedAddr       *big.Int        `json:"votedAddr"       gencodec:"required"`
+	VotedAddr       common.Address  `json:"votedAddr"       gencodec:"required"`
 	VoteHeight      *big.Int        `json:"voteHeight"      gencodec:"required"`
 	ReleaseHeight   *big.Int        `json:"releaseHeight"   gencodec:"required"`
 }
 
 type AccountAmountInfo struct {
 	Amount      *big.Int            `json:"specialAddr"     gencodec:"required"`
-	IDs         []big.Int           `json:"freezeHeight"    gencodec:"required"`
+	IDs         []*big.Int           `json:"freezeHeight"    gencodec:"required"`
 }

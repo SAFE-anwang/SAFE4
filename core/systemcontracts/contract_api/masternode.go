@@ -305,16 +305,16 @@ func GetMasterNodeInfoByID(ctx context.Context, api *ethapi.PublicBlockChainAPI,
 	return info, nil
 }
 
-func GetNextMasterNode(ctx context.Context, api *ethapi.PublicBlockChainAPI) (*common.Address, error) {
+func GetNextMasterNode(ctx context.Context, api *ethapi.PublicBlockChainAPI) (common.Address, error) {
 	vABI, err := abi.JSON(strings.NewReader(systemcontracts.MasterNodeABI))
 	if err != nil {
-		return nil, err
+		return common.Address{}, err
 	}
 
 	method := "getNext"
 	data, err := vABI.Pack(method)
 	if err != nil {
-		return nil, err
+		return common.Address{}, err
 	}
 
 	msgData := (hexutil.Bytes)(data)
@@ -324,14 +324,14 @@ func GetNextMasterNode(ctx context.Context, api *ethapi.PublicBlockChainAPI) (*c
 	}
 	result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
 	if err != nil {
-		return nil, err
+		return common.Address{}, err
 	}
 
 	addr := new(common.Address)
 	if err := vABI.UnpackIntoInterface(&addr, method, result); err != nil {
-		return nil, err
+		return common.Address{}, err
 	}
-	return addr, nil
+	return *addr, nil
 }
 
 func GetAllMasterNodes(ctx context.Context, api *ethapi.PublicBlockChainAPI) ([]types.MasterNodeInfo, error) {

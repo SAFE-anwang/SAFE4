@@ -113,7 +113,7 @@ func ProxyVote(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, t
 	return transactionPoolAPI.SendTransaction(ctx, args)
 }
 
-func GetSuperNodes4Voter(ctx context.Context, api *ethapi.PublicBlockChainAPI, voterAddr common.Address) (*types.SuperNodes4VoterInfo, error) {
+func GetSuperNodes4Voter(ctx context.Context, api *ethapi.PublicBlockChainAPI, voterAddr common.Address) (*types.SNVoteRetInfo, error) {
 	vABI, err := abi.JSON(strings.NewReader(systemcontracts.SNVoteABI))
 	if err != nil {
 		return nil, err
@@ -135,15 +135,14 @@ func GetSuperNodes4Voter(ctx context.Context, api *ethapi.PublicBlockChainAPI, v
 		return nil, err
 	}
 
-	addrs := new([]common.Address)
-	nums := new([]big.Int)
-	if err := vABI.UnpackIntoInterface(&[]interface{}{addrs, nums}, method, result); err != nil {
+	unpacked, err := vABI.Unpack(method, result)
+	if err != nil {
 		return nil, err
 	}
 
-	info := new(types.SuperNodes4VoterInfo)
-	info.SuperNodes = *addrs
-	info.VoteNums = *nums
+	info := new(types.SNVoteRetInfo)
+	info.Addrs = unpacked[0].([]common.Address)
+	info.VoteNums = unpacked[1].([]*big.Int)
 	return info, nil
 }
 
@@ -176,7 +175,7 @@ func GetRecordIDs4Voter(ctx context.Context, api *ethapi.PublicBlockChainAPI, vo
 	return *recordIDs, nil
 }
 
-func GetVoters4SN(ctx context.Context, api *ethapi.PublicBlockChainAPI, snAddr common.Address) (*types.Voters4SNInfo, error) {
+func GetVoters4SN(ctx context.Context, api *ethapi.PublicBlockChainAPI, snAddr common.Address) (*types.SNVoteRetInfo, error) {
 	vABI, err := abi.JSON(strings.NewReader(systemcontracts.SNVoteABI))
 	if err != nil {
 		return nil, err
@@ -198,15 +197,14 @@ func GetVoters4SN(ctx context.Context, api *ethapi.PublicBlockChainAPI, snAddr c
 		return nil, err
 	}
 
-	addrs := new([]common.Address)
-	nums := new([]big.Int)
-	if err := vABI.UnpackIntoInterface(&[]interface{}{addrs, nums}, method, result); err != nil {
+	unpacked, err := vABI.Unpack(method, result)
+	if err != nil {
 		return nil, err
 	}
 
-	info := new(types.Voters4SNInfo)
-	info.Voters = *addrs
-	info.VoteNums = *nums
+	info := new(types.SNVoteRetInfo)
+	info.Addrs = unpacked[0].([]common.Address)
+	info.VoteNums = unpacked[1].([]*big.Int)
 	return info, nil
 }
 
@@ -239,7 +237,7 @@ func GetVoteNum4SN(ctx context.Context, api *ethapi.PublicBlockChainAPI, snAddr 
 	return num, nil
 }
 
-func GetProxies4Voter(ctx context.Context, api *ethapi.PublicBlockChainAPI, voterAddr common.Address) (*types.Proxies4VoterInfo, error) {
+func GetProxies4Voter(ctx context.Context, api *ethapi.PublicBlockChainAPI, voterAddr common.Address) (*types.SNVoteRetInfo, error) {
 	vABI, err := abi.JSON(strings.NewReader(systemcontracts.SNVoteABI))
 	if err != nil {
 		return nil, err
@@ -261,15 +259,14 @@ func GetProxies4Voter(ctx context.Context, api *ethapi.PublicBlockChainAPI, vote
 		return nil, err
 	}
 
-	addrs := new([]common.Address)
-	nums := new([]big.Int)
-	if err := vABI.UnpackIntoInterface(&[]interface{}{addrs, nums}, method, result); err != nil {
+	unpacked, err := vABI.Unpack(method, result)
+	if err != nil {
 		return nil, err
 	}
 
-	info := new(types.Proxies4VoterInfo)
-	info.Proxies = *addrs
-	info.VoteNums = *nums
+	info := new(types.SNVoteRetInfo)
+	info.Addrs = unpacked[0].([]common.Address)
+	info.VoteNums = unpacked[1].([]*big.Int)
 	return info, nil
 }
 
@@ -302,7 +299,7 @@ func GetProxiedRecordIDs4Voter(ctx context.Context, api *ethapi.PublicBlockChain
 	return *recordIDs, nil
 }
 
-func GetVoters4Proxy(ctx context.Context, api *ethapi.PublicBlockChainAPI, proxyAddr common.Address) (*types.Voters4ProxyInfo, error) {
+func GetVoters4Proxy(ctx context.Context, api *ethapi.PublicBlockChainAPI, proxyAddr common.Address) (*types.SNVoteRetInfo, error) {
 	vABI, err := abi.JSON(strings.NewReader(systemcontracts.SNVoteABI))
 	if err != nil {
 		return nil, err
@@ -324,15 +321,14 @@ func GetVoters4Proxy(ctx context.Context, api *ethapi.PublicBlockChainAPI, proxy
 		return nil, err
 	}
 
-	addrs := new([]common.Address)
-	nums := new([]big.Int)
-	if err := vABI.UnpackIntoInterface(&[]interface{}{addrs, nums}, method, result); err != nil {
+	unpacked, err := vABI.Unpack(method, result)
+	if err != nil {
 		return nil, err
 	}
 
-	info := new(types.Voters4ProxyInfo)
-	info.Voters = *addrs
-	info.VoteNums = *nums
+	info := new(types.SNVoteRetInfo)
+	info.Addrs = unpacked[0].([]common.Address)
+	info.VoteNums = unpacked[1].([]*big.Int)
 	return info, nil
 }
 

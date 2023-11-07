@@ -61,6 +61,34 @@ func (api *PublicMasterNodeAPI) Restart(ctx context.Context, addr common.Address
 	return true, nil
 }
 
+func (api *PublicMasterNodeAPI) Register(ctx context.Context, from common.Address, amount *big.Int, isUnion bool, addr common.Address, lockDay *big.Int, enode string, description string, creatorIncentive *big.Int, partnerIncentive *big.Int) (common.Hash, error) {
+	return contract_api.RegisterMasterNode(ctx, api.blockChainAPI, api.transactionPoolAPI, from, amount, isUnion, addr, lockDay, enode, description, creatorIncentive, partnerIncentive)
+}
+
+func (api *PublicMasterNodeAPI) AppendRegister(ctx context.Context, from common.Address, amount *big.Int, addr common.Address, lockDay *big.Int) (common.Hash, error) {
+	return contract_api.AppendRegisterMasterNode(ctx, api.blockChainAPI, api.transactionPoolAPI, from, amount, addr, lockDay)
+}
+
+func (api *PublicMasterNodeAPI) TurnRegister(ctx context.Context, from common.Address, addr common.Address, lockID *big.Int) (common.Hash, error) {
+	return contract_api.TurnRegisterMasterNode(ctx, api.blockChainAPI, api.transactionPoolAPI, from, addr, lockID)
+}
+
+func (api *PublicMasterNodeAPI) ChangeAddress(ctx context.Context, from common.Address, addr common.Address, newAddr common.Address) (common.Hash, error) {
+	return contract_api.ChangeMasterNodeAddress(ctx, api.blockChainAPI, api.transactionPoolAPI, from, addr, newAddr)
+}
+
+func (api *PublicMasterNodeAPI) ChangeEnode(ctx context.Context, from common.Address, addr common.Address, enode string) (common.Hash, error) {
+	return contract_api.ChangeMasterNodeEnode(ctx, api.blockChainAPI, api.transactionPoolAPI, from, addr, enode)
+}
+
+func (api *PublicMasterNodeAPI) ChangeDescription(ctx context.Context, from common.Address, addr common.Address, description string) (common.Hash, error) {
+	return contract_api.ChangeMasterNodeDescription(ctx, api.blockChainAPI, api.transactionPoolAPI, from, addr, description)
+}
+
+func (api *PublicMasterNodeAPI) ChangeOfficial(ctx context.Context, from common.Address, addr common.Address, flag bool) (common.Hash, error) {
+	return contract_api.ChangeMasterNodeOfficial(ctx, api.blockChainAPI, api.transactionPoolAPI, from, addr, flag)
+}
+
 func (api *PublicMasterNodeAPI) GetInfo(ctx context.Context, addr common.Address) (*types.MasterNodeInfo, error) {
 	return contract_api.GetMasterNodeInfo(ctx, api.blockChainAPI, addr)
 }
@@ -69,22 +97,34 @@ func (api *PublicMasterNodeAPI) GetInfoByID(ctx context.Context, id *big.Int) (*
 	return contract_api.GetMasterNodeInfoByID(ctx, api.blockChainAPI, id)
 }
 
-func (api *PublicMasterNodeAPI) GetNext(ctx context.Context) (*common.Address, error) {
+func (api *PublicMasterNodeAPI) GetNext(ctx context.Context) (common.Address, error) {
 	return contract_api.GetNextMasterNode(ctx, api.blockChainAPI)
 }
 
 func (api *PublicMasterNodeAPI) GetAll(ctx context.Context) ([]types.MasterNodeInfo, error) {
-	return contract_api.GetAllMasterNode(ctx, api.blockChainAPI)
+	return contract_api.GetAllMasterNodes(ctx, api.blockChainAPI)
+}
+
+func (api *PublicMasterNodeAPI) GetOfficials(ctx context.Context) ([]types.MasterNodeInfo, error) {
+	return contract_api.GetOfficialMasterNodes(ctx, api.blockChainAPI)
 }
 
 func (api *PublicMasterNodeAPI) GetNum(ctx context.Context) (*big.Int, error) {
 	return contract_api.GetMasterNodeNum(ctx, api.blockChainAPI)
 }
 
-func (api *PublicMasterNodeAPI) Register(ctx context.Context, from common.Address, amount *big.Int, isUnion bool, addr common.Address, lockDay *big.Int, enode string, description string, creatorIncentive *big.Int, partnerIncentive *big.Int) (common.Hash, error) {
-	return contract_api.RegisterMasterNode(ctx, api.blockChainAPI, api.transactionPoolAPI, from, amount, isUnion, addr, lockDay, enode, description, creatorIncentive, partnerIncentive)
+func (api *PublicMasterNodeAPI) Exist(ctx context.Context, addr common.Address) (bool, error) {
+	return contract_api.ExistMasterNode(ctx, api.blockChainAPI, addr)
 }
 
-func (api *PublicMasterNodeAPI) AppendRegister(ctx context.Context, from common.Address, amount *big.Int, addr common.Address, lockDay *big.Int) (common.Hash, error) {
-	return contract_api.AppendRegisterMasterNode(ctx, api.blockChainAPI, api.transactionPoolAPI, from, amount, addr, lockDay)
+func (api *PublicMasterNodeAPI) ExistID(ctx context.Context, id *big.Int) (bool, error) {
+	return contract_api.ExistMasterNodeID(ctx, api.blockChainAPI, id)
+}
+
+func (api *PublicMasterNodeAPI) ExistEnode(ctx context.Context, enode string) (bool, error) {
+	return contract_api.ExistMasterNodeEnode(ctx, api.blockChainAPI, enode)
+}
+
+func (api *PublicMasterNodeAPI) ExistLockID(ctx context.Context, addr common.Address, lockID *big.Int) (bool, error) {
+	return contract_api.ExistMasterNodeLockID(ctx, api.blockChainAPI, addr, lockID)
 }

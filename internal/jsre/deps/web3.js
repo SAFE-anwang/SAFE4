@@ -1192,7 +1192,7 @@ module.exports = SolidityTypeInt;
     You should have received a copy of the GNU Lesser General Public License
     along with web3.js.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** 
+/**
  * @file param.js
  * @author Marek Kotewicz <marek@ethdev.com>
  * @date 2015
@@ -1211,7 +1211,7 @@ var SolidityParam = function (value, offset) {
 
 /**
  * This method should be used to get length of params's dynamic part
- * 
+ *
  * @method dynamicPartLength
  * @returns {Number} length of dynamic part (in bytes)
  */
@@ -1239,7 +1239,7 @@ SolidityParam.prototype.withOffset = function (offset) {
  * @param {SolidityParam} result of combination
  */
 SolidityParam.prototype.combine = function (param) {
-    return new SolidityParam(this.value + param.value); 
+    return new SolidityParam(this.value + param.value);
 };
 
 /**
@@ -1271,8 +1271,8 @@ SolidityParam.prototype.offsetAsBytes = function () {
  */
 SolidityParam.prototype.staticPart = function () {
     if (!this.isDynamic()) {
-        return this.value; 
-    } 
+        return this.value;
+    }
     return this.offsetAsBytes();
 };
 
@@ -1304,7 +1304,7 @@ SolidityParam.prototype.encode = function () {
  * @returns {String}
  */
 SolidityParam.encodeList = function (params) {
-    
+
     // updating offsets
     var totalOffset = params.length * 32;
     var offsetParams = params.map(function (param) {
@@ -1746,13 +1746,13 @@ if (typeof XMLHttpRequest === 'undefined') {
 
 /**
  * Utils
- * 
+ *
  * @module utils
  */
 
 /**
  * Utility functions
- * 
+ *
  * @class [utils] config
  * @constructor
  */
@@ -1819,7 +1819,7 @@ module.exports = {
     You should have received a copy of the GNU Lesser General Public License
     along with web3.js.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** 
+/**
  * @file sha3.js
  * @author Marek Kotewicz <marek@ethdev.com>
  * @date 2015
@@ -2524,12 +2524,12 @@ var Property = require('./web3/property');
 var HttpProvider = require('./web3/httpprovider');
 var IpcProvider = require('./web3/ipcprovider');
 var BigNumber = require('bignumber.js');
-var System = require('./web3/methods/system');
+var SysProperty = require('./web3/methods/sysproperty');
+var Account = require('./web3/methods/account');
 var MasterNode = require('./web3/methods/masternode');
 var SuperNode = require('./web3/methods/supernode');
+var SNVote = require('./web3/methods/snvote');
 var Proposal = require('./web3/methods/proposal');
-var MasterNodeState = require('./web3/methods/masternodestate');
-var SuperNodeState = require('./web3/methods/supernodestate');
 
 
 
@@ -2543,12 +2543,12 @@ function Web3 (provider) {
     this.personal = new Personal(this);
     this.bzz = new Swarm(this);
     this.settings = new Settings();
-    this.system = new System(this);
+    this.sysproperty = new SysProperty(this);
+    this.account = new Account(this);
     this.masternode = new MasterNode(this);
     this.supernode = new SuperNode(this);
+    this.snvote = new SNVote(this);
     this.proposal = new Proposal(this);
-    this.masternodestate = new MasterNodeState(this);
-    this.supernodestate = new SuperNodeState(this);
     this.version = {
         api: version.version
     };
@@ -2644,7 +2644,7 @@ Web3.prototype.createBatch = function () {
 module.exports = Web3;
 
 
-},{"./utils/sha3":19,"./utils/utils":20,"./version.json":21,"./web3/batch":24,"./web3/extend":28,"./web3/httpprovider":32,"./web3/iban":33,"./web3/ipcprovider":34,"./web3/methods/db":37,"./web3/methods/eth":38,"./web3/methods/net":39,"./web3/methods/personal":40,"./web3/methods/shh":41,"./web3/methods/swarm":42,"./web3/property":45,"./web3/requestmanager":46,"./web3/settings":47,"./web3/methods/system":87,"./web3/methods/masternode":88,"./web3/methods/supernode":89,"./web3/methods/proposal":90,"./web3/methods/masternodestate":91,"./web3/methods/supernodestate":92,"bignumber.js":"bignumber.js"}],23:[function(require,module,exports){
+},{"./utils/sha3":19,"./utils/utils":20,"./version.json":21,"./web3/batch":24,"./web3/extend":28,"./web3/httpprovider":32,"./web3/iban":33,"./web3/ipcprovider":34,"./web3/methods/db":37,"./web3/methods/eth":38,"./web3/methods/net":39,"./web3/methods/personal":40,"./web3/methods/shh":41,"./web3/methods/swarm":42,"./web3/property":45,"./web3/requestmanager":46,"./web3/settings":47,"./web3/methods/sysproperty":87,"./web3/methods/account":88,"./web3/methods/masternode":89,"./web3/methods/supernode":90,"./web3/methods/snvote":91,"./web3/methods/proposal":92,"bignumber.js":"bignumber.js"}],23:[function(require,module,exports){
 /*
     This file is part of web3.js.
 
@@ -2751,7 +2751,7 @@ module.exports = AllSolidityEvents;
     You should have received a copy of the GNU Lesser General Public License
     along with web3.js.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** 
+/**
  * @file batch.js
  * @author Marek Kotewicz <marek@ethdev.com>
  * @date 2015
@@ -2796,7 +2796,7 @@ Batch.prototype.execute = function () {
                 requests[index].callback(null, (requests[index].format ? requests[index].format(result.result) : result.result));
             }
         });
-    }); 
+    });
 };
 
 module.exports = Batch;
@@ -2983,7 +2983,7 @@ var ContractFactory = function (eth, abi) {
      */
     this.new = function () {
         /*jshint maxcomplexity: 7 */
-        
+
         var contract = new Contract(this.eth, this.abi);
 
         // parse arguments
@@ -3131,7 +3131,7 @@ module.exports = ContractFactory;
     You should have received a copy of the GNU Lesser General Public License
     along with web3.js.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** 
+/**
  * @file errors.js
  * @author Marek Kotewicz <marek@ethdev.com>
  * @date 2015
@@ -3406,7 +3406,7 @@ var extend = function (web3) {
         }
     };
 
-    ex.formatters = formatters; 
+    ex.formatters = formatters;
     ex.utils = utils;
     ex.Method = Method;
     ex.Property = Property;
@@ -4468,7 +4468,7 @@ module.exports = HttpProvider;
     You should have received a copy of the GNU Lesser General Public License
     along with web3.js.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** 
+/**
  * @file iban.js
  * @author Marek Kotewicz <marek@ethdev.com>
  * @date 2015
@@ -4668,7 +4668,7 @@ Iban.prototype.address = function () {
         var base36 = this._iban.substr(4);
         var asBn = new BigNumber(base36, 36);
         return padLeft(asBn.toString(16), 20);
-    } 
+    }
 
     return '';
 };
@@ -4713,7 +4713,7 @@ var IpcProvider = function (path, net) {
     var _this = this;
     this.responseCallbacks = {};
     this.path = path;
-    
+
     this.connection = net.connect({path: this.path});
 
     this.connection.on('error', function(e){
@@ -4723,7 +4723,7 @@ var IpcProvider = function (path, net) {
 
     this.connection.on('end', function(){
         _this._timeout();
-    }); 
+    });
 
 
     // LISTEN FOR CONNECTION RESPONSES
@@ -4762,7 +4762,7 @@ Will parse the response and make an array out of it.
 IpcProvider.prototype._parseResponse = function(data) {
     var _this = this,
         returnValues = [];
-    
+
     // DE-CHUNKER
     var dechunkedData = data
         .replace(/\}[\n\r]?\{/g,'}|--|{') // }{
@@ -4866,7 +4866,7 @@ IpcProvider.prototype.send = function (payload) {
         try {
             result = JSON.parse(data);
         } catch(e) {
-            throw errors.InvalidResponse(data);                
+            throw errors.InvalidResponse(data);
         }
 
         return result;
@@ -5041,7 +5041,7 @@ Method.prototype.extractCallback = function (args) {
 
 /**
  * Should be called to check if the number of arguments is correct
- * 
+ *
  * @method validateArgs
  * @param {Array} arguments
  * @throws {Error} if it is not
@@ -5054,7 +5054,7 @@ Method.prototype.validateArgs = function (args) {
 
 /**
  * Should be called to format input args of method
- * 
+ *
  * @method formatInput
  * @param {Array}
  * @return {Array}
@@ -5108,7 +5108,7 @@ Method.prototype.attachToObject = function (obj) {
         obj[name[0]] = obj[name[0]] || {};
         obj[name[0]][name[1]] = func;
     } else {
-        obj[name[0]] = func; 
+        obj[name[0]] = func;
     }
 };
 
@@ -5171,8 +5171,8 @@ var DB = function (web3) {
     this._requestManager = web3._requestManager;
 
     var self = this;
-    
-    methods().forEach(function(method) { 
+
+    methods().forEach(function(method) {
         method.attachToObject(self);
         method.setRequestManager(web3._requestManager);
     });
@@ -5597,7 +5597,7 @@ var Net = function (web3) {
 
     var self = this;
 
-    properties().forEach(function(p) { 
+    properties().forEach(function(p) {
         p.attachToObject(self);
         p.setRequestManager(web3._requestManager);
     });
@@ -6164,7 +6164,7 @@ module.exports = {
     You should have received a copy of the GNU Lesser General Public License
     along with web3.js.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** 
+/**
  * @file namereg.js
  * @author Marek Kotewicz <marek@ethdev.com>
  * @date 2015
@@ -6351,7 +6351,7 @@ module.exports = Property;
     You should have received a copy of the GNU Lesser General Public License
     along with web3.js.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** 
+/**
  * @file requestmanager.js
  * @author Jeffrey Wilcke <jeff@ethdev.com>
  * @author Marek Kotewicz <marek@ethdev.com>
@@ -6418,7 +6418,7 @@ RequestManager.prototype.sendAsync = function (data, callback) {
         if (err) {
             return callback(err);
         }
-        
+
         if (!Jsonrpc.isValidResponse(result)) {
             return callback(errors.InvalidResponse(result));
         }
@@ -6451,7 +6451,7 @@ RequestManager.prototype.sendBatch = function (data, callback) {
         }
 
         callback(err, results);
-    }); 
+    });
 };
 
 /**
@@ -6555,7 +6555,7 @@ RequestManager.prototype.poll = function () {
     }
 
     var payload = Jsonrpc.toBatchPayload(pollsData);
-    
+
     // map the request id to they poll id
     var pollsIdMap = {};
     payload.forEach(function(load, index){
@@ -6585,7 +6585,7 @@ RequestManager.prototype.poll = function () {
             } else
                 return false;
         }).filter(function (result) {
-            return !!result; 
+            return !!result;
         }).filter(function (result) {
             var valid = Jsonrpc.isValidResponse(result);
             if (!valid) {
@@ -6660,16 +6660,16 @@ var pollSyncing = function(self) {
 
         self.callbacks.forEach(function (callback) {
             if (self.lastSyncState !== sync) {
-                
+
                 // call the callback with true first so the app can stop anything, before receiving the sync data
                 if(!self.lastSyncState && utils.isObject(sync))
                     callback(null, true);
-                
+
                 // call on the next CPU cycle, so the actions of the sync stop can be processes first
                 setTimeout(function() {
                     callback(null, sync);
                 }, 0);
-                
+
                 self.lastSyncState = sync;
             }
         });
@@ -6724,7 +6724,7 @@ module.exports = IsSyncing;
     You should have received a copy of the GNU Lesser General Public License
     along with web3.js.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** 
+/**
  * @file transfer.js
  * @author Marek Kotewicz <marek@ethdev.com>
  * @date 2015
@@ -6743,7 +6743,7 @@ var exchangeAbi = require('../contracts/SmartExchange.json');
  * @param {Function} callback, callback
  */
 var transfer = function (eth, from, to, value, callback) {
-    var iban = new Iban(to); 
+    var iban = new Iban(to);
     if (!iban.isValid()) {
         throw new Error('invalid iban address');
     }
@@ -6751,7 +6751,7 @@ var transfer = function (eth, from, to, value, callback) {
     if (iban.isDirect()) {
         return transferToAddress(eth, from, iban.address(), value, callback);
     }
-    
+
     if (!callback) {
         var address = eth.icapNamereg().addr(iban.institution());
         return deposit(eth, from, address, value, iban.client());
@@ -6760,7 +6760,7 @@ var transfer = function (eth, from, to, value, callback) {
     eth.icapNamereg().addr(iban.institution(), function (err, address) {
         return deposit(eth, from, address, value, iban.client(), callback);
     });
-    
+
 };
 
 /**
@@ -13673,7 +13673,7 @@ module.exports = XMLHttpRequest;
   var Method = require('../method');
   var formatters = require('../formatters');
 
-  function System(web3) {
+  function SysProperty(web3) {
     this._requestManager = web3._requestManager;
 
     var self = this;
@@ -13685,29 +13685,227 @@ module.exports = XMLHttpRequest;
   }
 
   var methods = function () {
-    var getProperty = new Method({
-      name: 'getProperty',
-      call: 'system_getProperty',
+    var add = new Method({
+      name: 'add',
+      call: 'sysproperty_add',
+      params: 4,
+      inputFormatter: [formatters.inputAddressFormatter, formatters.formatInputString, formatters.formatInputInt, formatters.formatInputString]
+    });
+
+    var applyUpdate = new Method({
+      name: 'applyUpdate',
+      call: 'sysproperty_applyUpdate',
+      params: 4,
+      inputFormatter: [formatters.inputAddressFormatter, formatters.formatInputString, formatters.formatInputInt, formatters.formatInputString]
+    });
+
+    var vote4Update = new Method({
+      name: 'vote4Update',
+      call: 'sysproperty_vote4Update',
+      params: 4,
+      inputFormatter: [formatters.inputAddressFormatter, formatters.formatInputString, formatters.formatInputInt]
+    });
+
+    var getInfo = new Method({
+      name: 'getInfo',
+      call: 'sysproperty_getInfo',
       params: 1,
       inputFormatter: [formatters.formatInputString]
     });
 
-    var getPropertyValue = new Method({
-      name: 'getPropertyValue',
-      call: 'system_getPropertyValue',
+    var getUnconfirmedInfo = new Method({
+      name: 'getUnconfirmedInfo',
+      call: 'sysproperty_getUnconfirmedInfo',
+      params: 1,
+      inputFormatter: [formatters.formatInputString]
+    });
+
+    var getValue = new Method({
+      name: 'getValue',
+      call: 'sysproperty_getValue',
+      params: 1,
+      inputFormatter: [formatters.formatInputString]
+    });
+
+    var getAll = new Method({
+      name: 'getAll',
+      call: 'sysproperty_getAll',
+      params: 0
+    });
+
+    var getAllUnconfirmed = new Method({
+      name: 'getAllUnconfirmed',
+      call: 'sysproperty_getAllUnconfirmed',
+      params: 0
+    });
+
+    var exist = new Method({
+      name: 'exist',
+      call: 'sysproperty_exist',
+      params: 1,
+      inputFormatter: [formatters.formatInputString]
+    });
+
+    var existUnconfirmed = new Method({
+      name: 'existUnconfirmed',
+      call: 'sysproperty_existUnconfirmed',
       params: 1,
       inputFormatter: [formatters.formatInputString]
     });
 
     return [
-      getProperty,
-      getPropertyValue
+      add,
+      applyUpdate,
+      vote4Update,
+      getInfo,
+      getUnconfirmedInfo,
+      getValue,
+      getAll,
+      getAllUnconfirmed,
+      exist,
+      existUnconfirmed
     ];
   };
 
-  module.exports = System;
+  module.exports = SysProperty;
 
 },{"./formatters":9,"../formatters":30,"../method":36}],88:[function(require,module,exports){
+    /* This file is part of web3.js. */
+    /**
+     * @file eth.js
+     * @author Marek Kotewicz <marek@ethdev.com>
+     * @author Fabian Vogelsteller <fabian@ethdev.com>
+     * @date 2015
+     */
+
+    "use strict";
+
+    var Method = require('../method');
+    var formatters = require('../formatters');
+
+    function Account(web3) {
+      this._requestManager = web3._requestManager;
+
+      var self = this;
+
+      methods().forEach(function(method) {
+        method.attachToObject(self);
+        method.setRequestManager(self._requestManager);
+      });
+    }
+
+    var methods = function () {
+      var deposit = new Method({
+        name: 'deposit',
+        call: 'account_deposit',
+        params: 4,
+        inputFormatter: [formatters.inputAddressFormatter, formatters.formatInputInt, formatters.inputAddressFormatter, formatters.formatInputInt]
+      });
+
+      var withdraw = new Method({
+        name: 'withdraw',
+        call: 'account_withdraw',
+        params: 1,
+        inputFormatter: [formatters.inputAddressFormatter]
+      });
+
+      var withdrawByID = new Method({
+        name: 'withdrawByID',
+        call: 'account_withdrawByID',
+        params: 2,
+        inputFormatter: [formatters.inputAddressFormatter, formatters.inputArrayFormatter]
+      });
+
+      var transfer = new Method({
+        name: 'transfer',
+        call: 'account_transfer',
+        params: 4,
+        inputFormatter: [formatters.inputAddressFormatter, formatters.inputAddressFormatter, formatters.formatInputInt, formatters.formatInputInt]
+      });
+
+      var addLockDay = new Method({
+        name: 'addLockDay',
+        call: 'account_addLockDay',
+        params: 3,
+        inputFormatter: [formatters.inputAddressFormatter, formatters.formatInputInt, formatters.formatInputInt]
+      });
+
+      var getTotalAmount = new Method({
+        name: 'getTotalAmount',
+        call: 'account_getTotalAmount',
+        params: 1,
+        inputFormatter: [formatters.inputAddressFormatter]
+      });
+
+      var getAvailableAmount = new Method({
+        name: 'getAvailableAmount',
+        call: 'account_getAvailableAmount',
+        params: 1,
+        inputFormatter: [formatters.inputAddressFormatter]
+      });
+
+      var getLockAmount = new Method({
+        name: 'getLockAmount',
+        call: 'account_getLockAmount',
+        params: 1,
+        inputFormatter: [formatters.inputAddressFormatter]
+      });
+
+      var getFreezeAmount = new Method({
+        name: 'getFreezeAmount',
+        call: 'account_getFreezeAmount',
+        params: 1,
+        inputFormatter: [formatters.inputAddressFormatter]
+      });
+
+      var getRecords = new Method({
+        name: 'getRecords',
+        call: 'account_getRecords',
+        params: 1,
+        inputFormatter: [formatters.inputAddressFormatter]
+      });
+
+      var getRecord0 = new Method({
+        name: 'getRecord0',
+        call: 'account_getRecord0',
+        params: 2,
+        inputFormatter: [formatters.inputAddressFormatter, formatters.formatInputInt]
+      });
+
+      var getRecordByID = new Method({
+        name: 'getRecordByID',
+        call: 'account_getRecordByID',
+        params: 1,
+        inputFormatter: [formatters.formatInputInt]
+      });
+
+      var getRecordUseInfo = new Method({
+        name: 'getRecordUseInfo',
+        call: 'account_getRecordUseInfo',
+        params: 1,
+        inputFormatter: [formatters.formatInputInt]
+      });
+
+      return [
+        deposit,
+        withdraw,
+        withdrawByID,
+        transfer,
+        addLockDay,
+        getTotalAmount,
+        getAvailableAmount,
+        getLockAmount,
+        getFreezeAmount,
+        getRecords,
+        getRecord0,
+        getRecordByID,
+        getRecordUseInfo
+      ];
+    };
+
+    module.exports = Account;
+
+  },{"./formatters":9,"../formatters":30,"../method":36}],89:[function(require,module,exports){
   /* This file is part of web3.js. */
   /**
    * @file eth.js
@@ -13754,6 +13952,55 @@ module.exports = XMLHttpRequest;
       inputFormatter: [formatters.inputAddressFormatter]
     });
 
+    var register = new Method({
+      name: 'register',
+      call: 'masternode_register',
+      params: 9,
+      inputFormatter: [formatters.inputAddressFormatter, formatters.formatInputInt, formatters.formatInputBool, formatters.inputAddressFormatter, formatters.formatInputInt, formatters.formatInputString, formatters.formatInputString, formatters.formatInputInt, formatters.formatInputInt]
+    });
+
+    var appendRegister = new Method({
+      name: 'appendRegister',
+      call: 'masternode_appendRegister',
+      params: 4,
+      inputFormatter: [formatters.inputAddressFormatter, formatters.formatInputInt, formatters.inputAddressFormatter, formatters.formatInputInt]
+    });
+
+    var turnRegister = new Method({
+      name: 'turnRegister',
+      call: 'masternode_turnRegister',
+      params: 3,
+      inputFormatter: [formatters.inputAddressFormatter, formatters.inputAddressFormatter, formatters.formatInputInt]
+    });
+
+    var changeAddress = new Method({
+      name: 'changeAddress',
+      call: 'masternode_changeAddress',
+      params: 3,
+      inputFormatter: [formatters.inputAddressFormatter, formatters.inputAddressFormatter, formatters.inputAddressFormatter]
+    });
+
+    var changeEnode = new Method({
+      name: 'changeEnode',
+      call: 'masternode_changeEnode',
+      params: 3,
+      inputFormatter: [formatters.inputAddressFormatter, formatters.inputAddressFormatter, formatters.formatInputString]
+    });
+
+    var changeDescription = new Method({
+      name: 'changeDescription',
+      call: 'masternode_changeDescription',
+      params: 3,
+      inputFormatter: [formatters.inputAddressFormatter, formatters.inputAddressFormatter, formatters.formatInputString]
+    });
+
+    var changeOfficial = new Method({
+      name: 'changeOfficial',
+      call: 'masternode_changeOfficial',
+      params: 3,
+      inputFormatter: [formatters.inputAddressFormatter, formatters.inputAddressFormatter, formatters.formatInputBool]
+    });
+
     var getInfo = new Method({
       name: 'getInfo',
       call: 'masternode_getInfo',
@@ -13780,43 +14027,73 @@ module.exports = XMLHttpRequest;
       params: 0
     });
 
+    var getOfficials = new Method({
+      name: 'getOfficials',
+      call: 'masternode_getOfficials',
+      params: 0
+    });
+
     var getNum = new Method({
       name: 'getNum',
       call: 'masternode_getNum',
       params: 0
     });
 
-    var register = new Method({
-      name: 'register',
-      call: 'masternode_register',
-      params: 9,
-      inputFormatter: [formatters.inputAddressFormatter, formatters.formatInputInt, formatters.formatInputBool, formatters.inputAddressFormatter, formatters.formatInputInt, formatters.formatInputString, formatters.formatInputString, formatters.formatInputInt, formatters.formatInputInt]
+    var exist = new Method({
+      name: 'exist',
+      call: 'masternode_exist',
+      params: 1,
+      inputFormatter: [formatters.inputAddressFormatter]
     });
 
-    var appendRegister = new Method({
-      name: 'appendRegister',
-      call: 'masternode_appendRegister',
-      params: 4,
-      inputFormatter: [formatters.inputAddressFormatter, formatters.formatInputInt, formatters.inputAddressFormatter, formatters.formatInputInt]
+    var existID = new Method({
+      name: 'existID',
+      call: 'masternode_existID',
+      params: 1,
+      inputFormatter: [formatters.formatInputInt]
+    });
+
+    var existEnode = new Method({
+      name: 'existEnode',
+      call: 'masternode_existEnode',
+      params: 1,
+      inputFormatter: [formatters.formatInputString]
+    });
+
+    var existLockID = new Method({
+      name: 'existLockID',
+      call: 'masternode_existLockID',
+      params: 1,
+      inputFormatter: [formatters.inputAddressFormatter, formatters.formatInputInt]
     });
 
     return [
       start,
       stop,
       restart,
+      register,
+      appendRegister,
+      turnRegister,
+      changeAddress,
+      changeEnode,
+      changeDescription,
+      changeOfficial,
       getInfo,
       getInfoByID,
       getNext,
       getAll,
+      getOfficials,
       getNum,
-      register,
-      appendRegister
+      exist,
+      existID,
+      existEnode,
+      existLockID
     ];
   };
 
   module.exports = MasterNode;
 
-},{"./formatters":9,"../formatters":30,"../method":36}],89:[function(require,module,exports){
+},{"./formatters":9,"../formatters":30,"../method":36}],90:[function(require,module,exports){
   /* This file is part of web3.js. */
   /**
    * @file eth.js
@@ -13863,6 +14140,62 @@ module.exports = XMLHttpRequest;
       inputFormatter: [formatters.inputAddressFormatter]
     });
 
+    var register = new Method({
+      name: 'register',
+      call: 'supernode_register',
+      params: 11,
+      inputFormatter: [formatters.inputAddressFormatter, formatters.formatInputInt, formatters.formatInputBool, formatters.inputAddressFormatter, formatters.formatInputInt, formatters.formatInputString, formatters.formatInputString, formatters.formatInputString, formatters.formatInputInt, formatters.formatInputInt, formatters.formatInputInt]
+    });
+
+    var appendRegister = new Method({
+      name: 'appendRegister',
+      call: 'supernode_appendRegister',
+      params: 4,
+      inputFormatter: [formatters.inputAddressFormatter, formatters.formatInputInt, formatters.inputAddressFormatter, formatters.formatInputInt]
+    });
+
+    var turnRegister = new Method({
+      name: 'turnRegister',
+      call: 'supernode_turnRegister',
+      params: 3,
+      inputFormatter: [formatters.inputAddressFormatter, formatters.inputAddressFormatter, formatters.formatInputInt]
+    });
+
+    var changeAddress = new Method({
+      name: 'changeAddress',
+      call: 'supernode_changeAddress',
+      params: 3,
+      inputFormatter: [formatters.inputAddressFormatter, formatters.inputAddressFormatter, formatters.inputAddressFormatter]
+    });
+
+    var changeName = new Method({
+      name: 'changeName',
+      call: 'supernode_changeName',
+      params: 3,
+      inputFormatter: [formatters.inputAddressFormatter, formatters.inputAddressFormatter, formatters.formatInputString]
+    });
+
+    var changeEnode = new Method({
+      name: 'changeEnode',
+      call: 'supernode_changeEnode',
+      params: 3,
+      inputFormatter: [formatters.inputAddressFormatter, formatters.inputAddressFormatter, formatters.formatInputString]
+    });
+
+    var changeDescription = new Method({
+      name: 'changeDescription',
+      call: 'supernode_changeDescription',
+      params: 3,
+      inputFormatter: [formatters.inputAddressFormatter, formatters.inputAddressFormatter, formatters.formatInputString]
+    });
+
+    var changeOfficial = new Method({
+      name: 'changeOfficial',
+      call: 'supernode_changeOfficial',
+      params: 3,
+      inputFormatter: [formatters.inputAddressFormatter, formatters.inputAddressFormatter, formatters.formatInputBool]
+    });
+
     var getInfo = new Method({
       name: 'getInfo',
       call: 'supernode_getInfo',
@@ -13889,238 +14222,329 @@ module.exports = XMLHttpRequest;
       params: 0
     });
 
+    var getOfficials = new Method({
+      name: 'getOfficials',
+      call: 'supernode_getOfficials',
+      params: 0
+    });
+
     var getNum = new Method({
       name: 'getNum',
       call: 'supernode_getNum',
       params: 0
     });
 
-    var register = new Method({
-      name: 'register',
-      call: 'supernode_register',
-      params: 11,
-      inputFormatter: [formatters.inputAddressFormatter, formatters.formatInputInt, formatters.formatInputBool, formatters.inputAddressFormatter, formatters.formatInputInt, formatters.formatInputString, formatters.formatInputString, formatters.formatInputString, formatters.formatInputInt, formatters.formatInputInt, formatters.formatInputInt]
+    var exist = new Method({
+      name: 'exist',
+      call: 'supernode_exist',
+      params: 1,
+      inputFormatter: [formatters.inputAddressFormatter]
     });
 
-    var appendRegister = new Method({
-      name: 'appendRegister',
-      call: 'supernode_appendRegister',
-      params: 4,
-      inputFormatter: [formatters.inputAddressFormatter, formatters.formatInputInt, formatters.inputAddressFormatter, formatters.formatInputInt]
+    var existID = new Method({
+      name: 'existID',
+      call: 'supernode_existID',
+      params: 1,
+      inputFormatter: [formatters.formatInputInt]
+    });
+
+    var existName = new Method({
+      name: 'existName',
+      call: 'supernode_existName',
+      params: 1,
+      inputFormatter: [formatters.formatInputString]
+    });
+
+    var existEnode = new Method({
+      name: 'existEnode',
+      call: 'supernode_existEnode',
+      params: 1,
+      inputFormatter: [formatters.formatInputString]
+    });
+
+    var existLockID = new Method({
+      name: 'existLockID',
+      call: 'supernode_existLockID',
+      params: 1,
+      inputFormatter: [formatters.inputAddressFormatter, formatters.formatInputInt]
     });
 
     return [
       start,
       stop,
       restart,
+      register,
+      appendRegister,
+      turnRegister,
+      changeAddress,
+      changeName,
+      changeEnode,
+      changeDescription,
+      changeOfficial,
       getInfo,
       getInfoByID,
       getAll,
       getTop,
+      getOfficials,
       getNum,
-      register,
-      appendRegister,
+      exist,
+      existID,
+      existName,
+      existEnode,
+      existLockID
     ];
   };
 
   module.exports = SuperNode;
 
-},{"./formatters":9,"../formatters":30,"../method":36}],90:[function(require,module,exports){
-  /* This file is part of web3.js. */
-  /**
-   * @file eth.js
-   * @author Marek Kotewicz <marek@ethdev.com>
-   * @author Fabian Vogelsteller <fabian@ethdev.com>
-   * @date 2015
-   */
-
-  "use strict";
-
-  var Method = require('../method');
-  var formatters = require('../formatters');
-
-  function Proposal(web3) {
-    this._requestManager = web3._requestManager;
-
-    var self = this;
-
-    methods().forEach(function(method) {
-      method.attachToObject(self);
-      method.setRequestManager(self._requestManager);
-    });
-  }
-
-  var methods = function () {
-    var create = new Method({
-      name: 'create',
-      call: 'proposal_create',
-      params: 8,
-      inputFormatter: [formatters.inputAddressFormatter, formatters.formatInputString, formatters.formatInputInt, formatters.formatInputInt, formatters.formatInputInt, formatters.formatInputInt, formatters.formatInputString, formatters.formatInputString]
-    });
-
-    var vote = new Method({
-      name: 'vote',
-      call: 'proposal_vote',
-      params: 1,
-      inputFormatter: [formatters.inputAddressFormatter, formatters.formatInputInt, formatters.formatInputInt]
-    });
-
-    var getInfo = new Method({
-      name: 'getInfo',
-      call: 'proposal_getInfo',
-      params: 1,
-      inputFormatter: [formatters.formatInputInt]
-    });
-
-    var getAll = new Method({
-      name: 'getAll',
-      call: 'proposal_getAll',
-      params: 0
-    });
-
-    var getMine = new Method({
-      name: 'getMine',
-      call: 'proposal_getMine',
-      params: 1,
-      inputFormatter: [formatters.formatInputInt]
-    });
-
-    return [
-      getInfo,
-      getAll,
-      getMine
-    ];
-  };
-
-  module.exports = Proposal;
-
 },{"./formatters":9,"../formatters":30,"../method":36}],91:[function(require,module,exports){
-  /* This file is part of web3.js. */
-  /**
-   * @file eth.js
-   * @author Marek Kotewicz <marek@ethdev.com>
-   * @author Fabian Vogelsteller <fabian@ethdev.com>
-   * @date 2015
-   */
+    /* This file is part of web3.js. */
+    /**
+     * @file eth.js
+     * @author Marek Kotewicz <marek@ethdev.com>
+     * @author Fabian Vogelsteller <fabian@ethdev.com>
+     * @date 2015
+     */
 
-  "use strict";
+    "use strict";
 
-  var Method = require('../method');
-  var formatters = require('../formatters');
+    var Method = require('../method');
+    var formatters = require('../formatters');
 
-  function MasterNodeState(web3) {
-    this._requestManager = web3._requestManager;
+    function SNVote(web3) {
+      this._requestManager = web3._requestManager;
 
-    var self = this;
+      var self = this;
 
-    methods().forEach(function(method) {
-      method.attachToObject(self);
-      method.setRequestManager(self._requestManager);
-    });
-  }
+      methods().forEach(function(method) {
+        method.attachToObject(self);
+        method.setRequestManager(self._requestManager);
+      });
+    }
 
-  var methods = function () {
-    var upload = new Method({
-      name: 'upload',
-      call: 'masternodestate_upload',
-      params: 3,
-      inputFormatter: [formatters.inputAddressFormatter, formatters.inputArrayFormatter, formatters.inputArrayFormatter]
-    });
+    var methods = function () {
+      var voteOrApproval = new Method({
+        name: 'voteOrApproval',
+        call: 'snvote_voteOrApproval',
+        params: 4,
+        inputFormatter: [formatters.inputAddressFormatter, formatters.formatInputBool, formatters.inputAddressFormatter, formatters.inputArrayFormatter]
+      });
 
-    var getAll = new Method({
-      name: 'getAll',
-      call: 'masternodestate_getAll',
-      params: 0
-    });
+      var removeVoteOrApproval = new Method({
+        name: 'removeVoteOrApproval',
+        call: 'snvote_removeVoteOrApproval',
+        params: 2,
+        inputFormatter: [formatters.inputAddressFormatter, formatters.inputArrayFormatter]
+      });
 
-    var getEntriesByAddr = new Method({
-      name: 'getEntriesByAddr',
-      call: 'masternodestate_getEntriesByAddr',
-      params: 1,
-      inputFormatter: [formatters.inputAddressFormatter]
-    });
+      var proxyVote = new Method({
+        name: 'proxyVote',
+        call: 'snvote_proxyVote',
+        params: 2,
+        inputFormatter: [formatters.inputAddressFormatter, formatters.inputAddressFormatter]
+      });
 
-    var getEntriesByID = new Method({
-      name: 'getEntriesByID',
-      call: 'masternodestate_getEntriesByID',
-      params: 1,
-      inputFormatter: [formatters.formatInputInt]
-    });
+      var getSuperNodes4Voter = new Method({
+        name: 'getSuperNodes4Voter',
+        call: 'snvote_getSuperNodes4Voter',
+        params: 1,
+        inputFormatter: [formatters.inputAddressFormatter]
+      });
 
-    return [
-      upload,
-      getAll,
-      getEntriesByAddr,
-      getEntriesByID
-    ];
-  };
+      var getRecordIDs4Voter = new Method({
+        name: 'getRecordIDs4Voter',
+        call: 'snvote_getRecordIDs4Voter',
+        params: 1,
+        inputFormatter: [formatters.inputAddressFormatter]
+      });
 
-  module.exports = MasterNodeState;
+      var getVoters4SN = new Method({
+        name: 'getVoters4SN',
+        call: 'snvote_getVoters4SN',
+        params: 1,
+        inputFormatter: [formatters.inputAddressFormatter]
+      });
 
-},{"./formatters":9,"../formatters":30,"../method":36}],92:[function(require,module,exports){
-  /* This file is part of web3.js. */
-  /**
-   * @file eth.js
-   * @author Marek Kotewicz <marek@ethdev.com>
-   * @author Fabian Vogelsteller <fabian@ethdev.com>
-   * @date 2015
-   */
+      var getVoteNum4SN = new Method({
+        name: 'getVoteNum4SN',
+        call: 'snvote_getVoteNum4SN',
+        params: 1,
+        inputFormatter: [formatters.inputAddressFormatter]
+      });
 
-  "use strict";
+      var getProxies4Voter = new Method({
+        name: 'getProxies4Voter',
+        call: 'snvote_getProxies4Voter',
+        params: 1,
+        inputFormatter: [formatters.inputAddressFormatter]
+      });
 
-  var Method = require('../method');
-  var formatters = require('../formatters');
+      var getProxiedRecordIDs4Voter = new Method({
+        name: 'getProxiedRecordIDs4Voter',
+        call: 'snvote_getProxiedRecordIDs4Voter',
+        params: 1,
+        inputFormatter: [formatters.inputAddressFormatter]
+      });
 
-  function SuperNodeState(web3) {
-    this._requestManager = web3._requestManager;
+      var getVoters4Proxy = new Method({
+        name: 'getVoters4Proxy',
+        call: 'snvote_getVoters4Proxy',
+        params: 1,
+        inputFormatter: [formatters.inputAddressFormatter]
+      });
 
-    var self = this;
+      var getVoteNum4Proxy = new Method({
+        name: 'getVoteNum4Proxy',
+        call: 'snvote_getVoteNum4Proxy',
+        params: 1,
+        inputFormatter: [formatters.inputAddressFormatter]
+      });
 
-    methods().forEach(function(method) {
-      method.attachToObject(self);
-      method.setRequestManager(self._requestManager);
-    });
-  }
+      return [
+        voteOrApproval,
+        removeVoteOrApproval,
+        proxyVote,
+        getSuperNodes4Voter,
+        getRecordIDs4Voter,
+        getVoters4SN,
+        getVoteNum4SN,
+        getProxies4Voter,
+        getProxiedRecordIDs4Voter,
+        getVoters4Proxy,
+        getVoteNum4Proxy
+      ];
+    };
 
-  var methods = function () {
-    var upload = new Method({
-      name: 'upload',
-      call: 'supernodestate_upload',
-      params: 3,
-      inputFormatter: [formatters.inputAddressFormatter, formatters.inputArrayFormatter, formatters.inputArrayFormatter]
-    });
+    module.exports = SNVote;
 
-    var getAll = new Method({
-      name: 'getAll',
-      call: 'supernodestate_getAll',
-      params: 0
-    });
+  },{"./formatters":9,"../formatters":30,"../method":36}],92:[function(require,module,exports){
+    /* This file is part of web3.js. */
+    /**
+     * @file eth.js
+     * @author Marek Kotewicz <marek@ethdev.com>
+     * @author Fabian Vogelsteller <fabian@ethdev.com>
+     * @date 2015
+     */
 
-    var getEntriesByAddr = new Method({
-      name: 'getEntriesByAddr',
-      call: 'supernodestate_getEntriesByAddr',
-      params: 1,
-      inputFormatter: [formatters.inputAddressFormatter]
-    });
+    "use strict";
 
-    var getEntriesByID = new Method({
-      name: 'getEntriesByID',
-      call: 'supernodestate_getEntriesByID',
-      params: 1,
-      inputFormatter: [formatters.formatInputInt]
-    });
+    var Method = require('../method');
+    var formatters = require('../formatters');
 
-    return [
-      upload,
-      getAll,
-      getEntriesByAddr,
-      getEntriesByID
-    ];
-  };
+    function Proposal(web3) {
+      this._requestManager = web3._requestManager;
 
-  module.exports = SuperNodeState;
+      var self = this;
 
-},{"./formatters":9,"../formatters":30,"../method":36}],"bignumber.js":[function(require,module,exports){
+      methods().forEach(function(method) {
+        method.attachToObject(self);
+        method.setRequestManager(self._requestManager);
+      });
+    }
+
+    var methods = function () {
+      var create = new Method({
+        name: 'create',
+        call: 'proposal_create',
+        params: 7,
+        inputFormatter: [formatters.inputAddressFormatter, formatters.formatInputString, formatters.formatInputInt, formatters.formatInputInt, formatters.formatInputInt, formatters.formatInputInt, formatters.formatInputString]
+      });
+
+      var vote = new Method({
+        name: 'vote',
+        call: 'proposal_vote',
+        params: 3,
+        inputFormatter: [formatters.inputAddressFormatter, formatters.formatInputInt, formatters.formatInputInt]
+      });
+
+      var changeTitle = new Method({
+        name: 'changeTitle',
+        call: 'proposal_changeTitle',
+        params: 3,
+        inputFormatter: [formatters.inputAddressFormatter, formatters.formatInputInt, formatters.formatInputString]
+      });
+
+      var changePayAmount = new Method({
+        name: 'changePayAmount',
+        call: 'proposal_changePayAmount',
+        params: 3,
+        inputFormatter: [formatters.inputAddressFormatter, formatters.formatInputInt, formatters.formatInputInt]
+      });
+
+      var changePayTimes = new Method({
+        name: 'changePayTimes',
+        call: 'proposal_changePayTimes',
+        params: 3,
+        inputFormatter: [formatters.inputAddressFormatter, formatters.formatInputInt, formatters.formatInputInt]
+      });
+
+      var changeStartPayTime = new Method({
+        name: 'changeStartPayTime',
+        call: 'proposal_changeStartPayTime',
+        params: 3,
+        inputFormatter: [formatters.inputAddressFormatter, formatters.formatInputInt, formatters.formatInputInt]
+      });
+
+      var changeEndPayTime = new Method({
+        name: 'changeEndPayTime',
+        call: 'proposal_changeEndPayTime',
+        params: 3,
+        inputFormatter: [formatters.inputAddressFormatter, formatters.formatInputInt, formatters.formatInputInt]
+      });
+
+      var changeDescription = new Method({
+        name: 'changeDescription',
+        call: 'proposal_changeDescription',
+        params: 3,
+        inputFormatter: [formatters.inputAddressFormatter, formatters.formatInputInt, formatters.formatInputString]
+      });
+
+      var getInfo = new Method({
+        name: 'getInfo',
+        call: 'proposal_getInfo',
+        params: 1,
+        inputFormatter: [formatters.formatInputInt]
+      });
+
+      var getAll = new Method({
+        name: 'getAll',
+        call: 'proposal_getAll',
+        params: 0
+      });
+
+      var getMine = new Method({
+        name: 'getMine',
+        call: 'proposal_getMine',
+        params: 1,
+        inputFormatter: [formatters.inputAddressFormatter]
+      });
+
+      var exist = new Method({
+        name: 'exist',
+        call: 'proposal_exist',
+        params: 1,
+        inputFormatter: [formatters.formatInputInt]
+      });
+
+      return [
+        create,
+        vote,
+        changeTitle,
+        changePayAmount,
+        changePayTimes,
+        changeStartPayTime,
+        changeEndPayTime,
+        changeDescription,
+        getInfo,
+        getAll,
+        getMine,
+        exist
+      ];
+    };
+
+    module.exports = Proposal;
+
+  },{"./formatters":9,"../formatters":30,"../method":36}],"bignumber.js":[function(require,module,exports){
 'use strict';
 
 module.exports = BigNumber; // jshint ignore:line

@@ -541,7 +541,7 @@ func (s *Spos) snapshot(chain consensus.ChainHeaderReader, number uint64, hash c
 						signersmap[signer] = struct{}{}
 					}
 				}else { //TODO Call the contract to get the super node list
-					superNodeInfos, err := contract_api.GetTopSuperNode(s.ctx, s.blockChainAPI)
+					superNodeInfos, err := contract_api.GetTopSuperNodes(s.ctx, s.blockChainAPI)
 					if err != nil {
 						log.Error("Failed to GetTopSN", "error", err)
 						return nil, err
@@ -1074,7 +1074,7 @@ func (s *Spos) distributeReward(header *types.Header, state *state.StateDB, txs 
 	}
 	ppAddr := systemcontracts.ProposalContractAddr
 	ppAmount := getBlockSubsidy(number, onlySuperBlockPart)
-	return s.Reward(header.Coinbase, superNodeReward, *mnAddr, masterNodePayment, ppAddr, ppAmount, header, state, txs, receipts)
+	return s.Reward(header.Coinbase, superNodeReward, mnAddr, masterNodePayment, ppAddr, ppAmount, header, state, txs, receipts)
 }
 
 func (s *Spos) Reward(snAddr common.Address, snCount *big.Int, mnAddr common.Address, mnCount *big.Int, ppAddr common.Address, ppCount *big.Int, header *types.Header, state *state.StateDB, txs *[]*types.Transaction, receipts *[]*types.Receipt) (*types.Transaction, error){
@@ -1178,7 +1178,7 @@ func (s *Spos) CheckRewardTransaction(block *types.Block) error{
 				return err
 			}
 
-			if snCount.Cmp(superNodeReward) != 0 || mnCount.Cmp(masterNodePayment) != 0 || ppCount.Cmp(proposalReward) != 0 || ppAddr != systemcontracts.ProposalContractAddr || &mnAddr != nextMNAddr || from != snAddr{
+			if snCount.Cmp(superNodeReward) != 0 || mnCount.Cmp(masterNodePayment) != 0 || ppCount.Cmp(proposalReward) != 0 || ppAddr != systemcontracts.ProposalContractAddr || mnAddr != nextMNAddr || from != snAddr{
 				return fmt.Errorf("invalid greward (snCount: %d superNodeReward: %d mnCount:%d masterNodePayment:%d from:%s snAddr:%s mnAddr:%s nextMNAddr:%s ppAddr:%s)", snCount, superNodeReward,
 					mnCount, masterNodePayment, from.Hex(), snAddr.Hex(), mnAddr.Hex(), nextMNAddr.Hex(), ppAddr.Hex())
 			}

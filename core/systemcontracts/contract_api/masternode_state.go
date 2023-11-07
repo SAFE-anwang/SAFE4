@@ -20,7 +20,7 @@ func UploadMasterNodeStates(ctx context.Context, blockChainAPI *ethapi.PublicBlo
 		return common.Hash{}, err
 	}
 
-	method := "uploadState"
+	method := "upload"
 	data, err := vABI.Pack(method, ids, states)
 	if err != nil {
 		return common.Hash{}, err
@@ -47,43 +47,13 @@ func UploadMasterNodeStates(ctx context.Context, blockChainAPI *ethapi.PublicBlo
 	return transactionPoolAPI.SendTransaction(ctx, args)
 }
 
-func GetAllMasterNodeStates(ctx context.Context, api *ethapi.PublicBlockChainAPI) ([]types.StateInfo, error) {
+func GetMasterNodeUploadStates(ctx context.Context, api *ethapi.PublicBlockChainAPI, id *big.Int) ([]types.StateEntry, error) {
 	vABI, err := abi.JSON(strings.NewReader(systemcontracts.MasterNodeStateABI))
 	if err != nil {
 		return nil, err
 	}
 
-	method := "getAllState"
-	data, err := vABI.Pack(method)
-	if err != nil {
-		return nil, err
-	}
-
-	msgData := (hexutil.Bytes)(data)
-	args := ethapi.TransactionArgs{
-		To: &systemcontracts.MasterNodeStateContractAddr,
-		Data: &msgData,
-	}
-	result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
-	if err != nil {
-		return nil, err
-	}
-
-	infos := new([]types.StateInfo)
-	err = vABI.UnpackIntoInterface(infos, method, result)
-	if err != nil {
-		return nil, err
-	}
-	return *infos, nil
-}
-
-func GetMasterNodeStateEntries(ctx context.Context, api *ethapi.PublicBlockChainAPI, id *big.Int) ([]types.StateEntry, error) {
-	vABI, err := abi.JSON(strings.NewReader(systemcontracts.MasterNodeStateABI))
-	if err != nil {
-		return nil, err
-	}
-
-	method := "getEntries"
+	method := "get"
 	data, err := vABI.Pack(method, id)
 	if err != nil {
 		return nil, err

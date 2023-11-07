@@ -49,7 +49,7 @@ func CreateProposal(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainA
 	return transactionPoolAPI.SendTransaction(ctx, args)
 }
 
-func VoteProposal(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, transactionPoolAPI *ethapi.PublicTransactionPoolAPI, from common.Address, id *big.Int, voteResult *big.Int) (common.Hash, error) {
+func Vote4Proposal(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, transactionPoolAPI *ethapi.PublicTransactionPoolAPI, from common.Address, id *big.Int, voteResult *big.Int) (common.Hash, error) {
 	vABI, err := abi.JSON(strings.NewReader(systemcontracts.ProposalABI))
 	if err != nil {
 		return common.Hash{}, err
@@ -375,7 +375,7 @@ func ExistProposal(ctx context.Context, api *ethapi.PublicBlockChainAPI, id *big
 	}
 
 	method := "exist"
-	data, err := vABI.Pack(method)
+	data, err := vABI.Pack(method, id)
 	if err != nil {
 		return false, err
 	}

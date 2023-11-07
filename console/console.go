@@ -142,12 +142,12 @@ func (c *Console) init(preload []string) error {
 	c.jsre.Do(func(vm *goja.Runtime) {
 		c.initAdmin(vm, bridge)
 		c.initPersonal(vm, bridge)
-		c.initSystem(vm, bridge)
+		c.initSysProperty(vm, bridge)
+		c.initAccount(vm, bridge)
 		c.initMasterNode(vm, bridge)
 		c.initSuperNode(vm, bridge)
+		c.initSNVote(vm, bridge)
 		c.initProposal(vm, bridge)
-		c.initMasterNodeState(vm, bridge)
-		c.initSuperNodeState(vm, bridge)
 	})
 
 	// Preload JavaScript files.
@@ -275,19 +275,68 @@ func (c *Console) initPersonal(vm *goja.Runtime, bridge *bridge) {
 	personal.Set("getPublicAndPrivateKey", jsre.MakeCallback(vm, bridge.GetPublicAndPrivateKey))
 }
 
-func (c *Console) initSystem(vm *goja.Runtime, bridge *bridge) {
-	system := getObject(vm, "system")
-	if system == nil || c.prompter == nil {
+func (c *Console) initSysProperty(vm *goja.Runtime, bridge *bridge) {
+	sysproperty := getObject(vm, "sysproperty")
+	if sysproperty == nil || c.prompter == nil {
 		return
 	}
 
-	getJeth(vm).Set("getProperty", system.Get("getProperty"))
-	getJeth(vm).Set("getPropertyValue", system.Get("getPropertyValue"))
-	getJeth(vm).Set("reward", system.Get("reward"))
+	getJeth(vm).Set("addProperty", sysproperty.Get("add"))
+	getJeth(vm).Set("applyUpdateProperty", sysproperty.Get("applyUpdate"))
+	getJeth(vm).Set("vote4UpdateProperty", sysproperty.Get("vote4Update"))
+	getJeth(vm).Set("getPropertyInfo", sysproperty.Get("getInfo"))
+	getJeth(vm).Set("getUnconfirmedPropertyInfo", sysproperty.Get("getUnconfirmedInfo"))
+	getJeth(vm).Set("getPropertyValue", sysproperty.Get("getValue"))
+	getJeth(vm).Set("getAllProperties", sysproperty.Get("getAll"))
+	getJeth(vm).Set("getAllUnconfirmedProperties", sysproperty.Get("getAllUnconfirmed"))
+	getJeth(vm).Set("existProperty", sysproperty.Get("exist"))
+	getJeth(vm).Set("existUnconfirmedProperty", sysproperty.Get("existUnconfirmed"))
 
-	system.Set("getProperty", jsre.MakeCallback(vm, bridge.GetProperty))
-	system.Set("getPropertyValue", jsre.MakeCallback(vm, bridge.GetPropertyValue))
-	system.Set("reward", jsre.MakeCallback(vm, bridge.Reward))
+	sysproperty.Set("add", jsre.MakeCallback(vm, bridge.AddProperty))
+	sysproperty.Set("applyUpdate", jsre.MakeCallback(vm, bridge.ApplyUpdateProperty))
+	sysproperty.Set("vote4Update", jsre.MakeCallback(vm, bridge.Vote4UpdateProperty))
+	sysproperty.Set("getInfo", jsre.MakeCallback(vm, bridge.GetPropertyInfo))
+	sysproperty.Set("getUnconfirmedInfo", jsre.MakeCallback(vm, bridge.GetUnconfirmedPropertyInfo))
+	sysproperty.Set("getValue", jsre.MakeCallback(vm, bridge.GetPropertyValue))
+	sysproperty.Set("getAll", jsre.MakeCallback(vm, bridge.GetAllProperties))
+	sysproperty.Set("getAllUnconfirmed", jsre.MakeCallback(vm, bridge.GetAllUnconfirmedProperties))
+	sysproperty.Set("exist", jsre.MakeCallback(vm, bridge.ExistProperty))
+	sysproperty.Set("existUnconfirmed", jsre.MakeCallback(vm, bridge.ExistUnconfirmedProperty))
+}
+
+func (c *Console) initAccount(vm *goja.Runtime, bridge *bridge) {
+	account := getObject(vm, "account")
+	if account == nil || c.prompter == nil {
+		return
+	}
+
+	getJeth(vm).Set("deposit", account.Get("deposit"))
+	getJeth(vm).Set("withdraw", account.Get("withdraw"))
+	getJeth(vm).Set("withdrawByID", account.Get("withdrawByID"))
+	getJeth(vm).Set("transfer", account.Get("transfer"))
+	getJeth(vm).Set("addLockDay", account.Get("addLockDay"))
+	getJeth(vm).Set("getTotalAmount", account.Get("getTotalAmount"))
+	getJeth(vm).Set("getAvailableAmount", account.Get("getAvailableAmount"))
+	getJeth(vm).Set("getLockAmount", account.Get("getLockAmount"))
+	getJeth(vm).Set("getFreezeAmount", account.Get("getFreezeAmount"))
+	getJeth(vm).Set("getRecords", account.Get("getRecords"))
+	getJeth(vm).Set("getRecord0", account.Get("getRecordByID"))
+	getJeth(vm).Set("getRecordByID", account.Get("getRecordByID"))
+	getJeth(vm).Set("getRecordUseInfo", account.Get("getRecordUseInfo"))
+
+	account.Set("deposit", jsre.MakeCallback(vm, bridge.Deposit))
+	account.Set("withdraw", jsre.MakeCallback(vm, bridge.Withdraw))
+	account.Set("withdrawByID", jsre.MakeCallback(vm, bridge.WithdrawByID))
+	account.Set("transfer", jsre.MakeCallback(vm, bridge.Transfer))
+	account.Set("addLockDay", jsre.MakeCallback(vm, bridge.AddLockDay))
+	account.Set("getTotalAmount", jsre.MakeCallback(vm, bridge.GetTotalAmount))
+	account.Set("getAvailableAmount", jsre.MakeCallback(vm, bridge.GetAvailableAmount))
+	account.Set("getLockAmount", jsre.MakeCallback(vm, bridge.GetLockAmount))
+	account.Set("getFreezeAmount", jsre.MakeCallback(vm, bridge.GetFreezeAmount))
+	account.Set("getRecords", jsre.MakeCallback(vm, bridge.GetRecords))
+	account.Set("getRecord0", jsre.MakeCallback(vm, bridge.GetRecord0))
+	account.Set("getRecordByID", jsre.MakeCallback(vm, bridge.GetRecordByID))
+	account.Set("getRecordUseInfo", jsre.MakeCallback(vm, bridge.GetRecordUseInfo))
 }
 
 func (c *Console) initMasterNode(vm *goja.Runtime, bridge *bridge) {
@@ -299,24 +348,44 @@ func (c *Console) initMasterNode(vm *goja.Runtime, bridge *bridge) {
 	getJeth(vm).Set("startMasterNode", masternode.Get("start"))
 	getJeth(vm).Set("stopMasterNode", masternode.Get("stop"))
 	getJeth(vm).Set("restartMasterNode", masternode.Get("restart"))
+	getJeth(vm).Set("registerMasterNode", masternode.Get("register"))
+	getJeth(vm).Set("appendRegisterMasterNode", masternode.Get("appendRegister"))
+	getJeth(vm).Set("turnRegisterMasterNode", masternode.Get("turnRegister"))
+	getJeth(vm).Set("changeMasterNodeAddress", masternode.Get("changeAddress"))
+	getJeth(vm).Set("changeMasterNodeEnode", masternode.Get("changeEnode"))
+	getJeth(vm).Set("changeMasterNodeDescription", masternode.Get("changeDescription"))
+	getJeth(vm).Set("changeMasterNodeOfficial", masternode.Get("changeOfficial"))
 	getJeth(vm).Set("getMasterNodeInfo", masternode.Get("getInfo"))
 	getJeth(vm).Set("getMasterNodeInfoByID", masternode.Get("getInfoByID"))
 	getJeth(vm).Set("getNextMasterNode", masternode.Get("getNext"))
-	getJeth(vm).Set("getAllMasterNode", masternode.Get("getAll"))
+	getJeth(vm).Set("getAllMasterNodes", masternode.Get("getAll"))
+	getJeth(vm).Set("getOfficialMasterNodes", masternode.Get("getOfficials"))
 	getJeth(vm).Set("getMasterNodeNum", masternode.Get("getNum"))
-	getJeth(vm).Set("registerMasterNode", masternode.Get("register"))
-	getJeth(vm).Set("appendRegisterMasterNode", masternode.Get("appendRegister"))
+	getJeth(vm).Set("existMasterNode", masternode.Get("exist"))
+	getJeth(vm).Set("existMasterNodeID", masternode.Get("existID"))
+	getJeth(vm).Set("existMasterNodeEnode", masternode.Get("existEnode"))
+	getJeth(vm).Set("existMasterNodeLockID", masternode.Get("existLockID"))
 
 	masternode.Set("start", jsre.MakeCallback(vm, bridge.StartMasterNode))
 	masternode.Set("stop", jsre.MakeCallback(vm, bridge.StopMasterNode))
 	masternode.Set("restart", jsre.MakeCallback(vm, bridge.RestartMasterNode))
+	masternode.Set("register", jsre.MakeCallback(vm, bridge.RegisterMasterNode))
+	masternode.Set("appendRegister", jsre.MakeCallback(vm, bridge.AppendRegisterMasterNode))
+	masternode.Set("turnRegister", jsre.MakeCallback(vm, bridge.TurnRegisterMasterNode))
+	masternode.Set("changeAddress", jsre.MakeCallback(vm, bridge.ChangeMasterNodeAddress))
+	masternode.Set("changeEnode", jsre.MakeCallback(vm, bridge.ChangeMasterNodeEnode))
+	masternode.Set("changeDescription", jsre.MakeCallback(vm, bridge.ChangeMasterNodeDescription))
+	masternode.Set("changeOfficial", jsre.MakeCallback(vm, bridge.ChangeMasterNodeOfficial))
 	masternode.Set("getInfo", jsre.MakeCallback(vm, bridge.GetMasterNodeInfo))
 	masternode.Set("getInfoByID", jsre.MakeCallback(vm, bridge.GetMasterNodeInfoByID))
 	masternode.Set("getNext", jsre.MakeCallback(vm, bridge.GetNextMasterNode))
-	masternode.Set("getAll", jsre.MakeCallback(vm, bridge.GetAllMasterNode))
+	masternode.Set("getAll", jsre.MakeCallback(vm, bridge.GetAllMasterNodes))
+	masternode.Set("getOfficials", jsre.MakeCallback(vm, bridge.GetOfficialMasterNodes))
 	masternode.Set("getNum", jsre.MakeCallback(vm, bridge.GetMasterNodeNum))
-	masternode.Set("register", jsre.MakeCallback(vm, bridge.RegisterMasterNode))
-	masternode.Set("appendRegister", jsre.MakeCallback(vm, bridge.AppendRegisterMasterNode))
+	masternode.Set("exist", jsre.MakeCallback(vm, bridge.ExistMasterNode))
+	masternode.Set("existID", jsre.MakeCallback(vm, bridge.ExistMasterNodeID))
+	masternode.Set("existEnode", jsre.MakeCallback(vm, bridge.ExistMasterNodeEnode))
+	masternode.Set("existLockID", jsre.MakeCallback(vm, bridge.ExistMasterNodeLockID))
 }
 
 func (c *Console) initSuperNode(vm *goja.Runtime, bridge *bridge) {
@@ -328,24 +397,79 @@ func (c *Console) initSuperNode(vm *goja.Runtime, bridge *bridge) {
 	getJeth(vm).Set("startSuperNode", supernode.Get("start"))
 	getJeth(vm).Set("stopSuperNode", supernode.Get("stop"))
 	getJeth(vm).Set("restartSuperNode", supernode.Get("restart"))
-	getJeth(vm).Set("getSuperNodeInfo", supernode.Get("getInfo"))
-	getJeth(vm).Set("getSuperNodeInfoByID", supernode.Get("getInfoByID"))
-	getJeth(vm).Set("getAllSuperNode", supernode.Get("getAll"))
-	getJeth(vm).Set("getTopSuperNode", supernode.Get("getTop"))
-	getJeth(vm).Set("getSuperNodeNum", supernode.Get("getNum"))
 	getJeth(vm).Set("registerSuperNode", supernode.Get("register"))
 	getJeth(vm).Set("appendRegisterSuperNode", supernode.Get("appendRegister"))
+	getJeth(vm).Set("turnRegisterSuperNode", supernode.Get("turnRegister"))
+	getJeth(vm).Set("changeSuperNodeAddress", supernode.Get("changeAddress"))
+	getJeth(vm).Set("changeSuperNodeName", supernode.Get("changeName"))
+	getJeth(vm).Set("changeSuperNodeEnode", supernode.Get("changeEnode"))
+	getJeth(vm).Set("changeSuperNodeDescription", supernode.Get("changeDescription"))
+	getJeth(vm).Set("changeSuperNodeOfficial", supernode.Get("changeOfficial"))
+	getJeth(vm).Set("getSuperNodeInfo", supernode.Get("getInfo"))
+	getJeth(vm).Set("getSuperNodeInfoByID", supernode.Get("getInfoByID"))
+	getJeth(vm).Set("getAllSuperNodes", supernode.Get("getAll"))
+	getJeth(vm).Set("getTopSuperNodes", supernode.Get("getTop"))
+	getJeth(vm).Set("getOfficialSuperNodes", supernode.Get("getOfficials"))
+	getJeth(vm).Set("getSuperNodeNum", supernode.Get("getNum"))
+	getJeth(vm).Set("existSuperNode", supernode.Get("exist"))
+	getJeth(vm).Set("existSuperNodeID", supernode.Get("existID"))
+	getJeth(vm).Set("existSuperNodeName", supernode.Get("existName"))
+	getJeth(vm).Set("existSuperNodeEnode", supernode.Get("existEnode"))
+	getJeth(vm).Set("existSuperNodeLockID", supernode.Get("existLockID"))
 
 	supernode.Set("start", jsre.MakeCallback(vm, bridge.StartSuperNode))
 	supernode.Set("stop", jsre.MakeCallback(vm, bridge.StopSuperNode))
 	supernode.Set("restart", jsre.MakeCallback(vm, bridge.RestartSuperNode))
-	supernode.Set("getInfo", jsre.MakeCallback(vm, bridge.GetSuperNodeInfo))
-	supernode.Set("getInfoByID", jsre.MakeCallback(vm, bridge.GetSuperNodeInfoByID))
-	supernode.Set("getAll", jsre.MakeCallback(vm, bridge.GetAllSuperNode))
-	supernode.Set("getTop", jsre.MakeCallback(vm, bridge.GetTopSuperNode))
-	supernode.Set("getNum", jsre.MakeCallback(vm, bridge.GetSuperNodeNum))
 	supernode.Set("register", jsre.MakeCallback(vm, bridge.RegisterSuperNode))
 	supernode.Set("appendRegister", jsre.MakeCallback(vm, bridge.AppendRegisterSuperNode))
+	supernode.Set("turnRegister", jsre.MakeCallback(vm, bridge.TurnRegisterSuperNode))
+	supernode.Set("changeAddress", jsre.MakeCallback(vm, bridge.ChangeSuperNodeAddress))
+	supernode.Set("changeName", jsre.MakeCallback(vm, bridge.ChangeSuperNodeName))
+	supernode.Set("changeEnode", jsre.MakeCallback(vm, bridge.ChangeSuperNodeEnode))
+	supernode.Set("changeDescription", jsre.MakeCallback(vm, bridge.ChangeSuperNodeDescription))
+	supernode.Set("changeOfficial", jsre.MakeCallback(vm, bridge.ChangeSuperNodeOfficial))
+	supernode.Set("getInfo", jsre.MakeCallback(vm, bridge.GetSuperNodeInfo))
+	supernode.Set("getInfoByID", jsre.MakeCallback(vm, bridge.GetSuperNodeInfoByID))
+	supernode.Set("getAll", jsre.MakeCallback(vm, bridge.GetAllSuperNodes))
+	supernode.Set("getTop", jsre.MakeCallback(vm, bridge.GetTopSuperNodes))
+	supernode.Set("getOfficials", jsre.MakeCallback(vm, bridge.GetOfficialSuperNodes))
+	supernode.Set("getNum", jsre.MakeCallback(vm, bridge.GetSuperNodeNum))
+	supernode.Set("exist", jsre.MakeCallback(vm, bridge.ExistSuperNode))
+	supernode.Set("existID", jsre.MakeCallback(vm, bridge.ExistSuperNodeID))
+	supernode.Set("existName", jsre.MakeCallback(vm, bridge.ExistSuperNodeName))
+	supernode.Set("existEnode", jsre.MakeCallback(vm, bridge.ExistSuperNodeEnode))
+	supernode.Set("existLockID", jsre.MakeCallback(vm, bridge.ExistSuperNodeLockID))
+}
+
+func (c *Console) initSNVote(vm *goja.Runtime, bridge *bridge) {
+	snvote := getObject(vm, "snvote")
+	if snvote == nil || c.prompter == nil {
+		return
+	}
+
+	getJeth(vm).Set("voteOrApproval", snvote.Get("voteOrApproval"))
+	getJeth(vm).Set("removeVoteOrApproval", snvote.Get("removeVoteOrApproval"))
+	getJeth(vm).Set("proxyVote", snvote.Get("proxyVote"))
+	getJeth(vm).Set("getSuperNodes4Voter", snvote.Get("getSuperNodes4Voter"))
+	getJeth(vm).Set("getRecordIDs4Voter", snvote.Get("getRecordIDs4Voter"))
+	getJeth(vm).Set("getVoters4SN", snvote.Get("getVoters4SN"))
+	getJeth(vm).Set("getVoteNum4SN", snvote.Get("getVoteNum4SN"))
+	getJeth(vm).Set("getProxies4Voter", snvote.Get("getProxies4Voter"))
+	getJeth(vm).Set("getProxiedRecordIDs4Voter", snvote.Get("getProxiedRecordIDs4Voter"))
+	getJeth(vm).Set("getVoters4Proxy", snvote.Get("getVoters4Proxy"))
+	getJeth(vm).Set("getVoteNum4Proxy", snvote.Get("getVoteNum4Proxy"))
+
+	snvote.Set("voteOrApproval", jsre.MakeCallback(vm, bridge.VoteOrApproval))
+	snvote.Set("removeVoteOrApproval", jsre.MakeCallback(vm, bridge.RemoveVoteOrApproval))
+	snvote.Set("proxyVote", jsre.MakeCallback(vm, bridge.ProxyVote))
+	snvote.Set("getSuperNodes4Voter", jsre.MakeCallback(vm, bridge.GetSuperNodes4Voter))
+	snvote.Set("getRecordIDs4Voter", jsre.MakeCallback(vm, bridge.GetRecordIDs4Voter))
+	snvote.Set("getVoters4SN", jsre.MakeCallback(vm, bridge.GetVoters4SN))
+	snvote.Set("getVoteNum4SN", jsre.MakeCallback(vm, bridge.GetVoteNum4SN))
+	snvote.Set("getProxies4Voter", jsre.MakeCallback(vm, bridge.GetProxies4Voter))
+	snvote.Set("getProxiedRecordIDs4Voter", jsre.MakeCallback(vm, bridge.GetProxiedRecordIDs4Voter))
+	snvote.Set("getVoters4Proxy", jsre.MakeCallback(vm, bridge.GetVoters4Proxy))
+	snvote.Set("getVoteNum4Proxy", jsre.MakeCallback(vm, bridge.GetVoteNum4Proxy))
 }
 
 func (c *Console) initProposal(vm *goja.Runtime, bridge *bridge) {
@@ -355,50 +479,30 @@ func (c *Console) initProposal(vm *goja.Runtime, bridge *bridge) {
 	}
 
 	getJeth(vm).Set("createProposal", proposal.Get("create"))
-	getJeth(vm).Set("voteProposal", proposal.Get("vote"))
+	getJeth(vm).Set("vote4Proposal", proposal.Get("vote"))
+	getJeth(vm).Set("changeProposalTitle", proposal.Get("changeTitle"))
+	getJeth(vm).Set("changeProposalPayAmount", proposal.Get("changePayAmount"))
+	getJeth(vm).Set("changeProposalPayTimes", proposal.Get("changePayTimes"))
+	getJeth(vm).Set("changeProposalStartPayTime", proposal.Get("changeStartPayTime"))
+	getJeth(vm).Set("changeProposalEndPayTime", proposal.Get("changeEndPayTime"))
+	getJeth(vm).Set("changeProposalDescription", proposal.Get("changeDescription"))
 	getJeth(vm).Set("getProposalInfo", proposal.Get("getInfo"))
-	getJeth(vm).Set("getAllProposal", proposal.Get("getAll"))
-	getJeth(vm).Set("getMineProposal", proposal.Get("getMine"))
+	getJeth(vm).Set("getAllProposals", proposal.Get("getAll"))
+	getJeth(vm).Set("getMineProposals", proposal.Get("getMine"))
+	getJeth(vm).Set("existProposal", proposal.Get("exist"))
 
 	proposal.Set("create", jsre.MakeCallback(vm, bridge.CreateProposal))
-	proposal.Set("vote", jsre.MakeCallback(vm, bridge.VoteProposal))
+	proposal.Set("vote", jsre.MakeCallback(vm, bridge.Vote4Proposal))
+	proposal.Set("changeTitle", jsre.MakeCallback(vm, bridge.ChangeProposalTitle))
+	proposal.Set("changePayAmount", jsre.MakeCallback(vm, bridge.ChangeProposalPayAmount))
+	proposal.Set("changePayTimes", jsre.MakeCallback(vm, bridge.ChangeProposalPayTimes))
+	proposal.Set("changeStartPayTime", jsre.MakeCallback(vm, bridge.ChangeProposalStartPayTime))
+	proposal.Set("changeEndPayTime", jsre.MakeCallback(vm, bridge.ChangeProposalEndPayTime))
+	proposal.Set("changeDescription", jsre.MakeCallback(vm, bridge.ChangeProposalDescription))
 	proposal.Set("getInfo", jsre.MakeCallback(vm, bridge.GetProposalInfo))
-	proposal.Set("getAll", jsre.MakeCallback(vm, bridge.GetAllProposal))
-	proposal.Set("getMine", jsre.MakeCallback(vm, bridge.GetMineProposal))
-}
-
-func (c *Console) initMasterNodeState(vm *goja.Runtime, bridge *bridge) {
-	masternodestate := getObject(vm, "masternodestate")
-	if masternodestate == nil || c.prompter == nil {
-		return
-	}
-
-	getJeth(vm).Set("uploadMasterNodeState", masternodestate.Get("upload"))
-	getJeth(vm).Set("getAllMasterNodeState", masternodestate.Get("getAll"))
-	getJeth(vm).Set("getMasterNodeEntriesByAddr", masternodestate.Get("getEntriesByAddr"))
-	getJeth(vm).Set("getMasterNodeEntriesByID", masternodestate.Get("getEntriesByID"))
-
-	masternodestate.Set("upload", jsre.MakeCallback(vm, bridge.UploadMasterNodeState))
-	masternodestate.Set("getAll", jsre.MakeCallback(vm, bridge.GetAllMasterNodeState))
-	masternodestate.Set("getEntriesByAddr", jsre.MakeCallback(vm, bridge.GetMasterNodeEntriesByAddr))
-	masternodestate.Set("getEntriesByID", jsre.MakeCallback(vm, bridge.GetMasterNodeEntriesByID))
-}
-
-func (c *Console) initSuperNodeState(vm *goja.Runtime, bridge *bridge) {
-	supernodestate := getObject(vm, "supernodestate")
-	if supernodestate == nil || c.prompter == nil {
-		return
-	}
-
-	getJeth(vm).Set("uploadSuperNodeState", supernodestate.Get("upload"))
-	getJeth(vm).Set("getAllSuperNodeState", supernodestate.Get("getAll"))
-	getJeth(vm).Set("getSuperNodeEntriesByAddr", supernodestate.Get("getEntriesByAddr"))
-	getJeth(vm).Set("getSuperNodeEntriesByID", supernodestate.Get("getEntriesByID"))
-
-	supernodestate.Set("upload", jsre.MakeCallback(vm, bridge.UploadSuperNodeState))
-	supernodestate.Set("getAll", jsre.MakeCallback(vm, bridge.GetAllSuperNodeState))
-	supernodestate.Set("getEntriesByAddr", jsre.MakeCallback(vm, bridge.GetSuperNodeEntriesByAddr))
-	supernodestate.Set("getEntriesByID", jsre.MakeCallback(vm, bridge.GetSuperNodeEntriesByID))
+	proposal.Set("getAll", jsre.MakeCallback(vm, bridge.GetAllProposals))
+	proposal.Set("getMine", jsre.MakeCallback(vm, bridge.GetMineProposals))
+	proposal.Set("exist", jsre.MakeCallback(vm, bridge.ExistProposal))
 }
 
 func (c *Console) clearHistory() {

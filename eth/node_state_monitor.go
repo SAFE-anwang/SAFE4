@@ -242,7 +242,7 @@ func (monitor *NodeStateMonitor) broadcastLoop() {
 }
 
 func (monitor *NodeStateMonitor) isSuperNode(addr common.Address) bool {
-	infos, err := contract_api.GetTopSuperNode(monitor.ctx, monitor.blockChainAPI)
+	infos, err := contract_api.GetTopSuperNodes(monitor.ctx, monitor.blockChainAPI)
 	if err != nil {
 		return false
 	}
@@ -259,7 +259,7 @@ func (monitor *NodeStateMonitor) isSuperNode(addr common.Address) bool {
 func (monitor *NodeStateMonitor) collectMasterNodes() ([]*big.Int, []*big.Int) {
 	var ids []*big.Int
 	var states []*big.Int
-	infos, err := contract_api.GetAllMasterNode(monitor.ctx, monitor.blockChainAPI)
+	infos, err := contract_api.GetAllMasterNodes(monitor.ctx, monitor.blockChainAPI)
 	if err != nil {
 		return ids, states
 	}
@@ -297,7 +297,7 @@ func (monitor *NodeStateMonitor) collectMasterNodes() ([]*big.Int, []*big.Int) {
 func (monitor *NodeStateMonitor) collectSuperNodes() ([]*big.Int, []*big.Int) {
 	var ids []*big.Int
 	var states []*big.Int
-	infos, err := contract_api.GetAllSuperNode(monitor.ctx, monitor.blockChainAPI)
+	infos, err := contract_api.GetAllSuperNodes(monitor.ctx, monitor.blockChainAPI)
 	if err != nil {
 		return ids, states
 	}

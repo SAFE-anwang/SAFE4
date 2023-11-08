@@ -214,13 +214,13 @@ func ChangeMasterNodeDescription(ctx context.Context, blockChainAPI *ethapi.Publ
 	return transactionPoolAPI.SendTransaction(ctx, args)
 }
 
-func ChangeMasterNodeOfficial(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, transactionPoolAPI *ethapi.PublicTransactionPoolAPI, from common.Address, addr common.Address, flag bool) (common.Hash, error) {
+func ChangeMasterNodeIsOfficial(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, transactionPoolAPI *ethapi.PublicTransactionPoolAPI, from common.Address, addr common.Address, flag bool) (common.Hash, error) {
 	vABI, err := abi.JSON(strings.NewReader(systemcontracts.MasterNodeABI))
 	if err != nil {
 		return common.Hash{}, err
 	}
 
-	method := "changeOfficial"
+	method := "changeIsOfficial"
 	data, err := vABI.Pack(method, addr, flag)
 	if err != nil {
 		return common.Hash{}, err

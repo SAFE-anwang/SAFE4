@@ -344,7 +344,7 @@ func GetMineProposals(ctx context.Context, api *ethapi.PublicBlockChainAPI, from
 		return nil, err
 	}
 
-	method := "getMine"
+	method := "getMines"
 	data, err := vABI.Pack(method)
 	if err != nil {
 		return nil, err

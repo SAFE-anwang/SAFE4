@@ -657,20 +657,20 @@ func (b *bridge) GetAvailableAmount(call jsre.Call) (goja.Value, error) {
 	return getAvailableAmount(goja.Null(), call.Argument(0))
 }
 
-func (b *bridge) GetLockAmount(call jsre.Call) (goja.Value, error) {
-	getLockAmount, callable := goja.AssertFunction(getJeth(call.VM).Get("getLockAmount"))
+func (b *bridge) GetLockedAmount(call jsre.Call) (goja.Value, error) {
+	getLockedAmount, callable := goja.AssertFunction(getJeth(call.VM).Get("getLockedAmount"))
 	if !callable {
-		return nil, fmt.Errorf("jeth.getLockAmount is not callable")
+		return nil, fmt.Errorf("jeth.getLockedAmount is not callable")
 	}
-	return getLockAmount(goja.Null(), call.Argument(0))
+	return getLockedAmount(goja.Null(), call.Argument(0))
 }
 
-func (b *bridge) GetFreezeAmount(call jsre.Call) (goja.Value, error) {
-	getFreezeAmount, callable := goja.AssertFunction(getJeth(call.VM).Get("getFreezeAmount"))
+func (b *bridge) GetUsedAmount(call jsre.Call) (goja.Value, error) {
+	getUsedAmount, callable := goja.AssertFunction(getJeth(call.VM).Get("getUsedAmount"))
 	if !callable {
-		return nil, fmt.Errorf("jeth.getFreezeAmount is not callable")
+		return nil, fmt.Errorf("jeth.getUsedAmount is not callable")
 	}
-	return getFreezeAmount(goja.Null(), call.Argument(0))
+	return getUsedAmount(goja.Null(), call.Argument(0))
 }
 
 func (b *bridge) GetRecords(call jsre.Call) (goja.Value, error) {
@@ -694,7 +694,7 @@ func (b *bridge) GetRecordByID(call jsre.Call) (goja.Value, error) {
 	if !callable {
 		return nil, fmt.Errorf("jeth.getRecordByID is not callable")
 	}
-	return getRecordByID(goja.Null(), call.Argument(0), call.Argument(1))
+	return getRecordByID(goja.Null(), call.Argument(0))
 }
 
 func (b *bridge) GetRecordUseInfo(call jsre.Call) (goja.Value, error) {
@@ -779,12 +779,12 @@ func (b *bridge) ChangeMasterNodeDescription(call jsre.Call) (goja.Value, error)
 	return changeMasterNodeDescription(goja.Null(), call.Argument(0), call.Argument(1), call.Argument(2))
 }
 
-func (b *bridge) ChangeMasterNodeOfficial(call jsre.Call) (goja.Value, error) {
-	changeMasterNodeOfficial, callable := goja.AssertFunction(getJeth(call.VM).Get("changeMasterNodeOfficial"))
+func (b *bridge) ChangeMasterNodeIsOfficial(call jsre.Call) (goja.Value, error) {
+	changeMasterNodeIsOfficial, callable := goja.AssertFunction(getJeth(call.VM).Get("changeMasterNodeIsOfficial"))
 	if !callable {
-		return nil, fmt.Errorf("jeth.changeMasterNodeOfficial is not callable")
+		return nil, fmt.Errorf("jeth.changeMasterNodeIsOfficial is not callable")
 	}
-	return changeMasterNodeOfficial(goja.Null(), call.Argument(0), call.Argument(1), call.Argument(2))
+	return changeMasterNodeIsOfficial(goja.Null(), call.Argument(0), call.Argument(1), call.Argument(2))
 }
 
 func (b *bridge) GetMasterNodeInfo(call jsre.Call) (goja.Value, error) {
@@ -949,12 +949,12 @@ func (b *bridge) ChangeSuperNodeDescription(call jsre.Call) (goja.Value, error) 
 	return changeSuperNodeDescription(goja.Null(), call.Argument(0), call.Argument(1), call.Argument(2))
 }
 
-func (b *bridge) ChangeSuperNodeOfficial(call jsre.Call) (goja.Value, error) {
-	changeSuperNodeOfficial, callable := goja.AssertFunction(getJeth(call.VM).Get("changeSuperNodeOfficial"))
+func (b *bridge) ChangeSuperNodeIsOfficial(call jsre.Call) (goja.Value, error) {
+	changeSuperNodeIsOfficial, callable := goja.AssertFunction(getJeth(call.VM).Get("changeSuperNodeIsOfficial"))
 	if !callable {
-		return nil, fmt.Errorf("jeth.changeSuperNodeOfficial is not callable")
+		return nil, fmt.Errorf("jeth.changeSuperNodeIsOfficial is not callable")
 	}
-	return changeSuperNodeOfficial(goja.Null(), call.Argument(0), call.Argument(1), call.Argument(2))
+	return changeSuperNodeIsOfficial(goja.Null(), call.Argument(0), call.Argument(1), call.Argument(2))
 }
 
 func (b *bridge) GetSuperNodeInfo(call jsre.Call) (goja.Value, error) {

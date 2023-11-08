@@ -2,7 +2,6 @@ package contract_api
 
 import (
 	"context"
-	"errors"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
@@ -189,12 +188,12 @@ func GetAccountAvailableAmount(ctx context.Context, api *ethapi.PublicBlockChain
 	return getAccountAmountInfo(ctx, api, "getAvailableAmount", addr)
 }
 
-func GetAccountLockAmount(ctx context.Context, api *ethapi.PublicBlockChainAPI, addr common.Address) (*types.AccountAmountInfo, error) {
-	return getAccountAmountInfo(ctx, api, "getLockAmount", addr)
+func GetAccountLockedAmount(ctx context.Context, api *ethapi.PublicBlockChainAPI, addr common.Address) (*types.AccountAmountInfo, error) {
+	return getAccountAmountInfo(ctx, api, "getLockedAmount", addr)
 }
 
-func GetAccountFreezeAmount(ctx context.Context, api *ethapi.PublicBlockChainAPI, addr common.Address) (*types.AccountAmountInfo, error) {
-	return getAccountAmountInfo(ctx, api, "getFreezeAmount", addr)
+func GetAccountUsedAmount(ctx context.Context, api *ethapi.PublicBlockChainAPI, addr common.Address) (*types.AccountAmountInfo, error) {
+	return getAccountAmountInfo(ctx, api, "getUsedAmount", addr)
 }
 
 func getAccountAmountInfo(ctx context.Context, api *ethapi.PublicBlockChainAPI, method string, addr common.Address) (*types.AccountAmountInfo, error) {
@@ -258,22 +257,20 @@ func GetAccountRecords(ctx context.Context, api *ethapi.PublicBlockChainAPI, add
 	return *records, nil
 }
 
-func GetAccountRecord0(ctx context.Context, api *ethapi.PublicBlockChainAPI, from common.Address) (*types.AccountRecord, error) {
+func GetAccountRecord0(ctx context.Context, api *ethapi.PublicBlockChainAPI, addr common.Address) (*types.AccountRecord, error) {
 	vABI, err := abi.JSON(strings.NewReader(systemcontracts.AccountManagerABI))
 	if err != nil {
 		return nil, err
 	}
 
-	method := "getRecordByID"
-	id := big.NewInt(0)
-	data, err := vABI.Pack(method, id)
+	method := "getRecord0"
+	data, err := vABI.Pack(method, addr)
 	if err != nil {
 		return nil, err
 	}
 
 	msgData := (hexutil.Bytes)(data)
 	args := ethapi.TransactionArgs{
-		From: &from,
 		To: &systemcontracts.AccountManagerContractAddr,
 		Data: &msgData,
 	}
@@ -290,10 +287,6 @@ func GetAccountRecord0(ctx context.Context, api *ethapi.PublicBlockChainAPI, fro
 }
 
 func GetAccountRecordByID(ctx context.Context, api *ethapi.PublicBlockChainAPI, id *big.Int) (*types.AccountRecord, error) {
-	if id.Int64() == 0 {
-		return nil, errors.New("use GetAccountRecord0 if id=0")
-	}
-
 	vABI, err := abi.JSON(strings.NewReader(systemcontracts.AccountManagerABI))
 	if err != nil {
 		return nil, err

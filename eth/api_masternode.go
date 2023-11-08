@@ -85,8 +85,8 @@ func (api *PublicMasterNodeAPI) ChangeDescription(ctx context.Context, from comm
 	return contract_api.ChangeMasterNodeDescription(ctx, api.blockChainAPI, api.transactionPoolAPI, from, addr, description)
 }
 
-func (api *PublicMasterNodeAPI) ChangeOfficial(ctx context.Context, from common.Address, addr common.Address, flag bool) (common.Hash, error) {
-	return contract_api.ChangeMasterNodeOfficial(ctx, api.blockChainAPI, api.transactionPoolAPI, from, addr, flag)
+func (api *PublicMasterNodeAPI) ChangeIsOfficial(ctx context.Context, from common.Address, addr common.Address, flag bool) (common.Hash, error) {
+	return contract_api.ChangeMasterNodeIsOfficial(ctx, api.blockChainAPI, api.transactionPoolAPI, from, addr, flag)
 }
 
 func (api *PublicMasterNodeAPI) GetInfo(ctx context.Context, addr common.Address) (*types.MasterNodeInfo, error) {

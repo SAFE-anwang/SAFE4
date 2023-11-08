@@ -47,12 +47,12 @@ func (api *PublicAccountAPI) GetAvailableAmount(ctx context.Context, addr common
 	return contract_api.GetAccountAvailableAmount(ctx, api.blockChainAPI, addr)
 }
 
-func (api *PublicAccountAPI) GetLockAmount(ctx context.Context, addr common.Address) (*types.AccountAmountInfo, error) {
-	return contract_api.GetAccountLockAmount(ctx, api.blockChainAPI, addr)
+func (api *PublicAccountAPI) GetLockedAmount(ctx context.Context, addr common.Address) (*types.AccountAmountInfo, error) {
+	return contract_api.GetAccountLockedAmount(ctx, api.blockChainAPI, addr)
 }
 
-func (api *PublicAccountAPI) GetFreezeAmount(ctx context.Context, addr common.Address) (*types.AccountAmountInfo, error) {
-	return contract_api.GetAccountFreezeAmount(ctx, api.blockChainAPI, addr)
+func (api *PublicAccountAPI) GetUsedAmount(ctx context.Context, addr common.Address) (*types.AccountAmountInfo, error) {
+	return contract_api.GetAccountUsedAmount(ctx, api.blockChainAPI, addr)
 }
 
 func (api *PublicAccountAPI) GetRecords(ctx context.Context, addr common.Address) ([]types.AccountRecord, error) {

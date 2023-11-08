@@ -13844,16 +13844,16 @@ module.exports = XMLHttpRequest;
         inputFormatter: [formatters.inputAddressFormatter]
       });
 
-      var getLockAmount = new Method({
-        name: 'getLockAmount',
-        call: 'account_getLockAmount',
+      var getLockedAmount = new Method({
+        name: 'getLockedAmount',
+        call: 'account_getLockedAmount',
         params: 1,
         inputFormatter: [formatters.inputAddressFormatter]
       });
 
-      var getFreezeAmount = new Method({
-        name: 'getFreezeAmount',
-        call: 'account_getFreezeAmount',
+      var getUsedAmount = new Method({
+        name: 'getUsedAmount',
+        call: 'account_getUsedAmount',
         params: 1,
         inputFormatter: [formatters.inputAddressFormatter]
       });
@@ -13868,8 +13868,8 @@ module.exports = XMLHttpRequest;
       var getRecord0 = new Method({
         name: 'getRecord0',
         call: 'account_getRecord0',
-        params: 2,
-        inputFormatter: [formatters.inputAddressFormatter, formatters.formatInputInt]
+        params: 1,
+        inputFormatter: [formatters.inputAddressFormatter]
       });
 
       var getRecordByID = new Method({
@@ -13894,8 +13894,8 @@ module.exports = XMLHttpRequest;
         addLockDay,
         getTotalAmount,
         getAvailableAmount,
-        getLockAmount,
-        getFreezeAmount,
+        getLockedAmount,
+        getUsedAmount,
         getRecords,
         getRecord0,
         getRecordByID,
@@ -13994,9 +13994,9 @@ module.exports = XMLHttpRequest;
       inputFormatter: [formatters.inputAddressFormatter, formatters.inputAddressFormatter, formatters.formatInputString]
     });
 
-    var changeOfficial = new Method({
-      name: 'changeOfficial',
-      call: 'masternode_changeOfficial',
+    var changeIsOfficial = new Method({
+      name: 'changeIsOfficial',
+      call: 'masternode_changeIsOfficial',
       params: 3,
       inputFormatter: [formatters.inputAddressFormatter, formatters.inputAddressFormatter, formatters.formatInputBool]
     });
@@ -14077,7 +14077,7 @@ module.exports = XMLHttpRequest;
       changeAddress,
       changeEnode,
       changeDescription,
-      changeOfficial,
+      changeIsOfficial,
       getInfo,
       getInfoByID,
       getNext,
@@ -14189,9 +14189,9 @@ module.exports = XMLHttpRequest;
       inputFormatter: [formatters.inputAddressFormatter, formatters.inputAddressFormatter, formatters.formatInputString]
     });
 
-    var changeOfficial = new Method({
-      name: 'changeOfficial',
-      call: 'supernode_changeOfficial',
+    var changeIsOfficial = new Method({
+      name: 'changeIsOfficial',
+      call: 'supernode_changeIsOfficial',
       params: 3,
       inputFormatter: [formatters.inputAddressFormatter, formatters.inputAddressFormatter, formatters.formatInputBool]
     });
@@ -14216,9 +14216,9 @@ module.exports = XMLHttpRequest;
       params: 0
     });
 
-    var getTop = new Method({
-      name: 'getTop',
-      call: 'supernode_getTop',
+    var getTops = new Method({
+      name: 'getTops',
+      call: 'supernode_getTops',
       params: 0
     });
 
@@ -14280,11 +14280,11 @@ module.exports = XMLHttpRequest;
       changeName,
       changeEnode,
       changeDescription,
-      changeOfficial,
+      changeIsOfficial,
       getInfo,
       getInfoByID,
       getAll,
-      getTop,
+      getTops,
       getOfficials,
       getNum,
       exist,
@@ -14512,9 +14512,9 @@ module.exports = XMLHttpRequest;
         params: 0
       });
 
-      var getMine = new Method({
-        name: 'getMine',
-        call: 'proposal_getMine',
+      var getMines = new Method({
+        name: 'getMines',
+        call: 'proposal_getMines',
         params: 1,
         inputFormatter: [formatters.inputAddressFormatter]
       });
@@ -14537,7 +14537,7 @@ module.exports = XMLHttpRequest;
         changeDescription,
         getInfo,
         getAll,
-        getMine,
+        getMines,
         exist
       ];
     };

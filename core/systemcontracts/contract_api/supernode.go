@@ -247,13 +247,13 @@ func ChangeSuperNodeDescription(ctx context.Context, blockChainAPI *ethapi.Publi
 	return transactionPoolAPI.SendTransaction(ctx, args)
 }
 
-func ChangeSuperNodeOfficial(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, transactionPoolAPI *ethapi.PublicTransactionPoolAPI, from common.Address, addr common.Address, flag bool) (common.Hash, error) {
+func ChangeSuperNodeIsOfficial(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, transactionPoolAPI *ethapi.PublicTransactionPoolAPI, from common.Address, addr common.Address, flag bool) (common.Hash, error) {
 	vABI, err := abi.JSON(strings.NewReader(systemcontracts.SuperNodeABI))
 	if err != nil {
 		return common.Hash{}, err
 	}
 
-	method := "changeOfficial"
+	method := "changeIsOfficial"
 	data, err := vABI.Pack(method, addr, flag)
 	if err != nil {
 		return common.Hash{}, err
@@ -373,7 +373,7 @@ func GetTopSuperNodes(ctx context.Context, api *ethapi.PublicBlockChainAPI) ([]t
 		return nil, err
 	}
 
-	method := "getTop"
+	method := "getTops"
 	data, err := vABI.Pack(method)
 	if err != nil {
 		return nil, err

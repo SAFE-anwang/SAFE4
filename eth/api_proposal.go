@@ -59,7 +59,7 @@ func (api *PublicProposalAPI) GetAll(ctx context.Context) ([]types.ProposalInfo,
 	return contract_api.GetAllProposals(ctx, api.blockChainAPI)
 }
 
-func (api *PublicProposalAPI) GetMine(ctx context.Context, from common.Address) ([]types.ProposalInfo, error) {
+func (api *PublicProposalAPI) GetMines(ctx context.Context, from common.Address) ([]types.ProposalInfo, error) {
 	return contract_api.GetMineProposals(ctx, api.blockChainAPI, from)
 }
 

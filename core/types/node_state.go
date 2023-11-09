@@ -6,6 +6,6 @@ import (
 )
 
 type StateEntry struct {
-	Addr   common.Address   `json:"addr"      gencodec:"required"`
+	Caller common.Address   `json:"caller"    gencodec:"required"`
 	State  *big.Int         `json:"state"     gencodec:"required"`
 }

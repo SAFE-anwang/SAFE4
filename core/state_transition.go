@@ -20,9 +20,12 @@ import (
 	"fmt"
 	"math"
 	"math/big"
+	"strings"
 
+	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	cmath "github.com/ethereum/go-ethereum/common/math"
+	"github.com/ethereum/go-ethereum/core/systemcontracts"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -346,13 +349,47 @@ func (st *StateTransition) TransitionDb() (*ExecutionResult, error) {
 	if rules.IsLondon {
 		effectiveTip = cmath.BigMin(st.gasTipCap, new(big.Int).Sub(st.gasFeeCap, st.evm.Context.BaseFee))
 	}
-	st.state.AddBalance(st.evm.Context.Coinbase, new(big.Int).Mul(new(big.Int).SetUint64(st.gasUsed()), effectiveTip))
+
+	amount := new(big.Int).Mul(new(big.Int).SetUint64(st.gasUsed()), effectiveTip)
+	amount.Mul(amount, getPercent(st.evm.Context, st.evm.StateDB, st.evm.ChainConfig(), st.evm.Config))
+	amount.Div(amount, big.NewInt(100))
+	st.state.AddBalance(st.evm.Context.Coinbase, amount)
 
 	return &ExecutionResult{
 		UsedGas:    st.gasUsed(),
 		Err:        vmerr,
 		ReturnData: ret,
 	}, nil
+}
+
+func getPercent(blockCtx vm.BlockContext, statedb vm.StateDB, chainConfig *params.ChainConfig, config vm.Config) *big.Int {
+	vABI, err := abi.JSON(strings.NewReader(systemcontracts.PropertyABI))
+	if err != nil {
+		return common.Big0
+	}
+
+	method := "getValue"
+	name := "miner_reward_percent"
+	data, err := vABI.Pack(method, name)
+	if err != nil {
+		return common.Big0
+	}
+
+	msg :=  types.NewMessage(common.Address{}, &systemcontracts.PropertyContractAddr, 0, new(big.Int), 50000000, new(big.Int), new(big.Int), new(big.Int), data, nil, true)
+	vmenv := vm.NewEVM(blockCtx, vm.TxContext{}, statedb, chainConfig, config)
+	result, _, err := vmenv.Call(vm.AccountRef(msg.From()), *msg.To(), msg.Data(), msg.Gas(), msg.Value())
+	if err != nil {
+		return common.Big0
+	}
+
+	value := new(big.Int)
+	if err := vABI.UnpackIntoInterface(&value, method, result); err != nil {
+		return common.Big0
+	}
+	if value.Uint64() > 100 {
+		return big.NewInt(100)
+	}
+	return value
 }
 
 func (st *StateTransition) refundGas(refundQuotient uint64) {

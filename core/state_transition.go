@@ -351,8 +351,10 @@ func (st *StateTransition) TransitionDb() (*ExecutionResult, error) {
 	}
 
 	amount := new(big.Int).Mul(new(big.Int).SetUint64(st.gasUsed()), effectiveTip)
-	amount.Mul(amount, getPercent(st.evm.Context, st.evm.StateDB, st.evm.ChainConfig(), st.evm.Config))
-	amount.Div(amount, big.NewInt(100))
+	if effectiveTip.Uint64() != 0 {
+		amount.Mul(amount, getPercent(st.evm.Context, st.evm.StateDB, st.evm.ChainConfig(), st.evm.Config))
+		amount.Div(amount, big.NewInt(100))
+	}
 	st.state.AddBalance(st.evm.Context.Coinbase, amount)
 
 	return &ExecutionResult{

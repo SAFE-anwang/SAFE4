@@ -148,14 +148,14 @@ func ChangeSuperNodeAddress(ctx context.Context, blockChainAPI *ethapi.PublicBlo
 	return transactionPoolAPI.SendTransaction(ctx, args)
 }
 
-func ChangeSuperNodeEnode(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, transactionPoolAPI *ethapi.PublicTransactionPoolAPI, from common.Address, addr common.Address, enode string) (common.Hash, error) {
+func ChangeSuperNodeName(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, transactionPoolAPI *ethapi.PublicTransactionPoolAPI, from common.Address, addr common.Address, name string) (common.Hash, error) {
 	vABI, err := abi.JSON(strings.NewReader(systemcontracts.SuperNodeABI))
 	if err != nil {
 		return common.Hash{}, err
 	}
 
-	method := "changeEnode"
-	data, err := vABI.Pack(method, addr, enode)
+	method := "changeName"
+	data, err := vABI.Pack(method, addr, name)
 	if err != nil {
 		return common.Hash{}, err
 	}
@@ -181,14 +181,14 @@ func ChangeSuperNodeEnode(ctx context.Context, blockChainAPI *ethapi.PublicBlock
 	return transactionPoolAPI.SendTransaction(ctx, args)
 }
 
-func ChangeSuperNodeName(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, transactionPoolAPI *ethapi.PublicTransactionPoolAPI, from common.Address, addr common.Address, name string) (common.Hash, error) {
+func ChangeSuperNodeEnode(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, transactionPoolAPI *ethapi.PublicTransactionPoolAPI, from common.Address, addr common.Address, enode string) (common.Hash, error) {
 	vABI, err := abi.JSON(strings.NewReader(systemcontracts.SuperNodeABI))
 	if err != nil {
 		return common.Hash{}, err
 	}
 
 	method := "changeEnode"
-	data, err := vABI.Pack(method, addr, name)
+	data, err := vABI.Pack(method, addr, enode)
 	if err != nil {
 		return common.Hash{}, err
 	}

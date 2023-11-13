@@ -332,14 +332,14 @@ func GetVoters4Proxy(ctx context.Context, api *ethapi.PublicBlockChainAPI, proxy
 	return info, nil
 }
 
-func GetVoteNum4Proxy(ctx context.Context, api *ethapi.PublicBlockChainAPI, voterAddr common.Address) (*big.Int, error) {
+func GetVoteNum4Proxy(ctx context.Context, api *ethapi.PublicBlockChainAPI, proxyAddr common.Address) (*big.Int, error) {
 	vABI, err := abi.JSON(strings.NewReader(systemcontracts.SNVoteABI))
 	if err != nil {
 		return nil, err
 	}
 
 	method := "getVoteNum4Proxy"
-	data, err := vABI.Pack(method, voterAddr)
+	data, err := vABI.Pack(method, proxyAddr)
 	if err != nil {
 		return nil, err
 	}

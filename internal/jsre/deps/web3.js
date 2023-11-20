@@ -14128,8 +14128,8 @@ module.exports = XMLHttpRequest;
     var start = new Method({
       name: 'start',
       call: 'supernode_start',
-      params: 1,
-      inputFormatter: [formatters.inputAddressFormatter]
+      params: 2,
+      inputFormatter: [formatters.inputAddressFormatter, formatters.formatInputInt]
     });
 
     var stop = new Method({
@@ -14205,74 +14205,78 @@ module.exports = XMLHttpRequest;
     var getInfo = new Method({
       name: 'getInfo',
       call: 'supernode_getInfo',
-      params: 1,
-      inputFormatter: [formatters.inputAddressFormatter]
+      params: 2,
+      inputFormatter: [formatters.inputAddressFormatter, formatters.formatInputInt]
     });
 
     var getInfoByID = new Method({
       name: 'getInfoByID',
       call: 'supernode_getInfoByID',
-      params: 1,
-      inputFormatter: [formatters.formatInputInt]
+      params: 2,
+      inputFormatter: [formatters.formatInputInt, formatters.formatInputInt]
     });
 
     var getAll = new Method({
       name: 'getAll',
       call: 'supernode_getAll',
-      params: 0
+      params: 1,
+      inputFormatter: [formatters.formatInputInt]
     });
 
     var getTops = new Method({
       name: 'getTops',
       call: 'supernode_getTops',
-      params: 0
+      params: 1,
+      inputFormatter: [formatters.formatInputInt]
     });
 
     var getOfficials = new Method({
       name: 'getOfficials',
       call: 'supernode_getOfficials',
-      params: 0
+      params: 1,
+      inputFormatter: [formatters.formatInputInt]
     });
 
     var getNum = new Method({
       name: 'getNum',
       call: 'supernode_getNum',
-      params: 0
+      params: 1,
+      inputFormatter: [formatters.formatInputInt]
     });
 
     var exist = new Method({
       name: 'exist',
       call: 'supernode_exist',
-      params: 1,
-      inputFormatter: [formatters.inputAddressFormatter]
+      params: 2,
+      inputFormatter: [formatters.inputAddressFormatter, formatters.formatInputInt]
     });
 
     var existID = new Method({
       name: 'existID',
       call: 'supernode_existID',
-      params: 1,
-      inputFormatter: [formatters.formatInputInt]
+      params: 2,
+      inputFormatter: [formatters.formatInputInt, formatters.formatInputInt]
     });
 
     var existName = new Method({
       name: 'existName',
       call: 'supernode_existName',
-      params: 1,
-      inputFormatter: [formatters.formatInputString]
+      params: 2,
+      inputFormatter: [formatters.formatInputString, formatters.formatInputInt]
     });
 
     var existEnode = new Method({
       name: 'existEnode',
       call: 'supernode_existEnode',
-      params: 1,
-      inputFormatter: [formatters.formatInputString]
+      params: 2,
+      inputFormatter: [formatters.formatInputString, formatters.formatInputInt]
     });
 
     var existLockID = new Method({
       name: 'existLockID',
       call: 'supernode_existLockID',
-      params: 1,
-      inputFormatter: [formatters.inputAddressFormatter, formatters.formatInputInt]
+      params: 3,
+      inputFormatter: [formatters.inputAddressFormatter, formatters.formatInputInt, formatters.formatInputInt]
     });
 
     return [

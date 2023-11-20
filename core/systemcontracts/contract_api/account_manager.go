@@ -2,7 +2,6 @@ package contract_api
 
 import (
 	"context"
-	"fmt"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
@@ -214,10 +213,6 @@ func getAccountAmountInfo(ctx context.Context, api *ethapi.PublicBlockChainAPI, 
 		Data: &msgData,
 	}
 
-	if !blocknumber.IsInt64() {
-		return nil, fmt.Errorf("big.Int is out of int64 range")
-	}
-
 	//result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
 	result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(blocknumber.Int64())), nil)
 	if err != nil {
@@ -253,10 +248,6 @@ func GetAccountRecords(ctx context.Context, api *ethapi.PublicBlockChainAPI, add
 		Data: &msgData,
 	}
 
-	if !blocknumber.IsInt64() {
-		return nil, fmt.Errorf("big.Int is out of int64 range")
-	}
-
 	//result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
 	result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(blocknumber.Int64())), nil)
 	if err != nil {
@@ -286,10 +277,6 @@ func GetAccountRecord0(ctx context.Context, api *ethapi.PublicBlockChainAPI, add
 	args := ethapi.TransactionArgs{
 		To: &systemcontracts.AccountManagerContractAddr,
 		Data: &msgData,
-	}
-
-	if !blocknumber.IsInt64() {
-		return nil, fmt.Errorf("big.Int is out of int64 range")
 	}
 
 	//result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
@@ -323,10 +310,6 @@ func GetAccountRecordByID(ctx context.Context, api *ethapi.PublicBlockChainAPI, 
 		Data: &msgData,
 	}
 
-	if !blocknumber.IsInt64() {
-		return nil, fmt.Errorf("big.Int is out of int64 range")
-	}
-
 	//result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
 	result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(blocknumber.Int64())), nil)
 	if err != nil {
@@ -356,10 +339,6 @@ func GetAccountRecordUseInfo(ctx context.Context, api *ethapi.PublicBlockChainAP
 	args := ethapi.TransactionArgs{
 		To: &systemcontracts.AccountManagerContractAddr,
 		Data: &msgData,
-	}
-
-	if !blocknumber.IsInt64() {
-		return nil, fmt.Errorf("big.Int is out of int64 range")
 	}
 
 	//result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)

@@ -2,7 +2,6 @@ package contract_api
 
 import (
 	"context"
-	"fmt"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
@@ -299,10 +298,6 @@ func GetProposalInfo(ctx context.Context, api *ethapi.PublicBlockChainAPI, id *b
 		Data: &msgData,
 	}
 
-	if !blocknumber.IsInt64() {
-		return nil, fmt.Errorf("big.Int is out of int64 range")
-	}
-
 	//result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
 	result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(blocknumber.Int64())), nil)
 	if err != nil {
@@ -332,10 +327,6 @@ func GetAllProposals(ctx context.Context, api *ethapi.PublicBlockChainAPI, block
 	args := ethapi.TransactionArgs{
 		To: &systemcontracts.ProposalContractAddr,
 		Data: &msgData,
-	}
-
-	if !blocknumber.IsInt64() {
-		return nil, fmt.Errorf("big.Int is out of int64 range")
 	}
 
 	//result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
@@ -370,10 +361,6 @@ func GetMineProposals(ctx context.Context, api *ethapi.PublicBlockChainAPI, from
 		Data: &msgData,
 	}
 
-	if !blocknumber.IsInt64() {
-		return nil, fmt.Errorf("big.Int is out of int64 range")
-	}
-
 	//result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
 	result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(blocknumber.Int64())), nil)
 	if err != nil {
@@ -403,10 +390,6 @@ func ExistProposal(ctx context.Context, api *ethapi.PublicBlockChainAPI, id *big
 	args := ethapi.TransactionArgs{
 		To: &systemcontracts.ProposalContractAddr,
 		Data: &msgData,
-	}
-
-	if !blocknumber.IsInt64() {
-		return false, fmt.Errorf("big.Int is out of int64 range")
 	}
 
 	//result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)

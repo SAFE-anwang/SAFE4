@@ -2,7 +2,6 @@ package contract_api
 
 import (
 	"context"
-	"fmt"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
@@ -266,10 +265,6 @@ func GetMasterNodeInfo(ctx context.Context, api *ethapi.PublicBlockChainAPI, add
 		Data: &msgData,
 	}
 
-	if !blocknumber.IsInt64() {
-		return nil, fmt.Errorf("big.Int is out of int64 range")
-	}
-
 	//result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
 	result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(blocknumber.Int64())), nil)
 	if err != nil {
@@ -299,10 +294,6 @@ func GetMasterNodeInfoByID(ctx context.Context, api *ethapi.PublicBlockChainAPI,
 	args := ethapi.TransactionArgs{
 		To: &systemcontracts.MasterNodeContractAddr,
 		Data: &msgData,
-	}
-
-	if !blocknumber.IsInt64() {
-		return nil, fmt.Errorf("big.Int is out of int64 range")
 	}
 
 	//result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
@@ -336,10 +327,6 @@ func GetNextMasterNode(ctx context.Context, api *ethapi.PublicBlockChainAPI, blo
 		Data: &msgData,
 	}
 
-	if !blocknumber.IsInt64() {
-		return common.Address{}, fmt.Errorf("big.Int is out of int64 range")
-	}
-
 	//result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
 	result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(blocknumber.Int64())), nil)
 	if err != nil {
@@ -369,10 +356,6 @@ func GetAllMasterNodes(ctx context.Context, api *ethapi.PublicBlockChainAPI, blo
 	args := ethapi.TransactionArgs{
 		To: &systemcontracts.MasterNodeContractAddr,
 		Data: &msgData,
-	}
-
-	if !blocknumber.IsInt64() {
-		return nil, fmt.Errorf("big.Int is out of int64 range")
 	}
 
 	//result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
@@ -406,10 +389,6 @@ func GetOfficialMasterNodes(ctx context.Context, api *ethapi.PublicBlockChainAPI
 		Data: &msgData,
 	}
 
-	if !blocknumber.IsInt64() {
-		return nil, fmt.Errorf("big.Int is out of int64 range")
-	}
-
 	//result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
 	result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(blocknumber.Int64())), nil)
 	if err != nil {
@@ -439,10 +418,6 @@ func GetMasterNodeNum(ctx context.Context, api *ethapi.PublicBlockChainAPI, bloc
 	args := ethapi.TransactionArgs{
 		To: &systemcontracts.MasterNodeContractAddr,
 		Data: &msgData,
-	}
-
-	if !blocknumber.IsInt64() {
-		return nil, fmt.Errorf("big.Int is out of int64 range")
 	}
 
 	//result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
@@ -476,10 +451,6 @@ func ExistMasterNode(ctx context.Context, api *ethapi.PublicBlockChainAPI, addr 
 		Data: &msgData,
 	}
 
-	if !blocknumber.IsInt64() {
-		return false, fmt.Errorf("big.Int is out of int64 range")
-	}
-
 	//result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
 	result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(blocknumber.Int64())), nil)
 	if err != nil {
@@ -509,10 +480,6 @@ func ExistMasterNodeID(ctx context.Context, api *ethapi.PublicBlockChainAPI, id 
 	args := ethapi.TransactionArgs{
 		To: &systemcontracts.MasterNodeContractAddr,
 		Data: &msgData,
-	}
-
-	if !blocknumber.IsInt64() {
-		return false, fmt.Errorf("big.Int is out of int64 range")
 	}
 
 	//result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
@@ -546,10 +513,6 @@ func ExistMasterNodeEnode(ctx context.Context, api *ethapi.PublicBlockChainAPI, 
 		Data: &msgData,
 	}
 
-	if !blocknumber.IsInt64() {
-		return false, fmt.Errorf("big.Int is out of int64 range")
-	}
-
 	//result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
 	result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(blocknumber.Int64())), nil)
 	if err != nil {
@@ -579,10 +542,6 @@ func ExistMasterNodeLockID(ctx context.Context, api *ethapi.PublicBlockChainAPI,
 	args := ethapi.TransactionArgs{
 		To: &systemcontracts.MasterNodeContractAddr,
 		Data: &msgData,
-	}
-
-	if !blocknumber.IsInt64() {
-		return false, fmt.Errorf("big.Int is out of int64 range")
 	}
 
 	//result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)

@@ -2,7 +2,6 @@ package contract_api
 
 import (
 	"context"
-	"fmt"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
@@ -64,10 +63,6 @@ func GetMasterNodeUploadStates(ctx context.Context, api *ethapi.PublicBlockChain
 	args := ethapi.TransactionArgs{
 		To: &systemcontracts.MasterNodeStateContractAddr,
 		Data: &msgData,
-	}
-
-	if !blocknumber.IsInt64() {
-		return nil, fmt.Errorf("big.Int is out of int64 range")
 	}
 
 	//result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)

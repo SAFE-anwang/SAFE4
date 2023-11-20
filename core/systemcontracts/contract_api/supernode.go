@@ -280,7 +280,7 @@ func ChangeSuperNodeIsOfficial(ctx context.Context, blockChainAPI *ethapi.Public
 	return transactionPoolAPI.SendTransaction(ctx, args)
 }
 
-func GetSuperNodeInfo(ctx context.Context, api *ethapi.PublicBlockChainAPI, addr common.Address) (*types.SuperNodeInfo, error) {
+func GetSuperNodeInfo(ctx context.Context, api *ethapi.PublicBlockChainAPI, addr common.Address, blocknumber *big.Int) (*types.SuperNodeInfo, error) {
 	vABI, err := abi.JSON(strings.NewReader(systemcontracts.SuperNodeABI))
 	if err != nil {
 		return nil, err
@@ -297,7 +297,9 @@ func GetSuperNodeInfo(ctx context.Context, api *ethapi.PublicBlockChainAPI, addr
 		To: &systemcontracts.SuperNodeContractAddr,
 		Data: &msgData,
 	}
-	result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
+
+	//result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
+	result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(blocknumber.Int64())), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -309,7 +311,7 @@ func GetSuperNodeInfo(ctx context.Context, api *ethapi.PublicBlockChainAPI, addr
 	return info, nil
 }
 
-func GetSuperNodeInfoByID(ctx context.Context, api *ethapi.PublicBlockChainAPI, id *big.Int) (*types.SuperNodeInfo, error) {
+func GetSuperNodeInfoByID(ctx context.Context, api *ethapi.PublicBlockChainAPI, id *big.Int, blocknumber *big.Int) (*types.SuperNodeInfo, error) {
 	vABI, err := abi.JSON(strings.NewReader(systemcontracts.SuperNodeABI))
 	if err != nil {
 		return nil, err
@@ -326,7 +328,9 @@ func GetSuperNodeInfoByID(ctx context.Context, api *ethapi.PublicBlockChainAPI, 
 		To: &systemcontracts.SuperNodeContractAddr,
 		Data: &msgData,
 	}
-	result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
+
+	//result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
+	result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(blocknumber.Int64())), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -338,7 +342,7 @@ func GetSuperNodeInfoByID(ctx context.Context, api *ethapi.PublicBlockChainAPI, 
 	return info, nil
 }
 
-func GetAllSuperNodes(ctx context.Context, api *ethapi.PublicBlockChainAPI) ([]types.SuperNodeInfo, error) {
+func GetAllSuperNodes(ctx context.Context, api *ethapi.PublicBlockChainAPI, blocknumber *big.Int) ([]types.SuperNodeInfo, error) {
 	vABI, err := abi.JSON(strings.NewReader(systemcontracts.SuperNodeABI))
 	if err != nil {
 		return nil, err
@@ -355,7 +359,9 @@ func GetAllSuperNodes(ctx context.Context, api *ethapi.PublicBlockChainAPI) ([]t
 		To: &systemcontracts.SuperNodeContractAddr,
 		Data: &msgData,
 	}
-	result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
+
+	//result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
+	result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(blocknumber.Int64())), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -367,7 +373,7 @@ func GetAllSuperNodes(ctx context.Context, api *ethapi.PublicBlockChainAPI) ([]t
 	return *infos, nil
 }
 
-func GetTopSuperNodes(ctx context.Context, api *ethapi.PublicBlockChainAPI) ([]types.SuperNodeInfo, error) {
+func GetTopSuperNodes(ctx context.Context, api *ethapi.PublicBlockChainAPI, blocknumber *big.Int) ([]types.SuperNodeInfo, error) {
 	vABI, err := abi.JSON(strings.NewReader(systemcontracts.SuperNodeABI))
 	if err != nil {
 		return nil, err
@@ -384,7 +390,9 @@ func GetTopSuperNodes(ctx context.Context, api *ethapi.PublicBlockChainAPI) ([]t
 		To: &systemcontracts.SuperNodeContractAddr,
 		Data: &msgData,
 	}
-	result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
+
+	//result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
+	result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(blocknumber.Int64())), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -396,7 +404,7 @@ func GetTopSuperNodes(ctx context.Context, api *ethapi.PublicBlockChainAPI) ([]t
 	return *infos, nil
 }
 
-func GetOfficialSuperNodes(ctx context.Context, api *ethapi.PublicBlockChainAPI) ([]types.SuperNodeInfo, error) {
+func GetOfficialSuperNodes(ctx context.Context, api *ethapi.PublicBlockChainAPI, blocknumber *big.Int) ([]types.SuperNodeInfo, error) {
 	vABI, err := abi.JSON(strings.NewReader(systemcontracts.SuperNodeABI))
 	if err != nil {
 		return nil, err
@@ -413,7 +421,9 @@ func GetOfficialSuperNodes(ctx context.Context, api *ethapi.PublicBlockChainAPI)
 		To: &systemcontracts.SuperNodeContractAddr,
 		Data: &msgData,
 	}
-	result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
+
+	//result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
+	result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(blocknumber.Int64())), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -425,7 +435,7 @@ func GetOfficialSuperNodes(ctx context.Context, api *ethapi.PublicBlockChainAPI)
 	return *infos, nil
 }
 
-func GetSuperNodeNum(ctx context.Context, api *ethapi.PublicBlockChainAPI) (*big.Int, error) {
+func GetSuperNodeNum(ctx context.Context, api *ethapi.PublicBlockChainAPI, blocknumber *big.Int) (*big.Int, error) {
 	vABI, err := abi.JSON(strings.NewReader(systemcontracts.SuperNodeABI))
 	if err != nil {
 		return nil, err
@@ -442,7 +452,9 @@ func GetSuperNodeNum(ctx context.Context, api *ethapi.PublicBlockChainAPI) (*big
 		To: &systemcontracts.SuperNodeContractAddr,
 		Data: &msgData,
 	}
-	result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
+
+	//result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
+	result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(blocknumber.Int64())), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -454,7 +466,7 @@ func GetSuperNodeNum(ctx context.Context, api *ethapi.PublicBlockChainAPI) (*big
 	return count, nil
 }
 
-func ExistSuperNode(ctx context.Context, api *ethapi.PublicBlockChainAPI, addr common.Address) (bool, error) {
+func ExistSuperNode(ctx context.Context, api *ethapi.PublicBlockChainAPI, addr common.Address, blocknumber *big.Int) (bool, error) {
 	vABI, err := abi.JSON(strings.NewReader(systemcontracts.SuperNodeABI))
 	if err != nil {
 		return false, err
@@ -471,7 +483,9 @@ func ExistSuperNode(ctx context.Context, api *ethapi.PublicBlockChainAPI, addr c
 		To: &systemcontracts.SuperNodeContractAddr,
 		Data: &msgData,
 	}
-	result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
+
+	//result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
+	result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(blocknumber.Int64())), nil)
 	if err != nil {
 		return false, err
 	}
@@ -483,7 +497,7 @@ func ExistSuperNode(ctx context.Context, api *ethapi.PublicBlockChainAPI, addr c
 	return *value, nil
 }
 
-func ExistSuperNodeID(ctx context.Context, api *ethapi.PublicBlockChainAPI, id *big.Int) (bool, error) {
+func ExistSuperNodeID(ctx context.Context, api *ethapi.PublicBlockChainAPI, id *big.Int, blocknumber *big.Int) (bool, error) {
 	vABI, err := abi.JSON(strings.NewReader(systemcontracts.SuperNodeABI))
 	if err != nil {
 		return false, err
@@ -500,7 +514,9 @@ func ExistSuperNodeID(ctx context.Context, api *ethapi.PublicBlockChainAPI, id *
 		To: &systemcontracts.SuperNodeContractAddr,
 		Data: &msgData,
 	}
-	result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
+
+	//result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
+	result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(blocknumber.Int64())), nil)
 	if err != nil {
 		return false, err
 	}
@@ -512,7 +528,7 @@ func ExistSuperNodeID(ctx context.Context, api *ethapi.PublicBlockChainAPI, id *
 	return *value, nil
 }
 
-func ExistSuperNodeName(ctx context.Context, api *ethapi.PublicBlockChainAPI, name string) (bool, error) {
+func ExistSuperNodeName(ctx context.Context, api *ethapi.PublicBlockChainAPI, name string, blocknumber *big.Int) (bool, error) {
 	vABI, err := abi.JSON(strings.NewReader(systemcontracts.SuperNodeABI))
 	if err != nil {
 		return false, err
@@ -529,7 +545,9 @@ func ExistSuperNodeName(ctx context.Context, api *ethapi.PublicBlockChainAPI, na
 		To: &systemcontracts.SuperNodeContractAddr,
 		Data: &msgData,
 	}
-	result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
+
+	//result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
+	result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(blocknumber.Int64())), nil)
 	if err != nil {
 		return false, err
 	}
@@ -541,7 +559,7 @@ func ExistSuperNodeName(ctx context.Context, api *ethapi.PublicBlockChainAPI, na
 	return *value, nil
 }
 
-func ExistSuperNodeEnode(ctx context.Context, api *ethapi.PublicBlockChainAPI, enode string) (bool, error) {
+func ExistSuperNodeEnode(ctx context.Context, api *ethapi.PublicBlockChainAPI, enode string, blocknumber *big.Int) (bool, error) {
 	vABI, err := abi.JSON(strings.NewReader(systemcontracts.SuperNodeABI))
 	if err != nil {
 		return false, err
@@ -558,7 +576,9 @@ func ExistSuperNodeEnode(ctx context.Context, api *ethapi.PublicBlockChainAPI, e
 		To: &systemcontracts.SuperNodeContractAddr,
 		Data: &msgData,
 	}
-	result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
+
+	//result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
+	result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(blocknumber.Int64())), nil)
 	if err != nil {
 		return false, err
 	}
@@ -570,7 +590,7 @@ func ExistSuperNodeEnode(ctx context.Context, api *ethapi.PublicBlockChainAPI, e
 	return *value, nil
 }
 
-func ExistSuperNodeLockID(ctx context.Context, api *ethapi.PublicBlockChainAPI, addr common.Address, lockID *big.Int) (bool, error) {
+func ExistSuperNodeLockID(ctx context.Context, api *ethapi.PublicBlockChainAPI, addr common.Address, lockID *big.Int, blocknumber *big.Int) (bool, error) {
 	vABI, err := abi.JSON(strings.NewReader(systemcontracts.SuperNodeABI))
 	if err != nil {
 		return false, err
@@ -587,7 +607,9 @@ func ExistSuperNodeLockID(ctx context.Context, api *ethapi.PublicBlockChainAPI, 
 		To: &systemcontracts.SuperNodeContractAddr,
 		Data: &msgData,
 	}
-	result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
+
+	//result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
+	result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(blocknumber.Int64())), nil)
 	if err != nil {
 		return false, err
 	}

@@ -145,7 +145,7 @@ func (monitor *NodeStateMonitor) loop() {
 					monitor.lock.Lock()
 					monitor.snMonitorInfos[ping.Id.Int64()] = MonitorInfo{StateRunning, 0, curTime}
 					monitor.lock.Unlock()
-					info, err := contract_api.GetSuperNodeInfoByID(monitor.ctx, monitor.blockChainAPI, ping.Id)
+					info, err := contract_api.GetSuperNodeInfoByID(monitor.ctx, monitor.blockChainAPI, ping.Id, monitor.e.blockchain.CurrentBlock().Number())
 					if err != nil || hexutils.BytesToHex(pub)[1:] == GetPubKeyFromEnode(info.Enode) {
 						log.Warn("node-state-monitor", "ping", ping, "error", "verify signature failed")
 						break
@@ -206,7 +206,7 @@ func (monitor *NodeStateMonitor) broadcastLoop() {
 
 			curTime := time.Now().Unix()
 			curBlock := monitor.e.blockchain.CurrentBlock()
-			info1, err := contract_api.GetSuperNodeInfo(monitor.ctx, monitor.blockChainAPI, addr)
+			info1, err := contract_api.GetSuperNodeInfo(monitor.ctx, monitor.blockChainAPI, addr, monitor.e.blockchain.CurrentBlock().Number())
 			if err == nil {
 				if monitor.enode != info1.Enode {
 					if lastAddr != addr {
@@ -242,7 +242,7 @@ func (monitor *NodeStateMonitor) broadcastLoop() {
 }
 
 func (monitor *NodeStateMonitor) isSuperNode(addr common.Address) bool {
-	infos, err := contract_api.GetTopSuperNodes(monitor.ctx, monitor.blockChainAPI)
+	infos, err := contract_api.GetTopSuperNodes(monitor.ctx, monitor.blockChainAPI, monitor.e.blockchain.CurrentBlock().Number())
 	if err != nil {
 		return false
 	}
@@ -297,7 +297,7 @@ func (monitor *NodeStateMonitor) collectMasterNodes() ([]*big.Int, []*big.Int) {
 func (monitor *NodeStateMonitor) collectSuperNodes() ([]*big.Int, []*big.Int) {
 	var ids []*big.Int
 	var states []*big.Int
-	infos, err := contract_api.GetAllSuperNodes(monitor.ctx, monitor.blockChainAPI)
+	infos, err := contract_api.GetAllSuperNodes(monitor.ctx, monitor.blockChainAPI, monitor.e.blockchain.CurrentBlock().Number())
 	if err != nil {
 		return ids, states
 	}

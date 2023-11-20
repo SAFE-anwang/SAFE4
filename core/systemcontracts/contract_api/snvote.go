@@ -2,7 +2,6 @@ package contract_api
 
 import (
 	"context"
-	"fmt"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
@@ -132,10 +131,6 @@ func GetSuperNodes4Voter(ctx context.Context, api *ethapi.PublicBlockChainAPI, v
 		Data: &msgData,
 	}
 
-	if !blocknumber.IsInt64() {
-		return nil, fmt.Errorf("big.Int is out of int64 range")
-	}
-
 	//result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
 	result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(blocknumber.Int64())), nil)
 	if err != nil {
@@ -171,10 +166,6 @@ func GetRecordIDs4Voter(ctx context.Context, api *ethapi.PublicBlockChainAPI, vo
 		Data: &msgData,
 	}
 
-	if !blocknumber.IsInt64() {
-		return nil, fmt.Errorf("big.Int is out of int64 range")
-	}
-
 	//result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
 	result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(blocknumber.Int64())), nil)
 	if err != nil {
@@ -204,10 +195,6 @@ func GetVoters4SN(ctx context.Context, api *ethapi.PublicBlockChainAPI, snAddr c
 	args := ethapi.TransactionArgs{
 		To: &systemcontracts.SNVoteContractAddr,
 		Data: &msgData,
-	}
-
-	if !blocknumber.IsInt64() {
-		return nil, fmt.Errorf("big.Int is out of int64 range")
 	}
 
 	//result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
@@ -245,10 +232,6 @@ func GetVoteNum4SN(ctx context.Context, api *ethapi.PublicBlockChainAPI, snAddr 
 		Data: &msgData,
 	}
 
-	if !blocknumber.IsInt64() {
-		return nil, fmt.Errorf("big.Int is out of int64 range")
-	}
-
 	//result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
 	result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(blocknumber.Int64())), nil)
 	if err != nil {
@@ -278,10 +261,6 @@ func GetProxies4Voter(ctx context.Context, api *ethapi.PublicBlockChainAPI, vote
 	args := ethapi.TransactionArgs{
 		To: &systemcontracts.SNVoteContractAddr,
 		Data: &msgData,
-	}
-
-	if !blocknumber.IsInt64() {
-		return nil, fmt.Errorf("big.Int is out of int64 range")
 	}
 
 	//result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
@@ -319,10 +298,6 @@ func GetProxiedRecordIDs4Voter(ctx context.Context, api *ethapi.PublicBlockChain
 		Data: &msgData,
 	}
 
-	if !blocknumber.IsInt64() {
-		return nil, fmt.Errorf("big.Int is out of int64 range")
-	}
-
 	//result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
 	result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(blocknumber.Int64())), nil)
 	if err != nil {
@@ -352,10 +327,6 @@ func GetVoters4Proxy(ctx context.Context, api *ethapi.PublicBlockChainAPI, proxy
 	args := ethapi.TransactionArgs{
 		To: &systemcontracts.SNVoteContractAddr,
 		Data: &msgData,
-	}
-
-	if !blocknumber.IsInt64() {
-		return nil, fmt.Errorf("big.Int is out of int64 range")
 	}
 
 	//result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
@@ -391,10 +362,6 @@ func GetVoteNum4Proxy(ctx context.Context, api *ethapi.PublicBlockChainAPI, prox
 	args := ethapi.TransactionArgs{
 		To: &systemcontracts.SNVoteContractAddr,
 		Data: &msgData,
-	}
-
-	if !blocknumber.IsInt64() {
-		return nil, fmt.Errorf("big.Int is out of int64 range")
 	}
 
 	//result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)

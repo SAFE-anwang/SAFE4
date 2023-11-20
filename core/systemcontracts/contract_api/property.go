@@ -2,7 +2,6 @@ package contract_api
 
 import (
 	"context"
-	"fmt"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
@@ -132,10 +131,6 @@ func GetPropertyInfo(ctx context.Context, api *ethapi.PublicBlockChainAPI, name 
 		Data: &msgData,
 	}
 
-	if !blocknumber.IsInt64() {
-		return nil, fmt.Errorf("big.Int is out of int64 range")
-	}
-
 	//result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
 	result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(blocknumber.Int64())), nil)
 	if err != nil {
@@ -165,10 +160,6 @@ func GetUnconfirmedPropertyInfo(ctx context.Context, api *ethapi.PublicBlockChai
 	args := ethapi.TransactionArgs{
 		To: &systemcontracts.PropertyContractAddr,
 		Data: &msgData,
-	}
-
-	if !blocknumber.IsInt64() {
-		return nil, fmt.Errorf("big.Int is out of int64 range")
 	}
 
 	//result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
@@ -202,10 +193,6 @@ func GetPropertyValue(ctx context.Context, api *ethapi.PublicBlockChainAPI, name
 		Data: &msgData,
 	}
 
-	if !blocknumber.IsInt64() {
-		return nil, fmt.Errorf("big.Int is out of int64 range")
-	}
-
 	//result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
 	result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(blocknumber.Int64())), nil)
 	if err != nil {
@@ -235,10 +222,6 @@ func GetAllProperties(ctx context.Context, api *ethapi.PublicBlockChainAPI, bloc
 	args := ethapi.TransactionArgs{
 		To: &systemcontracts.PropertyContractAddr,
 		Data: &msgData,
-	}
-
-	if !blocknumber.IsInt64() {
-		return nil, fmt.Errorf("big.Int is out of int64 range")
 	}
 
 	//result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
@@ -272,10 +255,6 @@ func GetAllUnconfirmedProperties(ctx context.Context, api *ethapi.PublicBlockCha
 		Data: &msgData,
 	}
 
-	if !blocknumber.IsInt64() {
-		return nil, fmt.Errorf("big.Int is out of int64 range")
-	}
-
 	//result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
 	result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(blocknumber.Int64())), nil)
 	if err != nil {
@@ -307,10 +286,6 @@ func ExistProperty(ctx context.Context, api *ethapi.PublicBlockChainAPI, name st
 		Data: &msgData,
 	}
 
-	if !blocknumber.IsInt64() {
-		return false, fmt.Errorf("big.Int is out of int64 range")
-	}
-
 	//result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
 	result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(blocknumber.Int64())), nil)
 	if err != nil {
@@ -340,10 +315,6 @@ func ExistUnconfirmedProperty(ctx context.Context, api *ethapi.PublicBlockChainA
 	args := ethapi.TransactionArgs{
 		To: &systemcontracts.PropertyContractAddr,
 		Data: &msgData,
-	}
-
-	if !blocknumber.IsInt64() {
-		return false, fmt.Errorf("big.Int is out of int64 range")
 	}
 
 	//result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)

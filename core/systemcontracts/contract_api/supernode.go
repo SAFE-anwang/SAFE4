@@ -28,7 +28,7 @@ func RegisterSuperNode(ctx context.Context, blockChainAPI *ethapi.PublicBlockCha
 
 	msgData := (hexutil.Bytes)(data)
 	gasPrice := big.NewInt(params.GWei)
-	gasPrice, err = GetPropertyValue(ctx, blockChainAPI, "gas_price")
+	gasPrice, err = GetPropertyValue(ctx, blockChainAPI, "gas_price", new(big.Int).SetInt64(int64(rpc.LatestBlockNumber)))
 	if err != nil {
 		gasPrice = big.NewInt(params.GWei / 100)
 	}
@@ -62,7 +62,7 @@ func AppendRegisterSuperNode(ctx context.Context, blockChainAPI *ethapi.PublicBl
 
 	msgData := (hexutil.Bytes)(data)
 	gasPrice := big.NewInt(params.GWei)
-	gasPrice, err = GetPropertyValue(ctx, blockChainAPI, "gas_price")
+	gasPrice, err = GetPropertyValue(ctx, blockChainAPI, "gas_price", new(big.Int).SetInt64(int64(rpc.LatestBlockNumber)))
 	if err != nil {
 		gasPrice = big.NewInt(params.GWei / 100)
 	}
@@ -96,7 +96,7 @@ func TurnRegisterSuperNode(ctx context.Context, blockChainAPI *ethapi.PublicBloc
 
 	msgData := (hexutil.Bytes)(data)
 	gasPrice := big.NewInt(params.GWei)
-	gasPrice, err = GetPropertyValue(ctx, blockChainAPI, "gas_price")
+	gasPrice, err = GetPropertyValue(ctx, blockChainAPI, "gas_price", new(big.Int).SetInt64(int64(rpc.LatestBlockNumber)))
 	if err != nil {
 		gasPrice = big.NewInt(params.GWei / 100)
 	}
@@ -129,7 +129,7 @@ func ChangeSuperNodeAddress(ctx context.Context, blockChainAPI *ethapi.PublicBlo
 
 	msgData := (hexutil.Bytes)(data)
 	gasPrice := big.NewInt(params.GWei)
-	gasPrice, err = GetPropertyValue(ctx, blockChainAPI, "gas_price")
+	gasPrice, err = GetPropertyValue(ctx, blockChainAPI, "gas_price", new(big.Int).SetInt64(int64(rpc.LatestBlockNumber)))
 	if err != nil {
 		gasPrice = big.NewInt(params.GWei / 100)
 	}
@@ -162,7 +162,7 @@ func ChangeSuperNodeName(ctx context.Context, blockChainAPI *ethapi.PublicBlockC
 
 	msgData := (hexutil.Bytes)(data)
 	gasPrice := big.NewInt(params.GWei)
-	gasPrice, err = GetPropertyValue(ctx, blockChainAPI, "gas_price")
+	gasPrice, err = GetPropertyValue(ctx, blockChainAPI, "gas_price", new(big.Int).SetInt64(int64(rpc.LatestBlockNumber)))
 	if err != nil {
 		gasPrice = big.NewInt(params.GWei / 100)
 	}
@@ -195,7 +195,7 @@ func ChangeSuperNodeEnode(ctx context.Context, blockChainAPI *ethapi.PublicBlock
 
 	msgData := (hexutil.Bytes)(data)
 	gasPrice := big.NewInt(params.GWei)
-	gasPrice, err = GetPropertyValue(ctx, blockChainAPI, "gas_price")
+	gasPrice, err = GetPropertyValue(ctx, blockChainAPI, "gas_price", new(big.Int).SetInt64(int64(rpc.LatestBlockNumber)))
 	if err != nil {
 		gasPrice = big.NewInt(params.GWei / 100)
 	}
@@ -228,7 +228,7 @@ func ChangeSuperNodeDescription(ctx context.Context, blockChainAPI *ethapi.Publi
 
 	msgData := (hexutil.Bytes)(data)
 	gasPrice := big.NewInt(params.GWei)
-	gasPrice, err = GetPropertyValue(ctx, blockChainAPI, "gas_price")
+	gasPrice, err = GetPropertyValue(ctx, blockChainAPI, "gas_price", new(big.Int).SetInt64(int64(rpc.LatestBlockNumber)))
 	if err != nil {
 		gasPrice = big.NewInt(params.GWei / 100)
 	}
@@ -261,7 +261,7 @@ func ChangeSuperNodeIsOfficial(ctx context.Context, blockChainAPI *ethapi.Public
 
 	msgData := (hexutil.Bytes)(data)
 	gasPrice := big.NewInt(params.GWei)
-	gasPrice, err = GetPropertyValue(ctx, blockChainAPI, "gas_price")
+	gasPrice, err = GetPropertyValue(ctx, blockChainAPI, "gas_price", new(big.Int).SetInt64(int64(rpc.LatestBlockNumber)))
 	if err != nil {
 		gasPrice = big.NewInt(params.GWei / 100)
 	}

@@ -2,6 +2,7 @@ package contract_api
 
 import (
 	"context"
+	"fmt"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
@@ -28,7 +29,7 @@ func UploadMasterNodeStates(ctx context.Context, blockChainAPI *ethapi.PublicBlo
 
 	msgData := (hexutil.Bytes)(data)
 	gasPrice := big.NewInt(params.GWei)
-	gasPrice, err = GetPropertyValue(ctx, blockChainAPI, "gas_price")
+	gasPrice, err = GetPropertyValue(ctx, blockChainAPI, "gas_price", new(big.Int).SetInt64(int64(rpc.LatestBlockNumber)))
 	if err != nil {
 		gasPrice = big.NewInt(params.GWei / 100)
 	}
@@ -47,7 +48,7 @@ func UploadMasterNodeStates(ctx context.Context, blockChainAPI *ethapi.PublicBlo
 	return transactionPoolAPI.SendTransaction(ctx, args)
 }
 
-func GetMasterNodeUploadStates(ctx context.Context, api *ethapi.PublicBlockChainAPI, id *big.Int) ([]types.StateEntry, error) {
+func GetMasterNodeUploadStates(ctx context.Context, api *ethapi.PublicBlockChainAPI, id *big.Int, blocknumber *big.Int) ([]types.StateEntry, error) {
 	vABI, err := abi.JSON(strings.NewReader(systemcontracts.MasterNodeStateABI))
 	if err != nil {
 		return nil, err
@@ -64,7 +65,13 @@ func GetMasterNodeUploadStates(ctx context.Context, api *ethapi.PublicBlockChain
 		To: &systemcontracts.MasterNodeStateContractAddr,
 		Data: &msgData,
 	}
-	result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
+
+	if !blocknumber.IsInt64() {
+		return nil, fmt.Errorf("big.Int is out of int64 range")
+	}
+
+	//result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
+	result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(blocknumber.Int64())), nil)
 	if err != nil {
 		return nil, err
 	}

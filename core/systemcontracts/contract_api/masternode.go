@@ -2,6 +2,7 @@ package contract_api
 
 import (
 	"context"
+	"fmt"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
@@ -28,7 +29,7 @@ func RegisterMasterNode(ctx context.Context, blockChainAPI *ethapi.PublicBlockCh
 
 	msgData := (hexutil.Bytes)(data)
 	gasPrice := big.NewInt(params.GWei)
-	gasPrice, err = GetPropertyValue(ctx, blockChainAPI, "gas_price")
+	gasPrice, err = GetPropertyValue(ctx, blockChainAPI, "gas_price", new(big.Int).SetInt64(int64(rpc.LatestBlockNumber)))
 	if err != nil {
 		gasPrice = big.NewInt(params.GWei / 100)
 	}
@@ -62,7 +63,7 @@ func AppendRegisterMasterNode(ctx context.Context, blockChainAPI *ethapi.PublicB
 
 	msgData := (hexutil.Bytes)(data)
 	gasPrice := big.NewInt(params.GWei)
-	gasPrice, err = GetPropertyValue(ctx, blockChainAPI, "gas_price")
+	gasPrice, err = GetPropertyValue(ctx, blockChainAPI, "gas_price", new(big.Int).SetInt64(int64(rpc.LatestBlockNumber)))
 	if err != nil {
 		gasPrice = big.NewInt(params.GWei / 100)
 	}
@@ -96,7 +97,7 @@ func TurnRegisterMasterNode(ctx context.Context, blockChainAPI *ethapi.PublicBlo
 
 	msgData := (hexutil.Bytes)(data)
 	gasPrice := big.NewInt(params.GWei)
-	gasPrice, err = GetPropertyValue(ctx, blockChainAPI, "gas_price")
+	gasPrice, err = GetPropertyValue(ctx, blockChainAPI, "gas_price", new(big.Int).SetInt64(int64(rpc.LatestBlockNumber)))
 	if err != nil {
 		gasPrice = big.NewInt(params.GWei / 100)
 	}
@@ -129,7 +130,7 @@ func ChangeMasterNodeAddress(ctx context.Context, blockChainAPI *ethapi.PublicBl
 
 	msgData := (hexutil.Bytes)(data)
 	gasPrice := big.NewInt(params.GWei)
-	gasPrice, err = GetPropertyValue(ctx, blockChainAPI, "gas_price")
+	gasPrice, err = GetPropertyValue(ctx, blockChainAPI, "gas_price", new(big.Int).SetInt64(int64(rpc.LatestBlockNumber)))
 	if err != nil {
 		gasPrice = big.NewInt(params.GWei / 100)
 	}
@@ -162,7 +163,7 @@ func ChangeMasterNodeEnode(ctx context.Context, blockChainAPI *ethapi.PublicBloc
 
 	msgData := (hexutil.Bytes)(data)
 	gasPrice := big.NewInt(params.GWei)
-	gasPrice, err = GetPropertyValue(ctx, blockChainAPI, "gas_price")
+	gasPrice, err = GetPropertyValue(ctx, blockChainAPI, "gas_price", new(big.Int).SetInt64(int64(rpc.LatestBlockNumber)))
 	if err != nil {
 		gasPrice = big.NewInt(params.GWei / 100)
 	}
@@ -195,7 +196,7 @@ func ChangeMasterNodeDescription(ctx context.Context, blockChainAPI *ethapi.Publ
 
 	msgData := (hexutil.Bytes)(data)
 	gasPrice := big.NewInt(params.GWei)
-	gasPrice, err = GetPropertyValue(ctx, blockChainAPI, "gas_price")
+	gasPrice, err = GetPropertyValue(ctx, blockChainAPI, "gas_price", new(big.Int).SetInt64(int64(rpc.LatestBlockNumber)))
 	if err != nil {
 		gasPrice = big.NewInt(params.GWei / 100)
 	}
@@ -228,7 +229,7 @@ func ChangeMasterNodeIsOfficial(ctx context.Context, blockChainAPI *ethapi.Publi
 
 	msgData := (hexutil.Bytes)(data)
 	gasPrice := big.NewInt(params.GWei)
-	gasPrice, err = GetPropertyValue(ctx, blockChainAPI, "gas_price")
+	gasPrice, err = GetPropertyValue(ctx, blockChainAPI, "gas_price", new(big.Int).SetInt64(int64(rpc.LatestBlockNumber)))
 	if err != nil {
 		gasPrice = big.NewInt(params.GWei / 100)
 	}
@@ -247,7 +248,7 @@ func ChangeMasterNodeIsOfficial(ctx context.Context, blockChainAPI *ethapi.Publi
 	return transactionPoolAPI.SendTransaction(ctx, args)
 }
 
-func GetMasterNodeInfo(ctx context.Context, api *ethapi.PublicBlockChainAPI, addr common.Address) (*types.MasterNodeInfo, error) {
+func GetMasterNodeInfo(ctx context.Context, api *ethapi.PublicBlockChainAPI, addr common.Address, blocknumber *big.Int) (*types.MasterNodeInfo, error) {
 	vABI, err := abi.JSON(strings.NewReader(systemcontracts.MasterNodeABI))
 	if err != nil {
 		return nil, err
@@ -264,7 +265,13 @@ func GetMasterNodeInfo(ctx context.Context, api *ethapi.PublicBlockChainAPI, add
 		To: &systemcontracts.MasterNodeContractAddr,
 		Data: &msgData,
 	}
-	result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
+
+	if !blocknumber.IsInt64() {
+		return nil, fmt.Errorf("big.Int is out of int64 range")
+	}
+
+	//result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
+	result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(blocknumber.Int64())), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -276,7 +283,7 @@ func GetMasterNodeInfo(ctx context.Context, api *ethapi.PublicBlockChainAPI, add
 	return info, nil
 }
 
-func GetMasterNodeInfoByID(ctx context.Context, api *ethapi.PublicBlockChainAPI, id *big.Int) (*types.MasterNodeInfo, error) {
+func GetMasterNodeInfoByID(ctx context.Context, api *ethapi.PublicBlockChainAPI, id *big.Int, blocknumber *big.Int) (*types.MasterNodeInfo, error) {
 	vABI, err := abi.JSON(strings.NewReader(systemcontracts.MasterNodeABI))
 	if err != nil {
 		return nil, err
@@ -293,7 +300,13 @@ func GetMasterNodeInfoByID(ctx context.Context, api *ethapi.PublicBlockChainAPI,
 		To: &systemcontracts.MasterNodeContractAddr,
 		Data: &msgData,
 	}
-	result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
+
+	if !blocknumber.IsInt64() {
+		return nil, fmt.Errorf("big.Int is out of int64 range")
+	}
+
+	//result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
+	result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(blocknumber.Int64())), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -305,7 +318,7 @@ func GetMasterNodeInfoByID(ctx context.Context, api *ethapi.PublicBlockChainAPI,
 	return info, nil
 }
 
-func GetNextMasterNode(ctx context.Context, api *ethapi.PublicBlockChainAPI) (common.Address, error) {
+func GetNextMasterNode(ctx context.Context, api *ethapi.PublicBlockChainAPI, blocknumber *big.Int) (common.Address, error) {
 	vABI, err := abi.JSON(strings.NewReader(systemcontracts.MasterNodeABI))
 	if err != nil {
 		return common.Address{}, err
@@ -322,7 +335,13 @@ func GetNextMasterNode(ctx context.Context, api *ethapi.PublicBlockChainAPI) (co
 		To: &systemcontracts.MasterNodeContractAddr,
 		Data: &msgData,
 	}
-	result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
+
+	if !blocknumber.IsInt64() {
+		return common.Address{}, fmt.Errorf("big.Int is out of int64 range")
+	}
+
+	//result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
+	result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(blocknumber.Int64())), nil)
 	if err != nil {
 		return common.Address{}, err
 	}
@@ -334,7 +353,7 @@ func GetNextMasterNode(ctx context.Context, api *ethapi.PublicBlockChainAPI) (co
 	return *addr, nil
 }
 
-func GetAllMasterNodes(ctx context.Context, api *ethapi.PublicBlockChainAPI) ([]types.MasterNodeInfo, error) {
+func GetAllMasterNodes(ctx context.Context, api *ethapi.PublicBlockChainAPI, blocknumber *big.Int) ([]types.MasterNodeInfo, error) {
 	vABI, err := abi.JSON(strings.NewReader(systemcontracts.MasterNodeABI))
 	if err != nil {
 		return nil, err
@@ -351,7 +370,13 @@ func GetAllMasterNodes(ctx context.Context, api *ethapi.PublicBlockChainAPI) ([]
 		To: &systemcontracts.MasterNodeContractAddr,
 		Data: &msgData,
 	}
-	result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
+
+	if !blocknumber.IsInt64() {
+		return nil, fmt.Errorf("big.Int is out of int64 range")
+	}
+
+	//result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
+	result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(blocknumber.Int64())), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -363,7 +388,7 @@ func GetAllMasterNodes(ctx context.Context, api *ethapi.PublicBlockChainAPI) ([]
 	return *infos, nil
 }
 
-func GetOfficialMasterNodes(ctx context.Context, api *ethapi.PublicBlockChainAPI) ([]types.MasterNodeInfo, error) {
+func GetOfficialMasterNodes(ctx context.Context, api *ethapi.PublicBlockChainAPI, blocknumber *big.Int) ([]types.MasterNodeInfo, error) {
 	vABI, err := abi.JSON(strings.NewReader(systemcontracts.MasterNodeABI))
 	if err != nil {
 		return nil, err
@@ -380,7 +405,13 @@ func GetOfficialMasterNodes(ctx context.Context, api *ethapi.PublicBlockChainAPI
 		To: &systemcontracts.MasterNodeContractAddr,
 		Data: &msgData,
 	}
-	result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
+
+	if !blocknumber.IsInt64() {
+		return nil, fmt.Errorf("big.Int is out of int64 range")
+	}
+
+	//result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
+	result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(blocknumber.Int64())), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -392,7 +423,7 @@ func GetOfficialMasterNodes(ctx context.Context, api *ethapi.PublicBlockChainAPI
 	return *infos, nil
 }
 
-func GetMasterNodeNum(ctx context.Context, api *ethapi.PublicBlockChainAPI) (*big.Int, error) {
+func GetMasterNodeNum(ctx context.Context, api *ethapi.PublicBlockChainAPI, blocknumber *big.Int) (*big.Int, error) {
 	vABI, err := abi.JSON(strings.NewReader(systemcontracts.MasterNodeABI))
 	if err != nil {
 		return nil, err
@@ -409,7 +440,13 @@ func GetMasterNodeNum(ctx context.Context, api *ethapi.PublicBlockChainAPI) (*bi
 		To: &systemcontracts.MasterNodeContractAddr,
 		Data: &msgData,
 	}
-	result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
+
+	if !blocknumber.IsInt64() {
+		return nil, fmt.Errorf("big.Int is out of int64 range")
+	}
+
+	//result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
+	result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(blocknumber.Int64())), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -421,7 +458,7 @@ func GetMasterNodeNum(ctx context.Context, api *ethapi.PublicBlockChainAPI) (*bi
 	return count, nil
 }
 
-func ExistMasterNode(ctx context.Context, api *ethapi.PublicBlockChainAPI, addr common.Address) (bool, error) {
+func ExistMasterNode(ctx context.Context, api *ethapi.PublicBlockChainAPI, addr common.Address, blocknumber *big.Int) (bool, error) {
 	vABI, err := abi.JSON(strings.NewReader(systemcontracts.MasterNodeABI))
 	if err != nil {
 		return false, err
@@ -438,7 +475,13 @@ func ExistMasterNode(ctx context.Context, api *ethapi.PublicBlockChainAPI, addr 
 		To: &systemcontracts.MasterNodeContractAddr,
 		Data: &msgData,
 	}
-	result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
+
+	if !blocknumber.IsInt64() {
+		return false, fmt.Errorf("big.Int is out of int64 range")
+	}
+
+	//result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
+	result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(blocknumber.Int64())), nil)
 	if err != nil {
 		return false, err
 	}
@@ -450,7 +493,7 @@ func ExistMasterNode(ctx context.Context, api *ethapi.PublicBlockChainAPI, addr 
 	return *value, nil
 }
 
-func ExistMasterNodeID(ctx context.Context, api *ethapi.PublicBlockChainAPI, id *big.Int) (bool, error) {
+func ExistMasterNodeID(ctx context.Context, api *ethapi.PublicBlockChainAPI, id *big.Int, blocknumber *big.Int) (bool, error) {
 	vABI, err := abi.JSON(strings.NewReader(systemcontracts.MasterNodeABI))
 	if err != nil {
 		return false, err
@@ -467,7 +510,13 @@ func ExistMasterNodeID(ctx context.Context, api *ethapi.PublicBlockChainAPI, id 
 		To: &systemcontracts.MasterNodeContractAddr,
 		Data: &msgData,
 	}
-	result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
+
+	if !blocknumber.IsInt64() {
+		return false, fmt.Errorf("big.Int is out of int64 range")
+	}
+
+	//result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
+	result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(blocknumber.Int64())), nil)
 	if err != nil {
 		return false, err
 	}
@@ -479,7 +528,7 @@ func ExistMasterNodeID(ctx context.Context, api *ethapi.PublicBlockChainAPI, id 
 	return *value, nil
 }
 
-func ExistMasterNodeEnode(ctx context.Context, api *ethapi.PublicBlockChainAPI, enode string) (bool, error) {
+func ExistMasterNodeEnode(ctx context.Context, api *ethapi.PublicBlockChainAPI, enode string, blocknumber *big.Int) (bool, error) {
 	vABI, err := abi.JSON(strings.NewReader(systemcontracts.MasterNodeABI))
 	if err != nil {
 		return false, err
@@ -496,7 +545,13 @@ func ExistMasterNodeEnode(ctx context.Context, api *ethapi.PublicBlockChainAPI, 
 		To: &systemcontracts.MasterNodeContractAddr,
 		Data: &msgData,
 	}
-	result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
+
+	if !blocknumber.IsInt64() {
+		return false, fmt.Errorf("big.Int is out of int64 range")
+	}
+
+	//result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
+	result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(blocknumber.Int64())), nil)
 	if err != nil {
 		return false, err
 	}
@@ -508,7 +563,7 @@ func ExistMasterNodeEnode(ctx context.Context, api *ethapi.PublicBlockChainAPI, 
 	return *value, nil
 }
 
-func ExistMasterNodeLockID(ctx context.Context, api *ethapi.PublicBlockChainAPI, addr common.Address, lockID *big.Int) (bool, error) {
+func ExistMasterNodeLockID(ctx context.Context, api *ethapi.PublicBlockChainAPI, addr common.Address, lockID *big.Int, blocknumber *big.Int) (bool, error) {
 	vABI, err := abi.JSON(strings.NewReader(systemcontracts.MasterNodeABI))
 	if err != nil {
 		return false, err
@@ -525,7 +580,13 @@ func ExistMasterNodeLockID(ctx context.Context, api *ethapi.PublicBlockChainAPI,
 		To: &systemcontracts.MasterNodeContractAddr,
 		Data: &msgData,
 	}
-	result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
+
+	if !blocknumber.IsInt64() {
+		return false, fmt.Errorf("big.Int is out of int64 range")
+	}
+
+	//result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
+	result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(blocknumber.Int64())), nil)
 	if err != nil {
 		return false, err
 	}

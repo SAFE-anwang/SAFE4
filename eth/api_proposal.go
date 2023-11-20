@@ -51,18 +51,18 @@ func (api *PublicProposalAPI) ChangeDescription(ctx context.Context, from common
 	return contract_api.ChangeProposalDescription(ctx, api.blockChainAPI, api.transactionPoolAPI, from, id, description)
 }
 
-func (api *PublicProposalAPI) GetInfo(ctx context.Context, id *big.Int) (*types.ProposalInfo, error) {
-	return contract_api.GetProposalInfo(ctx, api.blockChainAPI, id)
+func (api *PublicProposalAPI) GetInfo(ctx context.Context, id *big.Int, blocknumber *big.Int) (*types.ProposalInfo, error) {
+	return contract_api.GetProposalInfo(ctx, api.blockChainAPI, id, blocknumber)
 }
 
-func (api *PublicProposalAPI) GetAll(ctx context.Context) ([]types.ProposalInfo, error) {
-	return contract_api.GetAllProposals(ctx, api.blockChainAPI)
+func (api *PublicProposalAPI) GetAll(ctx context.Context, blocknumber *big.Int) ([]types.ProposalInfo, error) {
+	return contract_api.GetAllProposals(ctx, api.blockChainAPI, blocknumber)
 }
 
-func (api *PublicProposalAPI) GetMines(ctx context.Context, from common.Address) ([]types.ProposalInfo, error) {
-	return contract_api.GetMineProposals(ctx, api.blockChainAPI, from)
+func (api *PublicProposalAPI) GetMines(ctx context.Context, from common.Address, blocknumber *big.Int) ([]types.ProposalInfo, error) {
+	return contract_api.GetMineProposals(ctx, api.blockChainAPI, from, blocknumber)
 }
 
-func (api *PublicProposalAPI) Exist(ctx context.Context, id *big.Int) (bool, error) {
-	return contract_api.ExistProposal(ctx, api.blockChainAPI, id)
+func (api *PublicProposalAPI) Exist(ctx context.Context, id *big.Int, blocknumber *big.Int) (bool, error) {
+	return contract_api.ExistProposal(ctx, api.blockChainAPI, id, blocknumber)
 }

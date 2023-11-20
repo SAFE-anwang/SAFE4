@@ -24,7 +24,7 @@ func NewPublicMasterNodeAPI(e *Ethereum) *PublicMasterNodeAPI {
 	return &PublicMasterNodeAPI{e, e.GetPublicBlockChainAPI(), e.GetPublicTransactionPoolAPI(), ""}
 }
 
-func (api *PublicMasterNodeAPI) Start(ctx context.Context, addr common.Address) (bool, error) {
+func (api *PublicMasterNodeAPI) Start(ctx context.Context, addr common.Address, blocknumber *big.Int) (bool, error) {
 	if len(api.enode) == 0 {
 		temp := api.e.p2pServer.NodeInfo().Enode
 		arr := strings.Split(temp, "?")
@@ -34,7 +34,7 @@ func (api *PublicMasterNodeAPI) Start(ctx context.Context, addr common.Address) 
 		api.enode = arr[0]
 	}
 
-	info, err := api.GetInfo(ctx, addr)
+	info, err := api.GetInfo(ctx, addr, blocknumber)
 	if err != nil {
 		return false, err
 	}
@@ -89,42 +89,42 @@ func (api *PublicMasterNodeAPI) ChangeIsOfficial(ctx context.Context, from commo
 	return contract_api.ChangeMasterNodeIsOfficial(ctx, api.blockChainAPI, api.transactionPoolAPI, from, addr, flag)
 }
 
-func (api *PublicMasterNodeAPI) GetInfo(ctx context.Context, addr common.Address) (*types.MasterNodeInfo, error) {
-	return contract_api.GetMasterNodeInfo(ctx, api.blockChainAPI, addr)
+func (api *PublicMasterNodeAPI) GetInfo(ctx context.Context, addr common.Address, blocknumber *big.Int) (*types.MasterNodeInfo, error) {
+	return contract_api.GetMasterNodeInfo(ctx, api.blockChainAPI, addr, blocknumber)
 }
 
-func (api *PublicMasterNodeAPI) GetInfoByID(ctx context.Context, id *big.Int) (*types.MasterNodeInfo, error) {
-	return contract_api.GetMasterNodeInfoByID(ctx, api.blockChainAPI, id)
+func (api *PublicMasterNodeAPI) GetInfoByID(ctx context.Context, id *big.Int, blocknumber *big.Int) (*types.MasterNodeInfo, error) {
+	return contract_api.GetMasterNodeInfoByID(ctx, api.blockChainAPI, id, blocknumber)
 }
 
-func (api *PublicMasterNodeAPI) GetNext(ctx context.Context) (common.Address, error) {
-	return contract_api.GetNextMasterNode(ctx, api.blockChainAPI)
+func (api *PublicMasterNodeAPI) GetNext(ctx context.Context, blocknumber *big.Int) (common.Address, error) {
+	return contract_api.GetNextMasterNode(ctx, api.blockChainAPI, blocknumber)
 }
 
-func (api *PublicMasterNodeAPI) GetAll(ctx context.Context) ([]types.MasterNodeInfo, error) {
-	return contract_api.GetAllMasterNodes(ctx, api.blockChainAPI)
+func (api *PublicMasterNodeAPI) GetAll(ctx context.Context, blocknumber *big.Int) ([]types.MasterNodeInfo, error) {
+	return contract_api.GetAllMasterNodes(ctx, api.blockChainAPI, blocknumber)
 }
 
-func (api *PublicMasterNodeAPI) GetOfficials(ctx context.Context) ([]types.MasterNodeInfo, error) {
-	return contract_api.GetOfficialMasterNodes(ctx, api.blockChainAPI)
+func (api *PublicMasterNodeAPI) GetOfficials(ctx context.Context, blocknumber *big.Int) ([]types.MasterNodeInfo, error) {
+	return contract_api.GetOfficialMasterNodes(ctx, api.blockChainAPI, blocknumber)
 }
 
-func (api *PublicMasterNodeAPI) GetNum(ctx context.Context) (*big.Int, error) {
-	return contract_api.GetMasterNodeNum(ctx, api.blockChainAPI)
+func (api *PublicMasterNodeAPI) GetNum(ctx context.Context, blocknumber *big.Int) (*big.Int, error) {
+	return contract_api.GetMasterNodeNum(ctx, api.blockChainAPI, blocknumber)
 }
 
-func (api *PublicMasterNodeAPI) Exist(ctx context.Context, addr common.Address) (bool, error) {
-	return contract_api.ExistMasterNode(ctx, api.blockChainAPI, addr)
+func (api *PublicMasterNodeAPI) Exist(ctx context.Context, addr common.Address, blocknumber *big.Int) (bool, error) {
+	return contract_api.ExistMasterNode(ctx, api.blockChainAPI, addr, blocknumber)
 }
 
-func (api *PublicMasterNodeAPI) ExistID(ctx context.Context, id *big.Int) (bool, error) {
-	return contract_api.ExistMasterNodeID(ctx, api.blockChainAPI, id)
+func (api *PublicMasterNodeAPI) ExistID(ctx context.Context, id *big.Int, blocknumber *big.Int) (bool, error) {
+	return contract_api.ExistMasterNodeID(ctx, api.blockChainAPI, id, blocknumber)
 }
 
-func (api *PublicMasterNodeAPI) ExistEnode(ctx context.Context, enode string) (bool, error) {
-	return contract_api.ExistMasterNodeEnode(ctx, api.blockChainAPI, enode)
+func (api *PublicMasterNodeAPI) ExistEnode(ctx context.Context, enode string, blocknumber *big.Int) (bool, error) {
+	return contract_api.ExistMasterNodeEnode(ctx, api.blockChainAPI, enode, blocknumber)
 }
 
-func (api *PublicMasterNodeAPI) ExistLockID(ctx context.Context, addr common.Address, lockID *big.Int) (bool, error) {
-	return contract_api.ExistMasterNodeLockID(ctx, api.blockChainAPI, addr, lockID)
+func (api *PublicMasterNodeAPI) ExistLockID(ctx context.Context, addr common.Address, lockID *big.Int, blocknumber *big.Int) (bool, error) {
+	return contract_api.ExistMasterNodeLockID(ctx, api.blockChainAPI, addr, lockID, blocknumber)
 }

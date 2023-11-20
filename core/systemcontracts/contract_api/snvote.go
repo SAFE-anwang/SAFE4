@@ -2,6 +2,7 @@ package contract_api
 
 import (
 	"context"
+	"fmt"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
@@ -28,7 +29,7 @@ func VoteOrApproval(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainA
 
 	msgData := (hexutil.Bytes)(data)
 	gasPrice := big.NewInt(params.GWei)
-	gasPrice, err = GetPropertyValue(ctx, blockChainAPI, "gas_price")
+	gasPrice, err = GetPropertyValue(ctx, blockChainAPI, "gas_price", new(big.Int).SetInt64(int64(rpc.LatestBlockNumber)))
 	if err != nil {
 		gasPrice = big.NewInt(params.GWei / 100)
 	}
@@ -61,7 +62,7 @@ func RemoveVoteOrApproval(ctx context.Context, blockChainAPI *ethapi.PublicBlock
 
 	msgData := (hexutil.Bytes)(data)
 	gasPrice := big.NewInt(params.GWei)
-	gasPrice, err = GetPropertyValue(ctx, blockChainAPI, "gas_price")
+	gasPrice, err = GetPropertyValue(ctx, blockChainAPI, "gas_price", new(big.Int).SetInt64(int64(rpc.LatestBlockNumber)))
 	if err != nil {
 		gasPrice = big.NewInt(params.GWei / 100)
 	}
@@ -94,7 +95,7 @@ func ProxyVote(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, t
 
 	msgData := (hexutil.Bytes)(data)
 	gasPrice := big.NewInt(params.GWei)
-	gasPrice, err = GetPropertyValue(ctx, blockChainAPI, "gas_price")
+	gasPrice, err = GetPropertyValue(ctx, blockChainAPI, "gas_price", new(big.Int).SetInt64(int64(rpc.LatestBlockNumber)))
 	if err != nil {
 		gasPrice = big.NewInt(params.GWei / 100)
 	}
@@ -113,7 +114,7 @@ func ProxyVote(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, t
 	return transactionPoolAPI.SendTransaction(ctx, args)
 }
 
-func GetSuperNodes4Voter(ctx context.Context, api *ethapi.PublicBlockChainAPI, voterAddr common.Address) (*types.SNVoteRetInfo, error) {
+func GetSuperNodes4Voter(ctx context.Context, api *ethapi.PublicBlockChainAPI, voterAddr common.Address, blocknumber *big.Int) (*types.SNVoteRetInfo, error) {
 	vABI, err := abi.JSON(strings.NewReader(systemcontracts.SNVoteABI))
 	if err != nil {
 		return nil, err
@@ -130,7 +131,13 @@ func GetSuperNodes4Voter(ctx context.Context, api *ethapi.PublicBlockChainAPI, v
 		To: &systemcontracts.SNVoteContractAddr,
 		Data: &msgData,
 	}
-	result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
+
+	if !blocknumber.IsInt64() {
+		return nil, fmt.Errorf("big.Int is out of int64 range")
+	}
+
+	//result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
+	result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(blocknumber.Int64())), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -146,7 +153,7 @@ func GetSuperNodes4Voter(ctx context.Context, api *ethapi.PublicBlockChainAPI, v
 	return info, nil
 }
 
-func GetRecordIDs4Voter(ctx context.Context, api *ethapi.PublicBlockChainAPI, voterAddr common.Address) ([]big.Int, error) {
+func GetRecordIDs4Voter(ctx context.Context, api *ethapi.PublicBlockChainAPI, voterAddr common.Address, blocknumber *big.Int) ([]big.Int, error) {
 	vABI, err := abi.JSON(strings.NewReader(systemcontracts.SNVoteABI))
 	if err != nil {
 		return nil, err
@@ -163,7 +170,13 @@ func GetRecordIDs4Voter(ctx context.Context, api *ethapi.PublicBlockChainAPI, vo
 		To: &systemcontracts.SNVoteContractAddr,
 		Data: &msgData,
 	}
-	result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
+
+	if !blocknumber.IsInt64() {
+		return nil, fmt.Errorf("big.Int is out of int64 range")
+	}
+
+	//result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
+	result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(blocknumber.Int64())), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -175,7 +188,7 @@ func GetRecordIDs4Voter(ctx context.Context, api *ethapi.PublicBlockChainAPI, vo
 	return *recordIDs, nil
 }
 
-func GetVoters4SN(ctx context.Context, api *ethapi.PublicBlockChainAPI, snAddr common.Address) (*types.SNVoteRetInfo, error) {
+func GetVoters4SN(ctx context.Context, api *ethapi.PublicBlockChainAPI, snAddr common.Address, blocknumber *big.Int) (*types.SNVoteRetInfo, error) {
 	vABI, err := abi.JSON(strings.NewReader(systemcontracts.SNVoteABI))
 	if err != nil {
 		return nil, err
@@ -192,7 +205,13 @@ func GetVoters4SN(ctx context.Context, api *ethapi.PublicBlockChainAPI, snAddr c
 		To: &systemcontracts.SNVoteContractAddr,
 		Data: &msgData,
 	}
-	result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
+
+	if !blocknumber.IsInt64() {
+		return nil, fmt.Errorf("big.Int is out of int64 range")
+	}
+
+	//result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
+	result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(blocknumber.Int64())), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -208,7 +227,7 @@ func GetVoters4SN(ctx context.Context, api *ethapi.PublicBlockChainAPI, snAddr c
 	return info, nil
 }
 
-func GetVoteNum4SN(ctx context.Context, api *ethapi.PublicBlockChainAPI, snAddr common.Address) (*big.Int, error) {
+func GetVoteNum4SN(ctx context.Context, api *ethapi.PublicBlockChainAPI, snAddr common.Address, blocknumber *big.Int) (*big.Int, error) {
 	vABI, err := abi.JSON(strings.NewReader(systemcontracts.SNVoteABI))
 	if err != nil {
 		return nil, err
@@ -225,7 +244,13 @@ func GetVoteNum4SN(ctx context.Context, api *ethapi.PublicBlockChainAPI, snAddr 
 		To: &systemcontracts.SNVoteContractAddr,
 		Data: &msgData,
 	}
-	result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
+
+	if !blocknumber.IsInt64() {
+		return nil, fmt.Errorf("big.Int is out of int64 range")
+	}
+
+	//result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
+	result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(blocknumber.Int64())), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -237,7 +262,7 @@ func GetVoteNum4SN(ctx context.Context, api *ethapi.PublicBlockChainAPI, snAddr 
 	return num, nil
 }
 
-func GetProxies4Voter(ctx context.Context, api *ethapi.PublicBlockChainAPI, voterAddr common.Address) (*types.SNVoteRetInfo, error) {
+func GetProxies4Voter(ctx context.Context, api *ethapi.PublicBlockChainAPI, voterAddr common.Address, blocknumber *big.Int) (*types.SNVoteRetInfo, error) {
 	vABI, err := abi.JSON(strings.NewReader(systemcontracts.SNVoteABI))
 	if err != nil {
 		return nil, err
@@ -254,7 +279,13 @@ func GetProxies4Voter(ctx context.Context, api *ethapi.PublicBlockChainAPI, vote
 		To: &systemcontracts.SNVoteContractAddr,
 		Data: &msgData,
 	}
-	result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
+
+	if !blocknumber.IsInt64() {
+		return nil, fmt.Errorf("big.Int is out of int64 range")
+	}
+
+	//result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
+	result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(blocknumber.Int64())), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -270,7 +301,7 @@ func GetProxies4Voter(ctx context.Context, api *ethapi.PublicBlockChainAPI, vote
 	return info, nil
 }
 
-func GetProxiedRecordIDs4Voter(ctx context.Context, api *ethapi.PublicBlockChainAPI, voterAddr common.Address) ([]big.Int, error) {
+func GetProxiedRecordIDs4Voter(ctx context.Context, api *ethapi.PublicBlockChainAPI, voterAddr common.Address, blocknumber *big.Int) ([]big.Int, error) {
 	vABI, err := abi.JSON(strings.NewReader(systemcontracts.SNVoteABI))
 	if err != nil {
 		return nil, err
@@ -287,7 +318,13 @@ func GetProxiedRecordIDs4Voter(ctx context.Context, api *ethapi.PublicBlockChain
 		To: &systemcontracts.SNVoteContractAddr,
 		Data: &msgData,
 	}
-	result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
+
+	if !blocknumber.IsInt64() {
+		return nil, fmt.Errorf("big.Int is out of int64 range")
+	}
+
+	//result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
+	result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(blocknumber.Int64())), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -299,7 +336,7 @@ func GetProxiedRecordIDs4Voter(ctx context.Context, api *ethapi.PublicBlockChain
 	return *recordIDs, nil
 }
 
-func GetVoters4Proxy(ctx context.Context, api *ethapi.PublicBlockChainAPI, proxyAddr common.Address) (*types.SNVoteRetInfo, error) {
+func GetVoters4Proxy(ctx context.Context, api *ethapi.PublicBlockChainAPI, proxyAddr common.Address, blocknumber *big.Int) (*types.SNVoteRetInfo, error) {
 	vABI, err := abi.JSON(strings.NewReader(systemcontracts.SNVoteABI))
 	if err != nil {
 		return nil, err
@@ -316,7 +353,13 @@ func GetVoters4Proxy(ctx context.Context, api *ethapi.PublicBlockChainAPI, proxy
 		To: &systemcontracts.SNVoteContractAddr,
 		Data: &msgData,
 	}
-	result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
+
+	if !blocknumber.IsInt64() {
+		return nil, fmt.Errorf("big.Int is out of int64 range")
+	}
+
+	//result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
+	result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(blocknumber.Int64())), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -332,7 +375,7 @@ func GetVoters4Proxy(ctx context.Context, api *ethapi.PublicBlockChainAPI, proxy
 	return info, nil
 }
 
-func GetVoteNum4Proxy(ctx context.Context, api *ethapi.PublicBlockChainAPI, proxyAddr common.Address) (*big.Int, error) {
+func GetVoteNum4Proxy(ctx context.Context, api *ethapi.PublicBlockChainAPI, proxyAddr common.Address, blocknumber *big.Int) (*big.Int, error) {
 	vABI, err := abi.JSON(strings.NewReader(systemcontracts.SNVoteABI))
 	if err != nil {
 		return nil, err
@@ -349,7 +392,13 @@ func GetVoteNum4Proxy(ctx context.Context, api *ethapi.PublicBlockChainAPI, prox
 		To: &systemcontracts.SNVoteContractAddr,
 		Data: &msgData,
 	}
-	result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
+
+	if !blocknumber.IsInt64() {
+		return nil, fmt.Errorf("big.Int is out of int64 range")
+	}
+
+	//result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
+	result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(blocknumber.Int64())), nil)
 	if err != nil {
 		return nil, err
 	}

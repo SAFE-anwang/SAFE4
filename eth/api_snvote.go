@@ -31,34 +31,34 @@ func (api *PublicSNVoteAPI) ProxyVote(ctx context.Context, from common.Address, 
 	return contract_api.ProxyVote(ctx, api.blockChainAPI, api.transactionPoolAPI, from, snAddr)
 }
 
-func (api *PublicSNVoteAPI) GetSuperNodes4Voter(ctx context.Context, voterAddr common.Address) (*types.SNVoteRetInfo, error) {
-	return contract_api.GetSuperNodes4Voter(ctx, api.blockChainAPI, voterAddr)
+func (api *PublicSNVoteAPI) GetSuperNodes4Voter(ctx context.Context, voterAddr common.Address, blocknumber *big.Int) (*types.SNVoteRetInfo, error) {
+	return contract_api.GetSuperNodes4Voter(ctx, api.blockChainAPI, voterAddr, blocknumber)
 }
 
-func (api *PublicSNVoteAPI) GetRecordIDs4Voter(ctx context.Context, voterAddr common.Address) ([]big.Int, error) {
-	return contract_api.GetRecordIDs4Voter(ctx, api.blockChainAPI, voterAddr)
+func (api *PublicSNVoteAPI) GetRecordIDs4Voter(ctx context.Context, voterAddr common.Address, blocknumber *big.Int) ([]big.Int, error) {
+	return contract_api.GetRecordIDs4Voter(ctx, api.blockChainAPI, voterAddr, blocknumber)
 }
 
-func (api *PublicSNVoteAPI) GetVoters4SN(ctx context.Context, snAddr common.Address) (*types.SNVoteRetInfo, error) {
-	return contract_api.GetVoters4SN(ctx, api.blockChainAPI, snAddr)
+func (api *PublicSNVoteAPI) GetVoters4SN(ctx context.Context, snAddr common.Address, blocknumber *big.Int) (*types.SNVoteRetInfo, error) {
+	return contract_api.GetVoters4SN(ctx, api.blockChainAPI, snAddr, blocknumber)
 }
 
-func (api *PublicSNVoteAPI) GetVoteNum4SN(ctx context.Context, snAddr common.Address) (*big.Int, error) {
-	return contract_api.GetVoteNum4SN(ctx, api.blockChainAPI, snAddr)
+func (api *PublicSNVoteAPI) GetVoteNum4SN(ctx context.Context, snAddr common.Address, blocknumber *big.Int) (*big.Int, error) {
+	return contract_api.GetVoteNum4SN(ctx, api.blockChainAPI, snAddr, blocknumber)
 }
 
-func (api *PublicSNVoteAPI) GetProxies4Voter(ctx context.Context, voterAddr common.Address) (*types.SNVoteRetInfo, error) {
-	return contract_api.GetProxies4Voter(ctx, api.blockChainAPI, voterAddr)
+func (api *PublicSNVoteAPI) GetProxies4Voter(ctx context.Context, voterAddr common.Address, blocknumber *big.Int) (*types.SNVoteRetInfo, error) {
+	return contract_api.GetProxies4Voter(ctx, api.blockChainAPI, voterAddr, blocknumber)
 }
 
-func (api *PublicSNVoteAPI) GetProxiedRecordIDs4Voter(ctx context.Context, voterAddr common.Address) ([]big.Int, error) {
-	return contract_api.GetProxiedRecordIDs4Voter(ctx, api.blockChainAPI, voterAddr)
+func (api *PublicSNVoteAPI) GetProxiedRecordIDs4Voter(ctx context.Context, voterAddr common.Address, blocknumber *big.Int) ([]big.Int, error) {
+	return contract_api.GetProxiedRecordIDs4Voter(ctx, api.blockChainAPI, voterAddr, blocknumber)
 }
 
-func (api *PublicSNVoteAPI) GetVoters4Proxy(ctx context.Context, proxyAddr common.Address) (*types.SNVoteRetInfo, error) {
-	return contract_api.GetVoters4Proxy(ctx, api.blockChainAPI, proxyAddr)
+func (api *PublicSNVoteAPI) GetVoters4Proxy(ctx context.Context, proxyAddr common.Address, blocknumber *big.Int) (*types.SNVoteRetInfo, error) {
+	return contract_api.GetVoters4Proxy(ctx, api.blockChainAPI, proxyAddr, blocknumber)
 }
 
-func (api *PublicSNVoteAPI) GetVoteNum4Proxy(ctx context.Context, proxyAddr common.Address) (*big.Int, error) {
-	return contract_api.GetVoteNum4Proxy(ctx, api.blockChainAPI, proxyAddr)
+func (api *PublicSNVoteAPI) GetVoteNum4Proxy(ctx context.Context, proxyAddr common.Address, blocknumber *big.Int) (*big.Int, error) {
+	return contract_api.GetVoteNum4Proxy(ctx, api.blockChainAPI, proxyAddr, blocknumber)
 }

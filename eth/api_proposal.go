@@ -6,6 +6,7 @@ import (
 	"github.com/ethereum/go-ethereum/core/systemcontracts/contract_api"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/internal/ethapi"
+	"github.com/ethereum/go-ethereum/rpc"
 	"math/big"
 )
 
@@ -51,18 +52,18 @@ func (api *PublicProposalAPI) ChangeDescription(ctx context.Context, from common
 	return contract_api.ChangeProposalDescription(ctx, api.blockChainAPI, api.transactionPoolAPI, from, id, description)
 }
 
-func (api *PublicProposalAPI) GetInfo(ctx context.Context, id *big.Int, blocknumber *big.Int) (*types.ProposalInfo, error) {
-	return contract_api.GetProposalInfo(ctx, api.blockChainAPI, id, blocknumber)
+func (api *PublicProposalAPI) GetInfo(ctx context.Context, id *big.Int, blockNrOrHash rpc.BlockNumberOrHash) (*types.ProposalInfo, error) {
+	return contract_api.GetProposalInfo(ctx, api.blockChainAPI, id, blockNrOrHash)
 }
 
-func (api *PublicProposalAPI) GetAll(ctx context.Context, blocknumber *big.Int) ([]types.ProposalInfo, error) {
-	return contract_api.GetAllProposals(ctx, api.blockChainAPI, blocknumber)
+func (api *PublicProposalAPI) GetAll(ctx context.Context, blockNrOrHash rpc.BlockNumberOrHash) ([]types.ProposalInfo, error) {
+	return contract_api.GetAllProposals(ctx, api.blockChainAPI, blockNrOrHash)
 }
 
-func (api *PublicProposalAPI) GetMines(ctx context.Context, from common.Address, blocknumber *big.Int) ([]types.ProposalInfo, error) {
-	return contract_api.GetMineProposals(ctx, api.blockChainAPI, from, blocknumber)
+func (api *PublicProposalAPI) GetMines(ctx context.Context, from common.Address, blockNrOrHash rpc.BlockNumberOrHash) ([]types.ProposalInfo, error) {
+	return contract_api.GetMineProposals(ctx, api.blockChainAPI, from, blockNrOrHash)
 }
 
-func (api *PublicProposalAPI) Exist(ctx context.Context, id *big.Int, blocknumber *big.Int) (bool, error) {
-	return contract_api.ExistProposal(ctx, api.blockChainAPI, id, blocknumber)
+func (api *PublicProposalAPI) Exist(ctx context.Context, id *big.Int, blockNrOrHash rpc.BlockNumberOrHash) (bool, error) {
+	return contract_api.ExistProposal(ctx, api.blockChainAPI, id, blockNrOrHash)
 }

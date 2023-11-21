@@ -28,7 +28,7 @@ func CreateProposal(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainA
 
 	msgData := (hexutil.Bytes)(data)
 	gasPrice := big.NewInt(params.GWei)
-	gasPrice, err = GetPropertyValue(ctx, blockChainAPI, "gas_price", new(big.Int).SetInt64(int64(rpc.LatestBlockNumber)))
+	gasPrice, err = GetPropertyValue(ctx, blockChainAPI, "gas_price", rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber))
 	if err != nil {
 		gasPrice = big.NewInt(params.GWei / 100)
 	}
@@ -63,7 +63,7 @@ func Vote4Proposal(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAP
 
 	msgData := (hexutil.Bytes)(data)
 	gasPrice := big.NewInt(params.GWei)
-	gasPrice, err = GetPropertyValue(ctx, blockChainAPI, "gas_price", new(big.Int).SetInt64(int64(rpc.LatestBlockNumber)))
+	gasPrice, err = GetPropertyValue(ctx, blockChainAPI, "gas_price", rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber))
 	if err != nil {
 		gasPrice = big.NewInt(params.GWei / 100)
 	}
@@ -96,7 +96,7 @@ func ChangeProposalTitle(ctx context.Context, blockChainAPI *ethapi.PublicBlockC
 
 	msgData := (hexutil.Bytes)(data)
 	gasPrice := big.NewInt(params.GWei)
-	gasPrice, err = GetPropertyValue(ctx, blockChainAPI, "gas_price", new(big.Int).SetInt64(int64(rpc.LatestBlockNumber)))
+	gasPrice, err = GetPropertyValue(ctx, blockChainAPI, "gas_price", rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber))
 	if err != nil {
 		gasPrice = big.NewInt(params.GWei / 100)
 	}
@@ -129,7 +129,7 @@ func ChangeProposalPayAmount(ctx context.Context, blockChainAPI *ethapi.PublicBl
 
 	msgData := (hexutil.Bytes)(data)
 	gasPrice := big.NewInt(params.GWei)
-	gasPrice, err = GetPropertyValue(ctx, blockChainAPI, "gas_price", new(big.Int).SetInt64(int64(rpc.LatestBlockNumber)))
+	gasPrice, err = GetPropertyValue(ctx, blockChainAPI, "gas_price", rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber))
 	if err != nil {
 		gasPrice = big.NewInt(params.GWei / 100)
 	}
@@ -162,7 +162,7 @@ func ChangeProposalPayTimes(ctx context.Context, blockChainAPI *ethapi.PublicBlo
 
 	msgData := (hexutil.Bytes)(data)
 	gasPrice := big.NewInt(params.GWei)
-	gasPrice, err = GetPropertyValue(ctx, blockChainAPI, "gas_price", new(big.Int).SetInt64(int64(rpc.LatestBlockNumber)))
+	gasPrice, err = GetPropertyValue(ctx, blockChainAPI, "gas_price", rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber))
 	if err != nil {
 		gasPrice = big.NewInt(params.GWei / 100)
 	}
@@ -195,7 +195,7 @@ func ChangeProposalStartPayTime(ctx context.Context, blockChainAPI *ethapi.Publi
 
 	msgData := (hexutil.Bytes)(data)
 	gasPrice := big.NewInt(params.GWei)
-	gasPrice, err = GetPropertyValue(ctx, blockChainAPI, "gas_price", new(big.Int).SetInt64(int64(rpc.LatestBlockNumber)))
+	gasPrice, err = GetPropertyValue(ctx, blockChainAPI, "gas_price", rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber))
 	if err != nil {
 		gasPrice = big.NewInt(params.GWei / 100)
 	}
@@ -228,7 +228,7 @@ func ChangeProposalEndPayTime(ctx context.Context, blockChainAPI *ethapi.PublicB
 
 	msgData := (hexutil.Bytes)(data)
 	gasPrice := big.NewInt(params.GWei)
-	gasPrice, err = GetPropertyValue(ctx, blockChainAPI, "gas_price", new(big.Int).SetInt64(int64(rpc.LatestBlockNumber)))
+	gasPrice, err = GetPropertyValue(ctx, blockChainAPI, "gas_price", rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber))
 	if err != nil {
 		gasPrice = big.NewInt(params.GWei / 100)
 	}
@@ -261,7 +261,7 @@ func ChangeProposalDescription(ctx context.Context, blockChainAPI *ethapi.Public
 
 	msgData := (hexutil.Bytes)(data)
 	gasPrice := big.NewInt(params.GWei)
-	gasPrice, err = GetPropertyValue(ctx, blockChainAPI, "gas_price", new(big.Int).SetInt64(int64(rpc.LatestBlockNumber)))
+	gasPrice, err = GetPropertyValue(ctx, blockChainAPI, "gas_price", rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber))
 	if err != nil {
 		gasPrice = big.NewInt(params.GWei / 100)
 	}
@@ -280,7 +280,7 @@ func ChangeProposalDescription(ctx context.Context, blockChainAPI *ethapi.Public
 	return transactionPoolAPI.SendTransaction(ctx, args)
 }
 
-func GetProposalInfo(ctx context.Context, api *ethapi.PublicBlockChainAPI, id *big.Int, blocknumber *big.Int) (*types.ProposalInfo, error) {
+func GetProposalInfo(ctx context.Context, api *ethapi.PublicBlockChainAPI, id *big.Int, blockNrOrHash rpc.BlockNumberOrHash) (*types.ProposalInfo, error) {
 	vABI, err := abi.JSON(strings.NewReader(systemcontracts.ProposalABI))
 	if err != nil {
 		return nil, err
@@ -297,9 +297,8 @@ func GetProposalInfo(ctx context.Context, api *ethapi.PublicBlockChainAPI, id *b
 		To: &systemcontracts.ProposalContractAddr,
 		Data: &msgData,
 	}
+	result, err := api.Call(ctx, args, blockNrOrHash, nil)
 
-	//result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
-	result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(blocknumber.Int64())), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -311,7 +310,7 @@ func GetProposalInfo(ctx context.Context, api *ethapi.PublicBlockChainAPI, id *b
 	return info, nil
 }
 
-func GetAllProposals(ctx context.Context, api *ethapi.PublicBlockChainAPI, blocknumber *big.Int) ([]types.ProposalInfo, error) {
+func GetAllProposals(ctx context.Context, api *ethapi.PublicBlockChainAPI, blockNrOrHash rpc.BlockNumberOrHash) ([]types.ProposalInfo, error) {
 	vABI, err := abi.JSON(strings.NewReader(systemcontracts.ProposalABI))
 	if err != nil {
 		return nil, err
@@ -328,9 +327,8 @@ func GetAllProposals(ctx context.Context, api *ethapi.PublicBlockChainAPI, block
 		To: &systemcontracts.ProposalContractAddr,
 		Data: &msgData,
 	}
+	result, err := api.Call(ctx, args, blockNrOrHash, nil)
 
-	//result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
-	result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(blocknumber.Int64())), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -342,7 +340,7 @@ func GetAllProposals(ctx context.Context, api *ethapi.PublicBlockChainAPI, block
 	return *infos, nil
 }
 
-func GetMineProposals(ctx context.Context, api *ethapi.PublicBlockChainAPI, from common.Address, blocknumber *big.Int) ([]types.ProposalInfo, error) {
+func GetMineProposals(ctx context.Context, api *ethapi.PublicBlockChainAPI, from common.Address, blockNrOrHash rpc.BlockNumberOrHash) ([]types.ProposalInfo, error) {
 	vABI, err := abi.JSON(strings.NewReader(systemcontracts.ProposalABI))
 	if err != nil {
 		return nil, err
@@ -360,9 +358,8 @@ func GetMineProposals(ctx context.Context, api *ethapi.PublicBlockChainAPI, from
 		To: &systemcontracts.ProposalContractAddr,
 		Data: &msgData,
 	}
+	result, err := api.Call(ctx, args, blockNrOrHash, nil)
 
-	//result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
-	result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(blocknumber.Int64())), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -374,7 +371,7 @@ func GetMineProposals(ctx context.Context, api *ethapi.PublicBlockChainAPI, from
 	return *infos, nil
 }
 
-func ExistProposal(ctx context.Context, api *ethapi.PublicBlockChainAPI, id *big.Int, blocknumber *big.Int) (bool, error) {
+func ExistProposal(ctx context.Context, api *ethapi.PublicBlockChainAPI, id *big.Int, blockNrOrHash rpc.BlockNumberOrHash) (bool, error) {
 	vABI, err := abi.JSON(strings.NewReader(systemcontracts.ProposalABI))
 	if err != nil {
 		return false, err
@@ -391,9 +388,8 @@ func ExistProposal(ctx context.Context, api *ethapi.PublicBlockChainAPI, id *big
 		To: &systemcontracts.ProposalContractAddr,
 		Data: &msgData,
 	}
+	result, err := api.Call(ctx, args, blockNrOrHash, nil)
 
-	//result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
-	result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(blocknumber.Int64())), nil)
 	if err != nil {
 		return false, err
 	}

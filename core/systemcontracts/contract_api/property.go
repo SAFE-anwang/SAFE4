@@ -28,7 +28,7 @@ func AddProperty(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI,
 
 	msgData := (hexutil.Bytes)(data)
 	gasPrice := big.NewInt(params.GWei)
-	gasPrice, err = GetPropertyValue(ctx, blockChainAPI, "gas_price", new(big.Int).SetInt64(int64(rpc.LatestBlockNumber)))
+	gasPrice, err = GetPropertyValue(ctx, blockChainAPI, "gas_price", rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber))
 	if err != nil {
 		gasPrice = big.NewInt(params.GWei / 100)
 	}
@@ -61,7 +61,7 @@ func ApplyUpdateProperty(ctx context.Context, blockChainAPI *ethapi.PublicBlockC
 
 	msgData := (hexutil.Bytes)(data)
 	gasPrice := big.NewInt(params.GWei)
-	gasPrice, err = GetPropertyValue(ctx, blockChainAPI, "gas_price", new(big.Int).SetInt64(int64(rpc.LatestBlockNumber)))
+	gasPrice, err = GetPropertyValue(ctx, blockChainAPI, "gas_price", rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber))
 	if err != nil {
 		gasPrice = big.NewInt(params.GWei / 100)
 	}
@@ -94,7 +94,7 @@ func Vote4UpdateProperty(ctx context.Context, blockChainAPI *ethapi.PublicBlockC
 
 	msgData := (hexutil.Bytes)(data)
 	gasPrice := big.NewInt(params.GWei)
-	gasPrice, err = GetPropertyValue(ctx, blockChainAPI, "gas_price", new(big.Int).SetInt64(int64(rpc.LatestBlockNumber)))
+	gasPrice, err = GetPropertyValue(ctx, blockChainAPI, "gas_price", rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber))
 	if err != nil {
 		gasPrice = big.NewInt(params.GWei / 100)
 	}
@@ -113,7 +113,7 @@ func Vote4UpdateProperty(ctx context.Context, blockChainAPI *ethapi.PublicBlockC
 	return transactionPoolAPI.SendTransaction(ctx, args)
 }
 
-func GetPropertyInfo(ctx context.Context, api *ethapi.PublicBlockChainAPI, name string, blocknumber *big.Int) (*types.PropertyInfo, error) {
+func GetPropertyInfo(ctx context.Context, api *ethapi.PublicBlockChainAPI, name string, blockNrOrHash rpc.BlockNumberOrHash) (*types.PropertyInfo, error) {
 	vABI, err := abi.JSON(strings.NewReader(systemcontracts.PropertyABI))
 	if err != nil {
 		return nil, err
@@ -130,9 +130,8 @@ func GetPropertyInfo(ctx context.Context, api *ethapi.PublicBlockChainAPI, name 
 		To: &systemcontracts.PropertyContractAddr,
 		Data: &msgData,
 	}
+	result, err := api.Call(ctx, args, blockNrOrHash, nil)
 
-	//result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
-	result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(blocknumber.Int64())), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -144,7 +143,7 @@ func GetPropertyInfo(ctx context.Context, api *ethapi.PublicBlockChainAPI, name 
 	return info, nil
 }
 
-func GetUnconfirmedPropertyInfo(ctx context.Context, api *ethapi.PublicBlockChainAPI, name string, blocknumber *big.Int) (*types.UnconfirmedPropertyInfo, error) {
+func GetUnconfirmedPropertyInfo(ctx context.Context, api *ethapi.PublicBlockChainAPI, name string, blockNrOrHash rpc.BlockNumberOrHash) (*types.UnconfirmedPropertyInfo, error) {
 	vABI, err := abi.JSON(strings.NewReader(systemcontracts.PropertyABI))
 	if err != nil {
 		return nil, err
@@ -161,9 +160,8 @@ func GetUnconfirmedPropertyInfo(ctx context.Context, api *ethapi.PublicBlockChai
 		To: &systemcontracts.PropertyContractAddr,
 		Data: &msgData,
 	}
+	result, err := api.Call(ctx, args, blockNrOrHash, nil)
 
-	//result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
-	result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(blocknumber.Int64())), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -175,7 +173,7 @@ func GetUnconfirmedPropertyInfo(ctx context.Context, api *ethapi.PublicBlockChai
 	return info, nil
 }
 
-func GetPropertyValue(ctx context.Context, api *ethapi.PublicBlockChainAPI, name string, blocknumber *big.Int) (*big.Int, error) {
+func GetPropertyValue(ctx context.Context, api *ethapi.PublicBlockChainAPI, name string, blockNrOrHash rpc.BlockNumberOrHash) (*big.Int, error) {
 	vABI, err := abi.JSON(strings.NewReader(systemcontracts.PropertyABI))
 	if err != nil {
 		return nil, err
@@ -192,9 +190,8 @@ func GetPropertyValue(ctx context.Context, api *ethapi.PublicBlockChainAPI, name
 		To: &systemcontracts.PropertyContractAddr,
 		Data: &msgData,
 	}
+	result, err := api.Call(ctx, args, blockNrOrHash, nil)
 
-	//result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
-	result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(blocknumber.Int64())), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -206,7 +203,7 @@ func GetPropertyValue(ctx context.Context, api *ethapi.PublicBlockChainAPI, name
 	return value, nil
 }
 
-func GetAllProperties(ctx context.Context, api *ethapi.PublicBlockChainAPI, blocknumber *big.Int) ([]types.PropertyInfo, error) {
+func GetAllProperties(ctx context.Context, api *ethapi.PublicBlockChainAPI, blockNrOrHash rpc.BlockNumberOrHash) ([]types.PropertyInfo, error) {
 	vABI, err := abi.JSON(strings.NewReader(systemcontracts.PropertyABI))
 	if err != nil {
 		return nil, err
@@ -223,9 +220,8 @@ func GetAllProperties(ctx context.Context, api *ethapi.PublicBlockChainAPI, bloc
 		To: &systemcontracts.PropertyContractAddr,
 		Data: &msgData,
 	}
+	result, err := api.Call(ctx, args, blockNrOrHash, nil)
 
-	//result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
-	result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(blocknumber.Int64())), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -237,7 +233,7 @@ func GetAllProperties(ctx context.Context, api *ethapi.PublicBlockChainAPI, bloc
 	return *infos, nil
 }
 
-func GetAllUnconfirmedProperties(ctx context.Context, api *ethapi.PublicBlockChainAPI, blocknumber *big.Int) ([]types.UnconfirmedPropertyInfo, error) {
+func GetAllUnconfirmedProperties(ctx context.Context, api *ethapi.PublicBlockChainAPI, blockNrOrHash rpc.BlockNumberOrHash) ([]types.UnconfirmedPropertyInfo, error) {
 	vABI, err := abi.JSON(strings.NewReader(systemcontracts.PropertyABI))
 	if err != nil {
 		return nil, err
@@ -254,9 +250,8 @@ func GetAllUnconfirmedProperties(ctx context.Context, api *ethapi.PublicBlockCha
 		To: &systemcontracts.PropertyContractAddr,
 		Data: &msgData,
 	}
+	result, err := api.Call(ctx, args, blockNrOrHash, nil)
 
-	//result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
-	result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(blocknumber.Int64())), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -268,7 +263,7 @@ func GetAllUnconfirmedProperties(ctx context.Context, api *ethapi.PublicBlockCha
 	return *infos, nil
 }
 
-func ExistProperty(ctx context.Context, api *ethapi.PublicBlockChainAPI, name string, blocknumber *big.Int) (bool, error) {
+func ExistProperty(ctx context.Context, api *ethapi.PublicBlockChainAPI, name string, blockNrOrHash rpc.BlockNumberOrHash) (bool, error) {
 	vABI, err := abi.JSON(strings.NewReader(systemcontracts.PropertyABI))
 	if err != nil {
 		return false, err
@@ -285,9 +280,8 @@ func ExistProperty(ctx context.Context, api *ethapi.PublicBlockChainAPI, name st
 		To: &systemcontracts.PropertyContractAddr,
 		Data: &msgData,
 	}
+	result, err := api.Call(ctx, args, blockNrOrHash, nil)
 
-	//result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
-	result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(blocknumber.Int64())), nil)
 	if err != nil {
 		return false, err
 	}
@@ -299,7 +293,7 @@ func ExistProperty(ctx context.Context, api *ethapi.PublicBlockChainAPI, name st
 	return *value, nil
 }
 
-func ExistUnconfirmedProperty(ctx context.Context, api *ethapi.PublicBlockChainAPI, name string, blocknumber *big.Int) (bool, error) {
+func ExistUnconfirmedProperty(ctx context.Context, api *ethapi.PublicBlockChainAPI, name string, blockNrOrHash rpc.BlockNumberOrHash) (bool, error) {
 	vABI, err := abi.JSON(strings.NewReader(systemcontracts.PropertyABI))
 	if err != nil {
 		return false, err
@@ -316,9 +310,8 @@ func ExistUnconfirmedProperty(ctx context.Context, api *ethapi.PublicBlockChainA
 		To: &systemcontracts.PropertyContractAddr,
 		Data: &msgData,
 	}
+	result, err := api.Call(ctx, args, blockNrOrHash, nil)
 
-	//result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
-	result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(blocknumber.Int64())), nil)
 	if err != nil {
 		return false, err
 	}

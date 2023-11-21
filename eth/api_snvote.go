@@ -6,6 +6,7 @@ import (
 	"github.com/ethereum/go-ethereum/core/systemcontracts/contract_api"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/internal/ethapi"
+	"github.com/ethereum/go-ethereum/rpc"
 	"math/big"
 )
 
@@ -31,34 +32,34 @@ func (api *PublicSNVoteAPI) ProxyVote(ctx context.Context, from common.Address, 
 	return contract_api.ProxyVote(ctx, api.blockChainAPI, api.transactionPoolAPI, from, snAddr)
 }
 
-func (api *PublicSNVoteAPI) GetSuperNodes4Voter(ctx context.Context, voterAddr common.Address, blocknumber *big.Int) (*types.SNVoteRetInfo, error) {
-	return contract_api.GetSuperNodes4Voter(ctx, api.blockChainAPI, voterAddr, blocknumber)
+func (api *PublicSNVoteAPI) GetSuperNodes4Voter(ctx context.Context, voterAddr common.Address, blockNrOrHash rpc.BlockNumberOrHash) (*types.SNVoteRetInfo, error) {
+	return contract_api.GetSuperNodes4Voter(ctx, api.blockChainAPI, voterAddr, blockNrOrHash)
 }
 
-func (api *PublicSNVoteAPI) GetRecordIDs4Voter(ctx context.Context, voterAddr common.Address, blocknumber *big.Int) ([]big.Int, error) {
-	return contract_api.GetRecordIDs4Voter(ctx, api.blockChainAPI, voterAddr, blocknumber)
+func (api *PublicSNVoteAPI) GetRecordIDs4Voter(ctx context.Context, voterAddr common.Address, blockNrOrHash rpc.BlockNumberOrHash) ([]big.Int, error) {
+	return contract_api.GetRecordIDs4Voter(ctx, api.blockChainAPI, voterAddr, blockNrOrHash)
 }
 
-func (api *PublicSNVoteAPI) GetVoters4SN(ctx context.Context, snAddr common.Address, blocknumber *big.Int) (*types.SNVoteRetInfo, error) {
-	return contract_api.GetVoters4SN(ctx, api.blockChainAPI, snAddr, blocknumber)
+func (api *PublicSNVoteAPI) GetVoters4SN(ctx context.Context, snAddr common.Address, blockNrOrHash rpc.BlockNumberOrHash) (*types.SNVoteRetInfo, error) {
+	return contract_api.GetVoters4SN(ctx, api.blockChainAPI, snAddr, blockNrOrHash)
 }
 
-func (api *PublicSNVoteAPI) GetVoteNum4SN(ctx context.Context, snAddr common.Address, blocknumber *big.Int) (*big.Int, error) {
-	return contract_api.GetVoteNum4SN(ctx, api.blockChainAPI, snAddr, blocknumber)
+func (api *PublicSNVoteAPI) GetVoteNum4SN(ctx context.Context, snAddr common.Address, blockNrOrHash rpc.BlockNumberOrHash) (*big.Int, error) {
+	return contract_api.GetVoteNum4SN(ctx, api.blockChainAPI, snAddr, blockNrOrHash)
 }
 
-func (api *PublicSNVoteAPI) GetProxies4Voter(ctx context.Context, voterAddr common.Address, blocknumber *big.Int) (*types.SNVoteRetInfo, error) {
-	return contract_api.GetProxies4Voter(ctx, api.blockChainAPI, voterAddr, blocknumber)
+func (api *PublicSNVoteAPI) GetProxies4Voter(ctx context.Context, voterAddr common.Address, blockNrOrHash rpc.BlockNumberOrHash) (*types.SNVoteRetInfo, error) {
+	return contract_api.GetProxies4Voter(ctx, api.blockChainAPI, voterAddr, blockNrOrHash)
 }
 
-func (api *PublicSNVoteAPI) GetProxiedRecordIDs4Voter(ctx context.Context, voterAddr common.Address, blocknumber *big.Int) ([]big.Int, error) {
-	return contract_api.GetProxiedRecordIDs4Voter(ctx, api.blockChainAPI, voterAddr, blocknumber)
+func (api *PublicSNVoteAPI) GetProxiedRecordIDs4Voter(ctx context.Context, voterAddr common.Address, blockNrOrHash rpc.BlockNumberOrHash) ([]big.Int, error) {
+	return contract_api.GetProxiedRecordIDs4Voter(ctx, api.blockChainAPI, voterAddr, blockNrOrHash)
 }
 
-func (api *PublicSNVoteAPI) GetVoters4Proxy(ctx context.Context, proxyAddr common.Address, blocknumber *big.Int) (*types.SNVoteRetInfo, error) {
-	return contract_api.GetVoters4Proxy(ctx, api.blockChainAPI, proxyAddr, blocknumber)
+func (api *PublicSNVoteAPI) GetVoters4Proxy(ctx context.Context, proxyAddr common.Address, blockNrOrHash rpc.BlockNumberOrHash) (*types.SNVoteRetInfo, error) {
+	return contract_api.GetVoters4Proxy(ctx, api.blockChainAPI, proxyAddr, blockNrOrHash)
 }
 
-func (api *PublicSNVoteAPI) GetVoteNum4Proxy(ctx context.Context, proxyAddr common.Address, blocknumber *big.Int) (*big.Int, error) {
-	return contract_api.GetVoteNum4Proxy(ctx, api.blockChainAPI, proxyAddr, blocknumber)
+func (api *PublicSNVoteAPI) GetVoteNum4Proxy(ctx context.Context, proxyAddr common.Address, blockNrOrHash rpc.BlockNumberOrHash) (*big.Int, error) {
+	return contract_api.GetVoteNum4Proxy(ctx, api.blockChainAPI, proxyAddr, blockNrOrHash)
 }

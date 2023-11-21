@@ -541,7 +541,7 @@ func (s *Spos) snapshot(chain consensus.ChainHeaderReader, number uint64, hash c
 						signersmap[signer] = struct{}{}
 					}
 				}else { //TODO Call the contract to get the super node list
-					superNodeInfos, err := contract_api.GetTopSuperNodes(s.ctx, s.blockChainAPI, new(big.Int).SetUint64(number))
+					superNodeInfos, err := contract_api.GetTopSuperNodes(s.ctx, s.blockChainAPI, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(number)))
 					if err != nil {
 						log.Error("Failed to GetTopSN", "error", err)
 						return nil, err
@@ -1068,7 +1068,7 @@ func (s *Spos) distributeReward(header *types.Header, state *state.StateDB, txs 
 	totalReward := getBlockSubsidy(number, withoutSuperBlockPart)
 	masterNodePayment := getMasternodePayment(totalReward)
 	superNodeReward := new(big.Int).Sub(totalReward, masterNodePayment)
-	mnAddr, err := contract_api.GetNextMasterNode(s.ctx, s.blockChainAPI, header.Number)
+	mnAddr, err := contract_api.GetNextMasterNode(s.ctx, s.blockChainAPI, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(header.Number.Int64())))
 	if err != nil {
 		return nil, err
 	}
@@ -1173,7 +1173,7 @@ func (s *Spos) CheckRewardTransaction(block *types.Block) error{
 			superNodeReward := new(big.Int).Sub(totalReward, masterNodePayment)
 			proposalReward := getBlockSubsidy(blocknumber, onlySuperBlockPart)
 
-			nextMNAddr, err := contract_api.GetNextMasterNode(s.ctx, s.blockChainAPI, block.Number())
+			nextMNAddr, err := contract_api.GetNextMasterNode(s.ctx, s.blockChainAPI, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(block.Number().Int64())))
 			if err != nil {
 				return err
 			}

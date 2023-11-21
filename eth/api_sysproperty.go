@@ -6,6 +6,7 @@ import (
 	"github.com/ethereum/go-ethereum/core/systemcontracts/contract_api"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/internal/ethapi"
+	"github.com/ethereum/go-ethereum/rpc"
 	"math/big"
 )
 
@@ -31,30 +32,30 @@ func (api *PublicSysPropertyAPI) Vote4Update(ctx context.Context, from common.Ad
 	return contract_api.Vote4UpdateProperty(ctx, api.blockChainAPI, api.transactionPoolAPI, from, name, voteResult)
 }
 
-func (api *PublicSysPropertyAPI) GetInfo(ctx context.Context, name string, blocknumber *big.Int) (*types.PropertyInfo, error) {
-	return contract_api.GetPropertyInfo(ctx, api.blockChainAPI, name, blocknumber)
+func (api *PublicSysPropertyAPI) GetInfo(ctx context.Context, name string, blockNrOrHash rpc.BlockNumberOrHash) (*types.PropertyInfo, error) {
+	return contract_api.GetPropertyInfo(ctx, api.blockChainAPI, name, blockNrOrHash)
 }
 
-func (api *PublicSysPropertyAPI) GetUnconfirmedInfo(ctx context.Context, name string, blocknumber *big.Int) (*types.UnconfirmedPropertyInfo, error) {
-	return contract_api.GetUnconfirmedPropertyInfo(ctx, api.blockChainAPI, name, blocknumber)
+func (api *PublicSysPropertyAPI) GetUnconfirmedInfo(ctx context.Context, name string, blockNrOrHash rpc.BlockNumberOrHash) (*types.UnconfirmedPropertyInfo, error) {
+	return contract_api.GetUnconfirmedPropertyInfo(ctx, api.blockChainAPI, name, blockNrOrHash)
 }
 
-func (api *PublicSysPropertyAPI) GetValue(ctx context.Context, name string, blocknumber *big.Int) (*big.Int, error) {
-	return contract_api.GetPropertyValue(ctx, api.blockChainAPI, name, blocknumber)
+func (api *PublicSysPropertyAPI) GetValue(ctx context.Context, name string, blockNrOrHash rpc.BlockNumberOrHash) (*big.Int, error) {
+	return contract_api.GetPropertyValue(ctx, api.blockChainAPI, name, blockNrOrHash)
 }
 
-func (api *PublicSysPropertyAPI) GetAll(ctx context.Context, blocknumber *big.Int) ([]types.PropertyInfo, error) {
-	return contract_api.GetAllProperties(ctx, api.blockChainAPI, blocknumber)
+func (api *PublicSysPropertyAPI) GetAll(ctx context.Context, blockNrOrHash rpc.BlockNumberOrHash) ([]types.PropertyInfo, error) {
+	return contract_api.GetAllProperties(ctx, api.blockChainAPI, blockNrOrHash)
 }
 
-func (api *PublicSysPropertyAPI) GetAllUnconfirmed(ctx context.Context, name string, blocknumber *big.Int) ([]types.UnconfirmedPropertyInfo, error) {
-	return contract_api.GetAllUnconfirmedProperties(ctx, api.blockChainAPI, blocknumber)
+func (api *PublicSysPropertyAPI) GetAllUnconfirmed(ctx context.Context, blockNrOrHash rpc.BlockNumberOrHash) ([]types.UnconfirmedPropertyInfo, error) {
+	return contract_api.GetAllUnconfirmedProperties(ctx, api.blockChainAPI, blockNrOrHash)
 }
 
-func (api *PublicSysPropertyAPI) Exist(ctx context.Context, name string, blocknumber *big.Int) (bool, error) {
-	return contract_api.ExistProperty(ctx, api.blockChainAPI, name, blocknumber)
+func (api *PublicSysPropertyAPI) Exist(ctx context.Context, name string, blockNrOrHash rpc.BlockNumberOrHash) (bool, error) {
+	return contract_api.ExistProperty(ctx, api.blockChainAPI, name, blockNrOrHash)
 }
 
-func (api *PublicSysPropertyAPI) ExistUnconfirmed(ctx context.Context, name string, blocknumber *big.Int) (bool, error) {
-	return contract_api.ExistUnconfirmedProperty(ctx, api.blockChainAPI, name, blocknumber)
+func (api *PublicSysPropertyAPI) ExistUnconfirmed(ctx context.Context, name string, blockNrOrHash rpc.BlockNumberOrHash) (bool, error) {
+	return contract_api.ExistUnconfirmedProperty(ctx, api.blockChainAPI, name, blockNrOrHash)
 }

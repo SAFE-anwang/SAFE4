@@ -6,6 +6,7 @@ import (
 	"github.com/ethereum/go-ethereum/core/systemcontracts/contract_api"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/internal/ethapi"
+	"github.com/ethereum/go-ethereum/rpc"
 	"math/big"
 )
 
@@ -39,34 +40,34 @@ func (api *PublicAccountAPI) AddLockDay(ctx context.Context, from common.Address
 	return contract_api.AddAccountLockDay(ctx, api.blockChainAPI, api.transactionPoolAPI, from, id, day)
 }
 
-func (api *PublicAccountAPI) GetTotalAmount(ctx context.Context, addr common.Address, blocknumber *big.Int) (*types.AccountAmountInfo, error) {
-	return contract_api.GetAccountTotalAmount(ctx, api.blockChainAPI, addr, blocknumber)
+func (api *PublicAccountAPI) GetTotalAmount(ctx context.Context, addr common.Address, blockNrOrHash rpc.BlockNumberOrHash) (*types.AccountAmountInfo, error) {
+	return contract_api.GetAccountTotalAmount(ctx, api.blockChainAPI, addr, blockNrOrHash)
 }
 
-func (api *PublicAccountAPI) GetAvailableAmount(ctx context.Context, addr common.Address, blocknumber *big.Int) (*types.AccountAmountInfo, error) {
-	return contract_api.GetAccountAvailableAmount(ctx, api.blockChainAPI, addr, blocknumber)
+func (api *PublicAccountAPI) GetAvailableAmount(ctx context.Context, addr common.Address, blockNrOrHash rpc.BlockNumberOrHash) (*types.AccountAmountInfo, error) {
+	return contract_api.GetAccountAvailableAmount(ctx, api.blockChainAPI, addr, blockNrOrHash)
 }
 
-func (api *PublicAccountAPI) GetLockedAmount(ctx context.Context, addr common.Address, blocknumber *big.Int) (*types.AccountAmountInfo, error) {
-	return contract_api.GetAccountLockedAmount(ctx, api.blockChainAPI, addr, blocknumber)
+func (api *PublicAccountAPI) GetLockedAmount(ctx context.Context, addr common.Address, blockNrOrHash rpc.BlockNumberOrHash) (*types.AccountAmountInfo, error) {
+	return contract_api.GetAccountLockedAmount(ctx, api.blockChainAPI, addr, blockNrOrHash)
 }
 
-func (api *PublicAccountAPI) GetUsedAmount(ctx context.Context, addr common.Address, blocknumber *big.Int) (*types.AccountAmountInfo, error) {
-	return contract_api.GetAccountUsedAmount(ctx, api.blockChainAPI, addr, blocknumber)
+func (api *PublicAccountAPI) GetUsedAmount(ctx context.Context, addr common.Address, blockNrOrHash rpc.BlockNumberOrHash) (*types.AccountAmountInfo, error) {
+	return contract_api.GetAccountUsedAmount(ctx, api.blockChainAPI, addr, blockNrOrHash)
 }
 
-func (api *PublicAccountAPI) GetRecords(ctx context.Context, addr common.Address, blocknumber *big.Int) ([]types.AccountRecord, error) {
-	return contract_api.GetAccountRecords(ctx, api.blockChainAPI, addr, blocknumber)
+func (api *PublicAccountAPI) GetRecords(ctx context.Context, addr common.Address, blockNrOrHash rpc.BlockNumberOrHash) ([]types.AccountRecord, error) {
+	return contract_api.GetAccountRecords(ctx, api.blockChainAPI, addr, blockNrOrHash)
 }
 
-func (api *PublicAccountAPI) GetRecord0(ctx context.Context, addr common.Address, blocknumber *big.Int) (*types.AccountRecord, error) {
-	return contract_api.GetAccountRecord0(ctx, api.blockChainAPI, addr, blocknumber)
+func (api *PublicAccountAPI) GetRecord0(ctx context.Context, addr common.Address, blockNrOrHash rpc.BlockNumberOrHash) (*types.AccountRecord, error) {
+	return contract_api.GetAccountRecord0(ctx, api.blockChainAPI, addr, blockNrOrHash)
 }
 
-func (api *PublicAccountAPI) GetRecordByID(ctx context.Context, id *big.Int, blocknumber *big.Int) (*types.AccountRecord, error) {
-	return contract_api.GetAccountRecordByID(ctx, api.blockChainAPI, id, blocknumber)
+func (api *PublicAccountAPI) GetRecordByID(ctx context.Context, id *big.Int, blockNrOrHash rpc.BlockNumberOrHash) (*types.AccountRecord, error) {
+	return contract_api.GetAccountRecordByID(ctx, api.blockChainAPI, id, blockNrOrHash)
 }
 
-func (api *PublicAccountAPI) GetRecordUseInfo(ctx context.Context, id *big.Int, blocknumber *big.Int) (*types.AccountRecordUseInfo, error) {
-	return contract_api.GetAccountRecordUseInfo(ctx, api.blockChainAPI, id, blocknumber)
+func (api *PublicAccountAPI) GetRecordUseInfo(ctx context.Context, id *big.Int, blockNrOrHash rpc.BlockNumberOrHash) (*types.AccountRecordUseInfo, error) {
+	return contract_api.GetAccountRecordUseInfo(ctx, api.blockChainAPI, id, blockNrOrHash)
 }

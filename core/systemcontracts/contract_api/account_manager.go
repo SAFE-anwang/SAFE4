@@ -28,7 +28,7 @@ func DepositAccount(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainA
 
 	msgData := (hexutil.Bytes)(data)
 	gasPrice := big.NewInt(params.GWei)
-	gasPrice, err = GetPropertyValue(ctx, blockChainAPI, "gas_price", new(big.Int).SetInt64(int64(rpc.LatestBlockNumber)))
+	gasPrice, err = GetPropertyValue(ctx, blockChainAPI, "gas_price", rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber))
 	if err != nil {
 		gasPrice = big.NewInt(params.GWei / 100)
 	}
@@ -62,7 +62,7 @@ func WithdrawAccount(ctx context.Context, blockChainAPI *ethapi.PublicBlockChain
 
 	msgData := (hexutil.Bytes)(data)
 	gasPrice := big.NewInt(params.GWei)
-	gasPrice, err = GetPropertyValue(ctx, blockChainAPI, "gas_price", new(big.Int).SetInt64(int64(rpc.LatestBlockNumber)))
+	gasPrice, err = GetPropertyValue(ctx, blockChainAPI, "gas_price", rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber))
 	if err != nil {
 		gasPrice = big.NewInt(params.GWei / 100)
 	}
@@ -95,7 +95,7 @@ func WithdrawAccountByID(ctx context.Context, blockChainAPI *ethapi.PublicBlockC
 
 	msgData := (hexutil.Bytes)(data)
 	gasPrice := big.NewInt(params.GWei)
-	gasPrice, err = GetPropertyValue(ctx, blockChainAPI, "gas_price", new(big.Int).SetInt64(int64(rpc.LatestBlockNumber)))
+	gasPrice, err = GetPropertyValue(ctx, blockChainAPI, "gas_price", rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber))
 	if err != nil {
 		gasPrice = big.NewInt(params.GWei / 100)
 	}
@@ -128,7 +128,7 @@ func TransferAccount(ctx context.Context, blockChainAPI *ethapi.PublicBlockChain
 
 	msgData := (hexutil.Bytes)(data)
 	gasPrice := big.NewInt(params.GWei)
-	gasPrice, err = GetPropertyValue(ctx, blockChainAPI, "gas_price", new(big.Int).SetInt64(int64(rpc.LatestBlockNumber)))
+	gasPrice, err = GetPropertyValue(ctx, blockChainAPI, "gas_price", rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber))
 	if err != nil {
 		gasPrice = big.NewInt(params.GWei / 100)
 	}
@@ -161,7 +161,7 @@ func AddAccountLockDay(ctx context.Context, blockChainAPI *ethapi.PublicBlockCha
 
 	msgData := (hexutil.Bytes)(data)
 	gasPrice := big.NewInt(params.GWei)
-	gasPrice, err = GetPropertyValue(ctx, blockChainAPI, "gas_price", new(big.Int).SetInt64(int64(rpc.LatestBlockNumber)))
+	gasPrice, err = GetPropertyValue(ctx, blockChainAPI, "gas_price", rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber))
 	if err != nil {
 		gasPrice = big.NewInt(params.GWei / 100)
 	}
@@ -180,23 +180,23 @@ func AddAccountLockDay(ctx context.Context, blockChainAPI *ethapi.PublicBlockCha
 	return transactionPoolAPI.SendTransaction(ctx, args)
 }
 
-func GetAccountTotalAmount(ctx context.Context, api *ethapi.PublicBlockChainAPI, addr common.Address, blocknumber *big.Int) (*types.AccountAmountInfo, error) {
-	return getAccountAmountInfo(ctx, api, "getTotalAmount", addr, blocknumber)
+func GetAccountTotalAmount(ctx context.Context, api *ethapi.PublicBlockChainAPI, addr common.Address, blockNrOrHash rpc.BlockNumberOrHash) (*types.AccountAmountInfo, error) {
+	return getAccountAmountInfo(ctx, api, "getTotalAmount", addr, blockNrOrHash)
 }
 
-func GetAccountAvailableAmount(ctx context.Context, api *ethapi.PublicBlockChainAPI, addr common.Address, blocknumber *big.Int) (*types.AccountAmountInfo, error) {
-	return getAccountAmountInfo(ctx, api, "getAvailableAmount", addr, blocknumber)
+func GetAccountAvailableAmount(ctx context.Context, api *ethapi.PublicBlockChainAPI, addr common.Address, blockNrOrHash rpc.BlockNumberOrHash) (*types.AccountAmountInfo, error) {
+	return getAccountAmountInfo(ctx, api, "getAvailableAmount", addr, blockNrOrHash)
 }
 
-func GetAccountLockedAmount(ctx context.Context, api *ethapi.PublicBlockChainAPI, addr common.Address, blocknumber *big.Int) (*types.AccountAmountInfo, error) {
-	return getAccountAmountInfo(ctx, api, "getLockedAmount", addr, blocknumber)
+func GetAccountLockedAmount(ctx context.Context, api *ethapi.PublicBlockChainAPI, addr common.Address, blockNrOrHash rpc.BlockNumberOrHash) (*types.AccountAmountInfo, error) {
+	return getAccountAmountInfo(ctx, api, "getLockedAmount", addr, blockNrOrHash)
 }
 
-func GetAccountUsedAmount(ctx context.Context, api *ethapi.PublicBlockChainAPI, addr common.Address, blocknumber *big.Int) (*types.AccountAmountInfo, error) {
-	return getAccountAmountInfo(ctx, api, "getUsedAmount", addr, blocknumber)
+func GetAccountUsedAmount(ctx context.Context, api *ethapi.PublicBlockChainAPI, addr common.Address, blockNrOrHash rpc.BlockNumberOrHash) (*types.AccountAmountInfo, error) {
+	return getAccountAmountInfo(ctx, api, "getUsedAmount", addr, blockNrOrHash)
 }
 
-func getAccountAmountInfo(ctx context.Context, api *ethapi.PublicBlockChainAPI, method string, addr common.Address, blocknumber *big.Int) (*types.AccountAmountInfo, error) {
+func getAccountAmountInfo(ctx context.Context, api *ethapi.PublicBlockChainAPI, method string, addr common.Address, blockNrOrHash rpc.BlockNumberOrHash) (*types.AccountAmountInfo, error) {
 	vABI, err := abi.JSON(strings.NewReader(systemcontracts.AccountManagerABI))
 	if err != nil {
 		return nil, err
@@ -213,8 +213,8 @@ func getAccountAmountInfo(ctx context.Context, api *ethapi.PublicBlockChainAPI, 
 		Data: &msgData,
 	}
 
-	//result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
-	result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(blocknumber.Int64())), nil)
+	result, err := api.Call(ctx, args, blockNrOrHash, nil)
+
 	if err != nil {
 		return nil, err
 	}
@@ -230,7 +230,7 @@ func getAccountAmountInfo(ctx context.Context, api *ethapi.PublicBlockChainAPI, 
 	return info, nil
 }
 
-func GetAccountRecords(ctx context.Context, api *ethapi.PublicBlockChainAPI, addr common.Address, blocknumber *big.Int) ([]types.AccountRecord, error) {
+func GetAccountRecords(ctx context.Context, api *ethapi.PublicBlockChainAPI, addr common.Address, blockNrOrHash rpc.BlockNumberOrHash) ([]types.AccountRecord, error) {
 	vABI, err := abi.JSON(strings.NewReader(systemcontracts.AccountManagerABI))
 	if err != nil {
 		return nil, err
@@ -247,9 +247,8 @@ func GetAccountRecords(ctx context.Context, api *ethapi.PublicBlockChainAPI, add
 		To: &systemcontracts.AccountManagerContractAddr,
 		Data: &msgData,
 	}
+	result, err := api.Call(ctx, args, blockNrOrHash, nil)
 
-	//result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
-	result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(blocknumber.Int64())), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -261,7 +260,7 @@ func GetAccountRecords(ctx context.Context, api *ethapi.PublicBlockChainAPI, add
 	return *records, nil
 }
 
-func GetAccountRecord0(ctx context.Context, api *ethapi.PublicBlockChainAPI, addr common.Address, blocknumber *big.Int) (*types.AccountRecord, error) {
+func GetAccountRecord0(ctx context.Context, api *ethapi.PublicBlockChainAPI, addr common.Address, blockNrOrHash rpc.BlockNumberOrHash) (*types.AccountRecord, error) {
 	vABI, err := abi.JSON(strings.NewReader(systemcontracts.AccountManagerABI))
 	if err != nil {
 		return nil, err
@@ -278,9 +277,8 @@ func GetAccountRecord0(ctx context.Context, api *ethapi.PublicBlockChainAPI, add
 		To: &systemcontracts.AccountManagerContractAddr,
 		Data: &msgData,
 	}
+	result, err := api.Call(ctx, args, blockNrOrHash, nil)
 
-	//result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
-	result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(blocknumber.Int64())), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -292,7 +290,7 @@ func GetAccountRecord0(ctx context.Context, api *ethapi.PublicBlockChainAPI, add
 	return record, nil
 }
 
-func GetAccountRecordByID(ctx context.Context, api *ethapi.PublicBlockChainAPI, id *big.Int, blocknumber *big.Int) (*types.AccountRecord, error) {
+func GetAccountRecordByID(ctx context.Context, api *ethapi.PublicBlockChainAPI, id *big.Int, blockNrOrHash rpc.BlockNumberOrHash) (*types.AccountRecord, error) {
 	vABI, err := abi.JSON(strings.NewReader(systemcontracts.AccountManagerABI))
 	if err != nil {
 		return nil, err
@@ -309,9 +307,8 @@ func GetAccountRecordByID(ctx context.Context, api *ethapi.PublicBlockChainAPI, 
 		To: &systemcontracts.AccountManagerContractAddr,
 		Data: &msgData,
 	}
+	result, err := api.Call(ctx, args, blockNrOrHash, nil)
 
-	//result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
-	result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(blocknumber.Int64())), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -323,7 +320,7 @@ func GetAccountRecordByID(ctx context.Context, api *ethapi.PublicBlockChainAPI, 
 	return record, nil
 }
 
-func GetAccountRecordUseInfo(ctx context.Context, api *ethapi.PublicBlockChainAPI, id *big.Int, blocknumber *big.Int) (*types.AccountRecordUseInfo, error) {
+func GetAccountRecordUseInfo(ctx context.Context, api *ethapi.PublicBlockChainAPI, id *big.Int, blockNrOrHash rpc.BlockNumberOrHash) (*types.AccountRecordUseInfo, error) {
 	vABI, err := abi.JSON(strings.NewReader(systemcontracts.AccountManagerABI))
 	if err != nil {
 		return nil, err
@@ -340,9 +337,8 @@ func GetAccountRecordUseInfo(ctx context.Context, api *ethapi.PublicBlockChainAP
 		To: &systemcontracts.AccountManagerContractAddr,
 		Data: &msgData,
 	}
+	result, err := api.Call(ctx, args, blockNrOrHash, nil)
 
-	//result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber), nil)
-	result, err := api.Call(ctx, args, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(blocknumber.Int64())), nil)
 	if err != nil {
 		return nil, err
 	}

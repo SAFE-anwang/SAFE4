@@ -13710,49 +13710,49 @@ module.exports = XMLHttpRequest;
       name: 'getInfo',
       call: 'sysproperty_getInfo',
       params: 2,
-      inputFormatter: [formatters.formatInputString, formatters.formatInputInt]
+      inputFormatter: [formatters.formatInputString, formatters.inputDefaultBlockNumberFormatter]
     });
 
     var getUnconfirmedInfo = new Method({
       name: 'getUnconfirmedInfo',
       call: 'sysproperty_getUnconfirmedInfo',
       params: 2,
-      inputFormatter: [formatters.formatInputString, formatters.formatInputInt]
+      inputFormatter: [formatters.formatInputString, formatters.inputDefaultBlockNumberFormatter]
     });
 
     var getValue = new Method({
       name: 'getValue',
       call: 'sysproperty_getValue',
       params: 2,
-      inputFormatter: [formatters.formatInputString, formatters.formatInputInt]
+      inputFormatter: [formatters.formatInputString, formatters.inputDefaultBlockNumberFormatter]
     });
 
     var getAll = new Method({
       name: 'getAll',
       call: 'sysproperty_getAll',
       params: 1,
-      inputFormatter: [formatters.formatInputInt]
+      inputFormatter: [formatters.inputDefaultBlockNumberFormatter]
     });
 
     var getAllUnconfirmed = new Method({
       name: 'getAllUnconfirmed',
       call: 'sysproperty_getAllUnconfirmed',
       params: 1,
-      inputFormatter: [formatters.formatInputInt]
+      inputFormatter: [formatters.inputDefaultBlockNumberFormatter]
     });
 
     var exist = new Method({
       name: 'exist',
       call: 'sysproperty_exist',
       params: 2,
-      inputFormatter: [formatters.formatInputString, formatters.formatInputInt]
+      inputFormatter: [formatters.formatInputString, formatters.inputDefaultBlockNumberFormatter]
     });
 
     var existUnconfirmed = new Method({
       name: 'existUnconfirmed',
       call: 'sysproperty_existUnconfirmed',
       params: 2,
-      inputFormatter: [formatters.formatInputString, formatters.formatInputInt]
+      inputFormatter: [formatters.formatInputString, formatters.inputDefaultBlockNumberFormatter]
     });
 
     return [
@@ -13836,56 +13836,56 @@ module.exports = XMLHttpRequest;
         name: 'getTotalAmount',
         call: 'account_getTotalAmount',
         params: 2,
-        inputFormatter: [formatters.inputAddressFormatter, formatters.formatInputInt]
+        inputFormatter: [formatters.inputAddressFormatter, formatters.inputDefaultBlockNumberFormatter]
       });
 
       var getAvailableAmount = new Method({
         name: 'getAvailableAmount',
         call: 'account_getAvailableAmount',
         params: 2,
-        inputFormatter: [formatters.inputAddressFormatter, formatters.formatInputInt]
+        inputFormatter: [formatters.inputAddressFormatter, formatters.inputDefaultBlockNumberFormatter]
       });
 
       var getLockedAmount = new Method({
         name: 'getLockedAmount',
         call: 'account_getLockedAmount',
         params: 2,
-        inputFormatter: [formatters.inputAddressFormatter, formatters.formatInputInt]
+        inputFormatter: [formatters.inputAddressFormatter, formatters.inputDefaultBlockNumberFormatter]
       });
 
       var getUsedAmount = new Method({
         name: 'getUsedAmount',
         call: 'account_getUsedAmount',
         params: 2,
-        inputFormatter: [formatters.inputAddressFormatter, formatters.formatInputInt]
+        inputFormatter: [formatters.inputAddressFormatter, formatters.inputDefaultBlockNumberFormatter]
       });
 
       var getRecords = new Method({
         name: 'getRecords',
         call: 'account_getRecords',
         params: 2,
-        inputFormatter: [formatters.inputAddressFormatter, formatters.formatInputInt]
+        inputFormatter: [formatters.inputAddressFormatter, formatters.inputDefaultBlockNumberFormatter]
       });
 
       var getRecord0 = new Method({
         name: 'getRecord0',
         call: 'account_getRecord0',
         params: 2,
-        inputFormatter: [formatters.inputAddressFormatter, formatters.formatInputInt]
+        inputFormatter: [formatters.inputAddressFormatter, formatters.inputDefaultBlockNumberFormatter]
       });
 
       var getRecordByID = new Method({
         name: 'getRecordByID',
         call: 'account_getRecordByID',
         params: 2,
-        inputFormatter: [formatters.formatInputInt, formatters.formatInputInt]
+        inputFormatter: [formatters.formatInputInt, formatters.inputDefaultBlockNumberFormatter]
       });
 
       var getRecordUseInfo = new Method({
         name: 'getRecordUseInfo',
         call: 'account_getRecordUseInfo',
         params: 2,
-        inputFormatter: [formatters.formatInputInt, formatters.formatInputInt]
+        inputFormatter: [formatters.formatInputInt, formatters.inputDefaultBlockNumberFormatter]
       });
 
       return [
@@ -13936,8 +13936,8 @@ module.exports = XMLHttpRequest;
     var start = new Method({
       name: 'start',
       call: 'masternode_start',
-      params: 2,
-      inputFormatter: [formatters.inputAddressFormatter, formatters.formatInputInt]
+      params: 1,
+      inputFormatter: [formatters.inputAddressFormatter]
     });
 
     var stop = new Method({
@@ -14007,70 +14007,70 @@ module.exports = XMLHttpRequest;
       name: 'getInfo',
       call: 'masternode_getInfo',
       params: 2,
-      inputFormatter: [formatters.inputAddressFormatter, formatters.formatInputInt]
+      inputFormatter: [formatters.inputAddressFormatter, formatters.inputDefaultBlockNumberFormatter]
     });
 
     var getInfoByID = new Method({
       name: 'getInfoByID',
       call: 'masternode_getInfoByID',
       params: 2,
-      inputFormatter: [formatters.formatInputInt, formatters.formatInputInt]
+      inputFormatter: [formatters.formatInputInt, formatters.inputDefaultBlockNumberFormatter]
     });
 
     var getNext = new Method({
       name: 'getNext',
       call: 'masternode_getNext',
       params: 1,
-      inputFormatter: [formatters.formatInputInt]
+      inputFormatter: [formatters.inputDefaultBlockNumberFormatter]
     });
 
     var getAll = new Method({
       name: 'getAll',
       call: 'masternode_getAll',
       params: 1,
-      inputFormatter: [formatters.formatInputInt]
+      inputFormatter: [formatters.inputDefaultBlockNumberFormatter]
     });
 
     var getOfficials = new Method({
       name: 'getOfficials',
       call: 'masternode_getOfficials',
       params: 1,
-      inputFormatter: [formatters.formatInputInt]
+      inputFormatter: [formatters.inputDefaultBlockNumberFormatter]
     });
 
     var getNum = new Method({
       name: 'getNum',
       call: 'masternode_getNum',
       params: 1,
-      inputFormatter: [formatters.formatInputInt]
+      inputFormatter: [formatters.inputDefaultBlockNumberFormatter]
     });
 
     var exist = new Method({
       name: 'exist',
       call: 'masternode_exist',
       params: 2,
-      inputFormatter: [formatters.inputAddressFormatter, formatters.formatInputInt]
+      inputFormatter: [formatters.inputAddressFormatter, formatters.inputDefaultBlockNumberFormatter]
     });
 
     var existID = new Method({
       name: 'existID',
       call: 'masternode_existID',
       params: 2,
-      inputFormatter: [formatters.formatInputInt, formatters.formatInputInt]
+      inputFormatter: [formatters.formatInputInt, formatters.inputDefaultBlockNumberFormatter]
     });
 
     var existEnode = new Method({
       name: 'existEnode',
       call: 'masternode_existEnode',
       params: 2,
-      inputFormatter: [formatters.formatInputString, formatters.formatInputInt]
+      inputFormatter: [formatters.formatInputString, formatters.inputDefaultBlockNumberFormatter]
     });
 
     var existLockID = new Method({
       name: 'existLockID',
       call: 'masternode_existLockID',
       params: 3,
-      inputFormatter: [formatters.inputAddressFormatter, formatters.formatInputInt, formatters.formatInputInt]
+      inputFormatter: [formatters.inputAddressFormatter, formatters.formatInputInt, formatters.inputDefaultBlockNumberFormatter]
     });
 
     return [
@@ -14128,8 +14128,8 @@ module.exports = XMLHttpRequest;
     var start = new Method({
       name: 'start',
       call: 'supernode_start',
-      params: 2,
-      inputFormatter: [formatters.inputAddressFormatter, formatters.formatInputInt]
+      params: 1,
+      inputFormatter: [formatters.inputAddressFormatter]
     });
 
     var stop = new Method({
@@ -14206,77 +14206,77 @@ module.exports = XMLHttpRequest;
       name: 'getInfo',
       call: 'supernode_getInfo',
       params: 2,
-      inputFormatter: [formatters.inputAddressFormatter, formatters.formatInputInt]
+      inputFormatter: [formatters.inputAddressFormatter, formatters.inputDefaultBlockNumberFormatter]
     });
 
     var getInfoByID = new Method({
       name: 'getInfoByID',
       call: 'supernode_getInfoByID',
       params: 2,
-      inputFormatter: [formatters.formatInputInt, formatters.formatInputInt]
+      inputFormatter: [formatters.formatInputInt, formatters.inputDefaultBlockNumberFormatter]
     });
 
     var getAll = new Method({
       name: 'getAll',
       call: 'supernode_getAll',
       params: 1,
-      inputFormatter: [formatters.formatInputInt]
+      inputFormatter: [formatters.inputDefaultBlockNumberFormatter]
     });
 
     var getTops = new Method({
       name: 'getTops',
       call: 'supernode_getTops',
       params: 1,
-      inputFormatter: [formatters.formatInputInt]
+      inputFormatter: [formatters.inputDefaultBlockNumberFormatter]
     });
 
     var getOfficials = new Method({
       name: 'getOfficials',
       call: 'supernode_getOfficials',
       params: 1,
-      inputFormatter: [formatters.formatInputInt]
+      inputFormatter: [formatters.inputDefaultBlockNumberFormatter]
     });
 
     var getNum = new Method({
       name: 'getNum',
       call: 'supernode_getNum',
       params: 1,
-      inputFormatter: [formatters.formatInputInt]
+      inputFormatter: [formatters.inputDefaultBlockNumberFormatter]
     });
 
     var exist = new Method({
       name: 'exist',
       call: 'supernode_exist',
       params: 2,
-      inputFormatter: [formatters.inputAddressFormatter, formatters.formatInputInt]
+      inputFormatter: [formatters.inputAddressFormatter, formatters.inputDefaultBlockNumberFormatter]
     });
 
     var existID = new Method({
       name: 'existID',
       call: 'supernode_existID',
       params: 2,
-      inputFormatter: [formatters.formatInputInt, formatters.formatInputInt]
+      inputFormatter: [formatters.formatInputInt, formatters.inputDefaultBlockNumberFormatter]
     });
 
     var existName = new Method({
       name: 'existName',
       call: 'supernode_existName',
       params: 2,
-      inputFormatter: [formatters.formatInputString, formatters.formatInputInt]
+      inputFormatter: [formatters.formatInputString, formatters.inputDefaultBlockNumberFormatter]
     });
 
     var existEnode = new Method({
       name: 'existEnode',
       call: 'supernode_existEnode',
       params: 2,
-      inputFormatter: [formatters.formatInputString, formatters.formatInputInt]
+      inputFormatter: [formatters.formatInputString, formatters.inputDefaultBlockNumberFormatter]
     });
 
     var existLockID = new Method({
       name: 'existLockID',
       call: 'supernode_existLockID',
       params: 3,
-      inputFormatter: [formatters.inputAddressFormatter, formatters.formatInputInt, formatters.formatInputInt]
+      inputFormatter: [formatters.inputAddressFormatter, formatters.formatInputInt, formatters.inputDefaultBlockNumberFormatter]
     });
 
     return [
@@ -14358,56 +14358,56 @@ module.exports = XMLHttpRequest;
         name: 'getSuperNodes4Voter',
         call: 'snvote_getSuperNodes4Voter',
         params: 2,
-        inputFormatter: [formatters.inputAddressFormatter, formatters.formatInputInt]
+        inputFormatter: [formatters.inputAddressFormatter, formatters.inputDefaultBlockNumberFormatter]
       });
 
       var getRecordIDs4Voter = new Method({
         name: 'getRecordIDs4Voter',
         call: 'snvote_getRecordIDs4Voter',
         params: 2,
-        inputFormatter: [formatters.inputAddressFormatter, formatters.formatInputInt]
+        inputFormatter: [formatters.inputAddressFormatter, formatters.inputDefaultBlockNumberFormatter]
       });
 
       var getVoters4SN = new Method({
         name: 'getVoters4SN',
         call: 'snvote_getVoters4SN',
         params: 2,
-        inputFormatter: [formatters.inputAddressFormatter, formatters.formatInputInt]
+        inputFormatter: [formatters.inputAddressFormatter, formatters.inputDefaultBlockNumberFormatter]
       });
 
       var getVoteNum4SN = new Method({
         name: 'getVoteNum4SN',
         call: 'snvote_getVoteNum4SN',
         params: 2,
-        inputFormatter: [formatters.inputAddressFormatter, formatters.formatInputInt]
+        inputFormatter: [formatters.inputAddressFormatter, formatters.inputDefaultBlockNumberFormatter]
       });
 
       var getProxies4Voter = new Method({
         name: 'getProxies4Voter',
         call: 'snvote_getProxies4Voter',
         params: 2,
-        inputFormatter: [formatters.inputAddressFormatter, formatters.formatInputInt]
+        inputFormatter: [formatters.inputAddressFormatter, formatters.inputDefaultBlockNumberFormatter]
       });
 
       var getProxiedRecordIDs4Voter = new Method({
         name: 'getProxiedRecordIDs4Voter',
         call: 'snvote_getProxiedRecordIDs4Voter',
         params: 2,
-        inputFormatter: [formatters.inputAddressFormatter, formatters.formatInputInt]
+        inputFormatter: [formatters.inputAddressFormatter, formatters.inputDefaultBlockNumberFormatter]
       });
 
       var getVoters4Proxy = new Method({
         name: 'getVoters4Proxy',
         call: 'snvote_getVoters4Proxy',
         params: 2,
-        inputFormatter: [formatters.inputAddressFormatter, formatters.formatInputInt]
+        inputFormatter: [formatters.inputAddressFormatter, formatters.inputDefaultBlockNumberFormatter]
       });
 
       var getVoteNum4Proxy = new Method({
         name: 'getVoteNum4Proxy',
         call: 'snvote_getVoteNum4Proxy',
         params: 2,
-        inputFormatter: [formatters.inputAddressFormatter, formatters.formatInputInt]
+        inputFormatter: [formatters.inputAddressFormatter, formatters.inputDefaultBlockNumberFormatter]
       });
 
       return [
@@ -14513,28 +14513,28 @@ module.exports = XMLHttpRequest;
         name: 'getInfo',
         call: 'proposal_getInfo',
         params: 2,
-        inputFormatter: [formatters.formatInputInt, formatters.formatInputInt]
+        inputFormatter: [formatters.formatInputInt, formatters.inputDefaultBlockNumberFormatter]
       });
 
       var getAll = new Method({
         name: 'getAll',
         call: 'proposal_getAll',
         params: 1,
-        inputFormatter: [formatters.formatInputInt]
+        inputFormatter: [formatters.inputDefaultBlockNumberFormatter]
       });
 
       var getMines = new Method({
         name: 'getMines',
         call: 'proposal_getMines',
         params: 2,
-        inputFormatter: [formatters.inputAddressFormatter, formatters.formatInputInt]
+        inputFormatter: [formatters.inputAddressFormatter, formatters.inputDefaultBlockNumberFormatter]
       });
 
       var exist = new Method({
         name: 'exist',
         call: 'proposal_exist',
         params: 2,
-        inputFormatter: [formatters.formatInputInt, formatters.formatInputInt]
+        inputFormatter: [formatters.formatInputInt, formatters.inputDefaultBlockNumberFormatter]
       });
 
       return [

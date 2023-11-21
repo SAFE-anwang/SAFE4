@@ -9,6 +9,7 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/internal/ethapi"
 	"github.com/ethereum/go-ethereum/log"
+	"github.com/ethereum/go-ethereum/rpc"
 	"math/big"
 	"strings"
 )
@@ -24,7 +25,7 @@ func NewPublicSuperNodeAPI(e *Ethereum) *PublicSuperNodeAPI {
 	return &PublicSuperNodeAPI{e, e.GetPublicBlockChainAPI(), e.GetPublicTransactionPoolAPI(), ""}
 }
 
-func (api *PublicSuperNodeAPI) Start(ctx context.Context, addr common.Address, blocknumber *big.Int) (bool, error) {
+func (api *PublicSuperNodeAPI) Start(ctx context.Context, addr common.Address) (bool, error) {
 	if len(api.enode) == 0 {
 		temp := api.e.p2pServer.NodeInfo().Enode
 		arr := strings.Split(temp, "?")
@@ -34,7 +35,7 @@ func (api *PublicSuperNodeAPI) Start(ctx context.Context, addr common.Address, b
 		api.enode = arr[0]
 	}
 
-	info, err := api.GetInfo(ctx, addr, blocknumber)
+	info, err := api.GetInfo(ctx, addr, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber))
 	if err != nil {
 		return false, err
 	}
@@ -93,46 +94,46 @@ func (api *PublicSuperNodeAPI) ChangeIsOfficial(ctx context.Context, from common
 	return contract_api.ChangeSuperNodeIsOfficial(ctx, api.blockChainAPI, api.transactionPoolAPI, from, addr, flag)
 }
 
-func (api *PublicSuperNodeAPI) GetInfo(ctx context.Context, addr common.Address, blocknumber *big.Int) (*types.SuperNodeInfo, error) {
-	return contract_api.GetSuperNodeInfo(ctx, api.blockChainAPI, addr, blocknumber)
+func (api *PublicSuperNodeAPI) GetInfo(ctx context.Context, addr common.Address, blockNrOrHash rpc.BlockNumberOrHash) (*types.SuperNodeInfo, error) {
+	return contract_api.GetSuperNodeInfo(ctx, api.blockChainAPI, addr, blockNrOrHash)
 }
 
-func (api *PublicSuperNodeAPI) GetInfoByID(ctx context.Context, id *big.Int, blocknumber *big.Int) (*types.SuperNodeInfo, error) {
-	return contract_api.GetSuperNodeInfoByID(ctx, api.blockChainAPI, id, blocknumber)
+func (api *PublicSuperNodeAPI) GetInfoByID(ctx context.Context, id *big.Int, blockNrOrHash rpc.BlockNumberOrHash) (*types.SuperNodeInfo, error) {
+	return contract_api.GetSuperNodeInfoByID(ctx, api.blockChainAPI, id, blockNrOrHash)
 }
 
-func (api *PublicSuperNodeAPI) GetAll(ctx context.Context, blocknumber *big.Int) ([]types.SuperNodeInfo, error) {
-	return contract_api.GetAllSuperNodes(ctx, api.blockChainAPI, blocknumber)
+func (api *PublicSuperNodeAPI) GetAll(ctx context.Context, blockNrOrHash rpc.BlockNumberOrHash) ([]types.SuperNodeInfo, error) {
+	return contract_api.GetAllSuperNodes(ctx, api.blockChainAPI, blockNrOrHash)
 }
 
-func (api *PublicSuperNodeAPI) GetTops(ctx context.Context, blocknumber *big.Int) ([]types.SuperNodeInfo, error) {
-	return contract_api.GetTopSuperNodes(ctx, api.blockChainAPI, blocknumber)
+func (api *PublicSuperNodeAPI) GetTops(ctx context.Context, blockNrOrHash rpc.BlockNumberOrHash) ([]types.SuperNodeInfo, error) {
+	return contract_api.GetTopSuperNodes(ctx, api.blockChainAPI, blockNrOrHash)
 }
 
-func (api *PublicSuperNodeAPI) GetOfficials(ctx context.Context, blocknumber *big.Int) ([]types.SuperNodeInfo, error) {
-	return contract_api.GetOfficialSuperNodes(ctx, api.blockChainAPI, blocknumber)
+func (api *PublicSuperNodeAPI) GetOfficials(ctx context.Context, blockNrOrHash rpc.BlockNumberOrHash) ([]types.SuperNodeInfo, error) {
+	return contract_api.GetOfficialSuperNodes(ctx, api.blockChainAPI, blockNrOrHash)
 }
 
-func (api *PublicSuperNodeAPI) GetNum(ctx context.Context, blocknumber *big.Int) (*big.Int, error) {
-	return contract_api.GetSuperNodeNum(ctx, api.blockChainAPI, blocknumber)
+func (api *PublicSuperNodeAPI) GetNum(ctx context.Context, blockNrOrHash rpc.BlockNumberOrHash) (*big.Int, error) {
+	return contract_api.GetSuperNodeNum(ctx, api.blockChainAPI, blockNrOrHash)
 }
 
-func (api *PublicSuperNodeAPI) Exist(ctx context.Context, addr common.Address, blocknumber *big.Int) (bool, error) {
-	return contract_api.ExistSuperNode(ctx, api.blockChainAPI, addr, blocknumber)
+func (api *PublicSuperNodeAPI) Exist(ctx context.Context, addr common.Address, blockNrOrHash rpc.BlockNumberOrHash) (bool, error) {
+	return contract_api.ExistSuperNode(ctx, api.blockChainAPI, addr, blockNrOrHash)
 }
 
-func (api *PublicSuperNodeAPI) ExistID(ctx context.Context, id *big.Int, blocknumber *big.Int) (bool, error) {
-	return contract_api.ExistSuperNodeID(ctx, api.blockChainAPI, id, blocknumber)
+func (api *PublicSuperNodeAPI) ExistID(ctx context.Context, id *big.Int, blockNrOrHash rpc.BlockNumberOrHash) (bool, error) {
+	return contract_api.ExistSuperNodeID(ctx, api.blockChainAPI, id, blockNrOrHash)
 }
 
-func (api *PublicSuperNodeAPI) ExistName(ctx context.Context, name string, blocknumber *big.Int) (bool, error) {
-	return contract_api.ExistSuperNodeName(ctx, api.blockChainAPI, name, blocknumber)
+func (api *PublicSuperNodeAPI) ExistName(ctx context.Context, name string, blockNrOrHash rpc.BlockNumberOrHash) (bool, error) {
+	return contract_api.ExistSuperNodeName(ctx, api.blockChainAPI, name, blockNrOrHash)
 }
 
-func (api *PublicSuperNodeAPI) ExistEnode(ctx context.Context, enode string, blocknumber *big.Int) (bool, error) {
-	return contract_api.ExistSuperNodeEnode(ctx, api.blockChainAPI, enode, blocknumber)
+func (api *PublicSuperNodeAPI) ExistEnode(ctx context.Context, enode string, blockNrOrHash rpc.BlockNumberOrHash) (bool, error) {
+	return contract_api.ExistSuperNodeEnode(ctx, api.blockChainAPI, enode, blockNrOrHash)
 }
 
-func (api *PublicSuperNodeAPI) ExistLockID(ctx context.Context, addr common.Address, lockID *big.Int, blocknumber *big.Int) (bool, error) {
-	return contract_api.ExistSuperNodeLockID(ctx, api.blockChainAPI, addr, lockID, blocknumber)
+func (api *PublicSuperNodeAPI) ExistLockID(ctx context.Context, addr common.Address, lockID *big.Int, blockNrOrHash rpc.BlockNumberOrHash) (bool, error) {
+	return contract_api.ExistSuperNodeLockID(ctx, api.blockChainAPI, addr, lockID, blockNrOrHash)
 }

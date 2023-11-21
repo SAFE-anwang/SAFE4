@@ -10,6 +10,7 @@ import (
 	"github.com/ethereum/go-ethereum/event"
 	"github.com/ethereum/go-ethereum/internal/ethapi"
 	"github.com/ethereum/go-ethereum/log"
+	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/status-im/keycard-go/hexutils"
 	"math/big"
 	"strings"
@@ -136,7 +137,7 @@ func (monitor *NodeStateMonitor) loop() {
 					monitor.lock.Lock()
 					monitor.mnMonitorInfos[ping.Id.Int64()] = MonitorInfo{StateRunning, 0, curTime}
 					monitor.lock.Unlock()
-					info, err := contract_api.GetMasterNodeInfoByID(monitor.ctx, monitor.blockChainAPI, ping.Id, monitor.e.blockchain.CurrentBlock().Number())
+					info, err := contract_api.GetMasterNodeInfoByID(monitor.ctx, monitor.blockChainAPI, ping.Id, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(monitor.e.blockchain.CurrentBlock().Number().Int64())))
 					if err != nil || hexutils.BytesToHex(pub)[1:] == GetPubKeyFromEnode(info.Enode) {
 						log.Warn("node-state-monitor", "ping", ping, "error", "verify signature failed")
 						break
@@ -145,7 +146,7 @@ func (monitor *NodeStateMonitor) loop() {
 					monitor.lock.Lock()
 					monitor.snMonitorInfos[ping.Id.Int64()] = MonitorInfo{StateRunning, 0, curTime}
 					monitor.lock.Unlock()
-					info, err := contract_api.GetSuperNodeInfoByID(monitor.ctx, monitor.blockChainAPI, ping.Id, monitor.e.blockchain.CurrentBlock().Number())
+					info, err := contract_api.GetSuperNodeInfoByID(monitor.ctx, monitor.blockChainAPI, ping.Id, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(monitor.e.blockchain.CurrentBlock().Number().Int64())))
 					if err != nil || hexutils.BytesToHex(pub)[1:] == GetPubKeyFromEnode(info.Enode) {
 						log.Warn("node-state-monitor", "ping", ping, "error", "verify signature failed")
 						break
@@ -206,7 +207,7 @@ func (monitor *NodeStateMonitor) broadcastLoop() {
 
 			curTime := time.Now().Unix()
 			curBlock := monitor.e.blockchain.CurrentBlock()
-			info1, err := contract_api.GetSuperNodeInfo(monitor.ctx, monitor.blockChainAPI, addr, monitor.e.blockchain.CurrentBlock().Number())
+			info1, err := contract_api.GetSuperNodeInfo(monitor.ctx, monitor.blockChainAPI, addr, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(curBlock.Number().Int64())))
 			if err == nil {
 				if monitor.enode != info1.Enode {
 					if lastAddr != addr {
@@ -221,7 +222,7 @@ func (monitor *NodeStateMonitor) broadcastLoop() {
 				monitor.snMonitorInfos[ping.Id.Int64()] = MonitorInfo{StateRunning, 0, curTime}
 				monitor.lock.Unlock()
 			} else {
-				info2, err := contract_api.GetMasterNodeInfo(monitor.ctx, monitor.blockChainAPI, addr, curBlock.Number())
+				info2, err := contract_api.GetMasterNodeInfo(monitor.ctx, monitor.blockChainAPI, addr, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(curBlock.Number().Int64())))
 				if err == nil {
 					if monitor.enode != info2.Enode {
 						if lastAddr != addr {
@@ -242,7 +243,7 @@ func (monitor *NodeStateMonitor) broadcastLoop() {
 }
 
 func (monitor *NodeStateMonitor) isSuperNode(addr common.Address) bool {
-	infos, err := contract_api.GetTopSuperNodes(monitor.ctx, monitor.blockChainAPI, monitor.e.blockchain.CurrentBlock().Number())
+	infos, err := contract_api.GetTopSuperNodes(monitor.ctx, monitor.blockChainAPI, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(monitor.e.blockchain.CurrentBlock().Number().Int64())))
 	if err != nil {
 		return false
 	}
@@ -259,7 +260,7 @@ func (monitor *NodeStateMonitor) isSuperNode(addr common.Address) bool {
 func (monitor *NodeStateMonitor) collectMasterNodes() ([]*big.Int, []*big.Int) {
 	var ids []*big.Int
 	var states []*big.Int
-	infos, err := contract_api.GetAllMasterNodes(monitor.ctx, monitor.blockChainAPI, monitor.e.blockchain.CurrentBlock().Number())
+	infos, err := contract_api.GetAllMasterNodes(monitor.ctx, monitor.blockChainAPI, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(monitor.e.blockchain.CurrentBlock().Number().Int64())))
 	if err != nil {
 		return ids, states
 	}
@@ -297,7 +298,7 @@ func (monitor *NodeStateMonitor) collectMasterNodes() ([]*big.Int, []*big.Int) {
 func (monitor *NodeStateMonitor) collectSuperNodes() ([]*big.Int, []*big.Int) {
 	var ids []*big.Int
 	var states []*big.Int
-	infos, err := contract_api.GetAllSuperNodes(monitor.ctx, monitor.blockChainAPI, monitor.e.blockchain.CurrentBlock().Number())
+	infos, err := contract_api.GetAllSuperNodes(monitor.ctx, monitor.blockChainAPI, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(monitor.e.blockchain.CurrentBlock().Number().Int64())))
 	if err != nil {
 		return ids, states
 	}

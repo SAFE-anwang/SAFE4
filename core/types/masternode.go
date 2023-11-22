@@ -27,7 +27,6 @@ type MasterNodeInfo struct {
 	Id            *big.Int                  `json:"id"            gencodec:"required"`
 	Addr          common.Address            `json:"addr"          gencodec:"required"`
 	Creator       common.Address            `json:"creator"       gencodec:"required"`
-	Amount        *big.Int                  `json:"amount"        gencodec:"required"`
 	Enode         string                    `json:"enode"         gencodec:"required"`
 	Description   string                    `json:"description"   gencodec:"required"`
 	IsOfficial    bool                      `json:"isOfficial"    gencodec:"required"`

@@ -1068,7 +1068,7 @@ func (s *Spos) distributeReward(header *types.Header, state *state.StateDB, txs 
 	totalReward := getBlockSubsidy(number, withoutSuperBlockPart)
 	masterNodePayment := getMasternodePayment(totalReward)
 	superNodeReward := new(big.Int).Sub(totalReward, masterNodePayment)
-	mnAddr, err := contract_api.GetNextMasterNode(s.ctx, s.blockChainAPI, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(header.Number.Int64())))
+	mnAddr, err := contract_api.GetNextMasterNode(s.ctx, s.blockChainAPI, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(header.Number.Int64() - 1)))
 	if err != nil {
 		return nil, err
 	}

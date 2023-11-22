@@ -1173,7 +1173,7 @@ func (s *Spos) CheckRewardTransaction(block *types.Block) error{
 			superNodeReward := new(big.Int).Sub(totalReward, masterNodePayment)
 			proposalReward := getBlockSubsidy(blocknumber, onlySuperBlockPart)
 
-			nextMNAddr, err := contract_api.GetNextMasterNode(s.ctx, s.blockChainAPI, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(block.Number().Int64())))
+			nextMNAddr, err := contract_api.GetNextMasterNode(s.ctx, s.blockChainAPI, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(block.Number().Int64() - 1)))
 			if err != nil {
 				return err
 			}

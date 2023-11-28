@@ -609,3 +609,63 @@ func ExistSuperNodeLockID(ctx context.Context, api *ethapi.PublicBlockChainAPI, 
 	}
 	return *value, nil
 }
+
+func IsValidSuperNode(ctx context.Context, api *ethapi.PublicBlockChainAPI, addr common.Address, blockNrOrHash rpc.BlockNumberOrHash) (bool, error) {
+	vABI, err := abi.JSON(strings.NewReader(systemcontracts.SuperNodeStorageABI))
+	if err != nil {
+		return false, err
+	}
+
+	method := "isValid"
+	data, err := vABI.Pack(method, addr)
+	if err != nil {
+		return false, err
+	}
+
+	msgData := (hexutil.Bytes)(data)
+	args := ethapi.TransactionArgs{
+		To: &systemcontracts.SuperNodeStorageContractAddr,
+		Data: &msgData,
+	}
+	result, err := api.Call(ctx, args, blockNrOrHash, nil)
+
+	if err != nil {
+		return false, err
+	}
+
+	value := new(bool)
+	if err := vABI.UnpackIntoInterface(&value, method, result); err != nil {
+		return false, err
+	}
+	return *value, nil
+}
+
+func IsFormalSuperNode(ctx context.Context, api *ethapi.PublicBlockChainAPI, addr common.Address, blockNrOrHash rpc.BlockNumberOrHash) (bool, error) {
+	vABI, err := abi.JSON(strings.NewReader(systemcontracts.SuperNodeStorageABI))
+	if err != nil {
+		return false, err
+	}
+
+	method := "isFormal"
+	data, err := vABI.Pack(method, addr)
+	if err != nil {
+		return false, err
+	}
+
+	msgData := (hexutil.Bytes)(data)
+	args := ethapi.TransactionArgs{
+		To: &systemcontracts.SuperNodeStorageContractAddr,
+		Data: &msgData,
+	}
+	result, err := api.Call(ctx, args, blockNrOrHash, nil)
+
+	if err != nil {
+		return false, err
+	}
+
+	value := new(bool)
+	if err := vABI.UnpackIntoInterface(&value, method, result); err != nil {
+		return false, err
+	}
+	return *value, nil
+}

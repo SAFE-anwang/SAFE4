@@ -14073,6 +14073,13 @@ module.exports = XMLHttpRequest;
       inputFormatter: [formatters.inputAddressFormatter, formatters.formatInputInt, formatters.inputDefaultBlockNumberFormatter]
     });
 
+    var isValid = new Method({
+      name: 'isValid',
+      call: 'masternode_isValid',
+      params: 2,
+      inputFormatter: [formatters.inputAddressFormatter, formatters.inputDefaultBlockNumberFormatter]
+    });
+
     return [
       start,
       stop,
@@ -14093,7 +14100,8 @@ module.exports = XMLHttpRequest;
       exist,
       existID,
       existEnode,
-      existLockID
+      existLockID,
+      isValid
     ];
   };
 
@@ -14279,6 +14287,20 @@ module.exports = XMLHttpRequest;
       inputFormatter: [formatters.inputAddressFormatter, formatters.formatInputInt, formatters.inputDefaultBlockNumberFormatter]
     });
 
+    var isValid = new Method({
+      name: 'isValid',
+      call: 'supernode_isValid',
+      params: 2,
+      inputFormatter: [formatters.inputAddressFormatter, formatters.inputDefaultBlockNumberFormatter]
+    });
+
+    var isFormal = new Method({
+      name: 'isFormal',
+      call: 'supernode_isFormal',
+      params: 2,
+      inputFormatter: [formatters.inputAddressFormatter, formatters.inputDefaultBlockNumberFormatter]
+    });
+
     return [
       start,
       stop,
@@ -14301,7 +14323,9 @@ module.exports = XMLHttpRequest;
       existID,
       existName,
       existEnode,
-      existLockID
+      existLockID,
+      isValid,
+      isFormal
     ];
   };
 

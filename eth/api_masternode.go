@@ -129,3 +129,7 @@ func (api *PublicMasterNodeAPI) ExistEnode(ctx context.Context, enode string, bl
 func (api *PublicMasterNodeAPI) ExistLockID(ctx context.Context, addr common.Address, lockID *big.Int, blockNrOrHash rpc.BlockNumberOrHash) (bool, error) {
 	return contract_api.ExistMasterNodeLockID(ctx, api.blockChainAPI, addr, lockID, blockNrOrHash)
 }
+
+func (api *PublicMasterNodeAPI) IsValid(ctx context.Context, addr common.Address, blockNrOrHash rpc.BlockNumberOrHash) (bool, error) {
+	return contract_api.IsValidMasterNode(ctx, api.blockChainAPI, addr, blockNrOrHash)
+}

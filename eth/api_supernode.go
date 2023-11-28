@@ -137,3 +137,11 @@ func (api *PublicSuperNodeAPI) ExistEnode(ctx context.Context, enode string, blo
 func (api *PublicSuperNodeAPI) ExistLockID(ctx context.Context, addr common.Address, lockID *big.Int, blockNrOrHash rpc.BlockNumberOrHash) (bool, error) {
 	return contract_api.ExistSuperNodeLockID(ctx, api.blockChainAPI, addr, lockID, blockNrOrHash)
 }
+
+func (api *PublicSuperNodeAPI) IsValid(ctx context.Context, addr common.Address, blockNrOrHash rpc.BlockNumberOrHash) (bool, error) {
+	return contract_api.IsValidSuperNode(ctx, api.blockChainAPI, addr, blockNrOrHash)
+}
+
+func (api *PublicSuperNodeAPI) IsFormal(ctx context.Context, addr common.Address, blockNrOrHash rpc.BlockNumberOrHash) (bool, error) {
+	return contract_api.IsFormalSuperNode(ctx, api.blockChainAPI, addr, blockNrOrHash)
+}

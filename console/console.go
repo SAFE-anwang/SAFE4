@@ -365,6 +365,7 @@ func (c *Console) initMasterNode(vm *goja.Runtime, bridge *bridge) {
 	getJeth(vm).Set("existMasterNodeID", masternode.Get("existID"))
 	getJeth(vm).Set("existMasterNodeEnode", masternode.Get("existEnode"))
 	getJeth(vm).Set("existMasterNodeLockID", masternode.Get("existLockID"))
+	getJeth(vm).Set("isValidMasterNode", masternode.Get("isValid"))
 
 	masternode.Set("start", jsre.MakeCallback(vm, bridge.StartMasterNode))
 	masternode.Set("stop", jsre.MakeCallback(vm, bridge.StopMasterNode))
@@ -386,6 +387,7 @@ func (c *Console) initMasterNode(vm *goja.Runtime, bridge *bridge) {
 	masternode.Set("existID", jsre.MakeCallback(vm, bridge.ExistMasterNodeID))
 	masternode.Set("existEnode", jsre.MakeCallback(vm, bridge.ExistMasterNodeEnode))
 	masternode.Set("existLockID", jsre.MakeCallback(vm, bridge.ExistMasterNodeLockID))
+	masternode.Set("isValid", jsre.MakeCallback(vm, bridge.IsValidMasterNode))
 }
 
 func (c *Console) initSuperNode(vm *goja.Runtime, bridge *bridge) {
@@ -416,6 +418,8 @@ func (c *Console) initSuperNode(vm *goja.Runtime, bridge *bridge) {
 	getJeth(vm).Set("existSuperNodeName", supernode.Get("existName"))
 	getJeth(vm).Set("existSuperNodeEnode", supernode.Get("existEnode"))
 	getJeth(vm).Set("existSuperNodeLockID", supernode.Get("existLockID"))
+	getJeth(vm).Set("isValidSuperNode", supernode.Get("isValid"))
+	getJeth(vm).Set("isFormalSuperNode", supernode.Get("isFormal"))
 
 	supernode.Set("start", jsre.MakeCallback(vm, bridge.StartSuperNode))
 	supernode.Set("stop", jsre.MakeCallback(vm, bridge.StopSuperNode))
@@ -439,6 +443,8 @@ func (c *Console) initSuperNode(vm *goja.Runtime, bridge *bridge) {
 	supernode.Set("existName", jsre.MakeCallback(vm, bridge.ExistSuperNodeName))
 	supernode.Set("existEnode", jsre.MakeCallback(vm, bridge.ExistSuperNodeEnode))
 	supernode.Set("existLockID", jsre.MakeCallback(vm, bridge.ExistSuperNodeLockID))
+	supernode.Set("isValid", jsre.MakeCallback(vm, bridge.IsValidSuperNode))
+	supernode.Set("isFormal", jsre.MakeCallback(vm, bridge.IsFormalSuperNode))
 }
 
 func (c *Console) initSNVote(vm *goja.Runtime, bridge *bridge) {

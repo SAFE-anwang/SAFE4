@@ -867,6 +867,14 @@ func (b *bridge) ExistMasterNodeLockID(call jsre.Call) (goja.Value, error) {
 	return existMasterNodeLockID(goja.Null(), call.Argument(0), call.Argument(1), call.Argument(2))
 }
 
+func (b *bridge) IsValidMasterNode(call jsre.Call) (goja.Value, error) {
+	isValidMasterNode, callable := goja.AssertFunction(getJeth(call.VM).Get("isValidMasterNode"))
+	if !callable {
+		return nil, fmt.Errorf("jeth.isValidMasterNode is not callable")
+	}
+	return isValidMasterNode(goja.Null(), call.Argument(0), call.Argument(1))
+}
+
 /****************************** supernode ******************************/
 
 func (b *bridge) StartSuperNode(call jsre.Call) (goja.Value, error) {
@@ -1043,6 +1051,22 @@ func (b *bridge) ExistSuperNodeLockID(call jsre.Call) (goja.Value, error) {
 		return nil, fmt.Errorf("jeth.existSuperNodeLockID is not callable")
 	}
 	return existSuperNodeLockID(goja.Null(), call.Argument(0), call.Argument(1), call.Argument(2))
+}
+
+func (b *bridge) IsValidSuperNode(call jsre.Call) (goja.Value, error) {
+	isValidSuperNode, callable := goja.AssertFunction(getJeth(call.VM).Get("isValidSuperNode"))
+	if !callable {
+		return nil, fmt.Errorf("jeth.isValidSuperNode is not callable")
+	}
+	return isValidSuperNode(goja.Null(), call.Argument(0), call.Argument(1))
+}
+
+func (b *bridge) IsFormalSuperNode(call jsre.Call) (goja.Value, error) {
+	isFormalSuperNode, callable := goja.AssertFunction(getJeth(call.VM).Get("isFormalSuperNode"))
+	if !callable {
+		return nil, fmt.Errorf("jeth.isFormalSuperNode is not callable")
+	}
+	return isFormalSuperNode(goja.Null(), call.Argument(0), call.Argument(1))
 }
 
 /****************************** snvote ******************************/

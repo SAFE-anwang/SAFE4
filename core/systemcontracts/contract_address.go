@@ -2,26 +2,30 @@ package systemcontracts
 
 import "github.com/ethereum/go-ethereum/common"
 
-var SystemContractAddr = common.HexToAddress("0x0000000000000000000000000000000000000992")
+var ProxyAdminContractAddr = common.HexToAddress("0x0000000000000000000000000000000000000999")
 
-var PropertyContractAddr = common.HexToAddress("0x0000000000000000000000000000000000001002")
+var PropertyContractAddr = common.HexToAddress("0x0000000000000000000000000000000000001000")
 
-var AccountManagerContractAddr = common.HexToAddress("0x0000000000000000000000000000000000001012")
+var AccountManagerContractAddr = common.HexToAddress("0x0000000000000000000000000000000000001010")
 
-var MasterNodeContractAddr = common.HexToAddress("0x0000000000000000000000000000000000001022")
+var MasterNodeStorageContractAddr = common.HexToAddress("0x0000000000000000000000000000000000001020")
 
-var SuperNodeContractAddr = common.HexToAddress("0x0000000000000000000000000000000000001032")
+var MasterNodeLogicContractAddr = common.HexToAddress("0x0000000000000000000000000000000000001025")
 
-var SNVoteContractAddr = common.HexToAddress("0x0000000000000000000000000000000000001042")
+var SuperNodeStorageContractAddr = common.HexToAddress("0x0000000000000000000000000000000000001030")
 
-var MasterNodeStateContractAddr = common.HexToAddress("0x0000000000000000000000000000000000001052")
+var SuperNodeLogicContractAddr = common.HexToAddress("0x0000000000000000000000000000000000001035")
 
-var SuperNodeStateContractAddr = common.HexToAddress("0x0000000000000000000000000000000000001062")
+var SNVoteContractAddr = common.HexToAddress("0x0000000000000000000000000000000000001040")
 
-var ProposalContractAddr = common.HexToAddress("0x0000000000000000000000000000000000001072")
+var MasterNodeStateContractAddr = common.HexToAddress("0x0000000000000000000000000000000000001050")
 
-var SystemRewardContractAddr = common.HexToAddress("0x0000000000000000000000000000000000001082")
+var SuperNodeStateContractAddr = common.HexToAddress("0x0000000000000000000000000000000000001060")
 
-var Safe3ContractAddr = common.HexToAddress("0x0000000000000000000000000000000000001092")
+var ProposalContractAddr = common.HexToAddress("0x0000000000000000000000000000000000001070")
 
-var MulticallContractAddr = common.HexToAddress("0x0000000000000000000000000000000000001102")
+var SystemRewardContractAddr = common.HexToAddress("0x0000000000000000000000000000000000001080")
+
+var Safe3ContractAddr = common.HexToAddress("0x0000000000000000000000000000000000001090")
+
+var MulticallContractAddr = common.HexToAddress("0x0000000000000000000000000000000000001100")

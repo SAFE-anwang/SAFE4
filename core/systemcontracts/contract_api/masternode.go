@@ -15,7 +15,7 @@ import (
 )
 
 func RegisterMasterNode(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, transactionPoolAPI *ethapi.PublicTransactionPoolAPI, from common.Address, amount *big.Int, isUnion bool, addr common.Address, lockDay *big.Int, enode string, description string, creatorIncentive *big.Int, partnerIncentive *big.Int) (common.Hash, error) {
-	vABI, err := abi.JSON(strings.NewReader(systemcontracts.MasterNodeABI))
+	vABI, err := abi.JSON(strings.NewReader(systemcontracts.MasterNodeLogicABI))
 	if err != nil {
 		return common.Hash{}, err
 	}
@@ -35,7 +35,7 @@ func RegisterMasterNode(ctx context.Context, blockChainAPI *ethapi.PublicBlockCh
 
 	args := ethapi.TransactionArgs{
 		From:     &from,
-		To:       &systemcontracts.MasterNodeContractAddr,
+		To:       &systemcontracts.MasterNodeLogicContractAddr,
 		Data:     &msgData,
 		Value:    (*hexutil.Big)(amount),
 		GasPrice: (*hexutil.Big)(gasPrice),
@@ -49,7 +49,7 @@ func RegisterMasterNode(ctx context.Context, blockChainAPI *ethapi.PublicBlockCh
 }
 
 func AppendRegisterMasterNode(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, transactionPoolAPI *ethapi.PublicTransactionPoolAPI, from common.Address, amount *big.Int, addr common.Address, lockDay *big.Int) (common.Hash, error) {
-	vABI, err := abi.JSON(strings.NewReader(systemcontracts.MasterNodeABI))
+	vABI, err := abi.JSON(strings.NewReader(systemcontracts.MasterNodeLogicABI))
 	if err != nil {
 		return common.Hash{}, err
 	}
@@ -69,7 +69,7 @@ func AppendRegisterMasterNode(ctx context.Context, blockChainAPI *ethapi.PublicB
 
 	args := ethapi.TransactionArgs{
 		From:     &from,
-		To:       &systemcontracts.MasterNodeContractAddr,
+		To:       &systemcontracts.MasterNodeLogicContractAddr,
 		Data:     &msgData,
 		Value:    (*hexutil.Big)(amount),
 		GasPrice: (*hexutil.Big)(gasPrice),
@@ -83,7 +83,7 @@ func AppendRegisterMasterNode(ctx context.Context, blockChainAPI *ethapi.PublicB
 }
 
 func TurnRegisterMasterNode(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, transactionPoolAPI *ethapi.PublicTransactionPoolAPI, from common.Address, addr common.Address, lockID *big.Int) (common.Hash, error) {
-	vABI, err := abi.JSON(strings.NewReader(systemcontracts.MasterNodeABI))
+	vABI, err := abi.JSON(strings.NewReader(systemcontracts.MasterNodeLogicABI))
 	if err != nil {
 		return common.Hash{}, err
 	}
@@ -103,7 +103,7 @@ func TurnRegisterMasterNode(ctx context.Context, blockChainAPI *ethapi.PublicBlo
 
 	args := ethapi.TransactionArgs{
 		From:     &from,
-		To:       &systemcontracts.MasterNodeContractAddr,
+		To:       &systemcontracts.MasterNodeLogicContractAddr,
 		Data:     &msgData,
 		GasPrice: (*hexutil.Big)(gasPrice),
 	}
@@ -116,7 +116,7 @@ func TurnRegisterMasterNode(ctx context.Context, blockChainAPI *ethapi.PublicBlo
 }
 
 func ChangeMasterNodeAddress(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, transactionPoolAPI *ethapi.PublicTransactionPoolAPI, from common.Address, addr common.Address, newAddr common.Address) (common.Hash, error) {
-	vABI, err := abi.JSON(strings.NewReader(systemcontracts.MasterNodeABI))
+	vABI, err := abi.JSON(strings.NewReader(systemcontracts.MasterNodeLogicABI))
 	if err != nil {
 		return common.Hash{}, err
 	}
@@ -136,7 +136,7 @@ func ChangeMasterNodeAddress(ctx context.Context, blockChainAPI *ethapi.PublicBl
 
 	args := ethapi.TransactionArgs{
 		From:     &from,
-		To:       &systemcontracts.MasterNodeContractAddr,
+		To:       &systemcontracts.MasterNodeLogicContractAddr,
 		Data:     &msgData,
 		GasPrice: (*hexutil.Big)(gasPrice),
 	}
@@ -149,7 +149,7 @@ func ChangeMasterNodeAddress(ctx context.Context, blockChainAPI *ethapi.PublicBl
 }
 
 func ChangeMasterNodeEnode(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, transactionPoolAPI *ethapi.PublicTransactionPoolAPI, from common.Address, addr common.Address, enode string) (common.Hash, error) {
-	vABI, err := abi.JSON(strings.NewReader(systemcontracts.MasterNodeABI))
+	vABI, err := abi.JSON(strings.NewReader(systemcontracts.MasterNodeLogicABI))
 	if err != nil {
 		return common.Hash{}, err
 	}
@@ -169,7 +169,7 @@ func ChangeMasterNodeEnode(ctx context.Context, blockChainAPI *ethapi.PublicBloc
 
 	args := ethapi.TransactionArgs{
 		From:     &from,
-		To:       &systemcontracts.MasterNodeContractAddr,
+		To:       &systemcontracts.MasterNodeLogicContractAddr,
 		Data:     &msgData,
 		GasPrice: (*hexutil.Big)(gasPrice),
 	}
@@ -182,7 +182,7 @@ func ChangeMasterNodeEnode(ctx context.Context, blockChainAPI *ethapi.PublicBloc
 }
 
 func ChangeMasterNodeDescription(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, transactionPoolAPI *ethapi.PublicTransactionPoolAPI, from common.Address, addr common.Address, description string) (common.Hash, error) {
-	vABI, err := abi.JSON(strings.NewReader(systemcontracts.MasterNodeABI))
+	vABI, err := abi.JSON(strings.NewReader(systemcontracts.MasterNodeLogicABI))
 	if err != nil {
 		return common.Hash{}, err
 	}
@@ -202,7 +202,7 @@ func ChangeMasterNodeDescription(ctx context.Context, blockChainAPI *ethapi.Publ
 
 	args := ethapi.TransactionArgs{
 		From:     &from,
-		To:       &systemcontracts.MasterNodeContractAddr,
+		To:       &systemcontracts.MasterNodeLogicContractAddr,
 		Data:     &msgData,
 		GasPrice: (*hexutil.Big)(gasPrice),
 	}
@@ -215,7 +215,7 @@ func ChangeMasterNodeDescription(ctx context.Context, blockChainAPI *ethapi.Publ
 }
 
 func ChangeMasterNodeIsOfficial(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, transactionPoolAPI *ethapi.PublicTransactionPoolAPI, from common.Address, addr common.Address, flag bool) (common.Hash, error) {
-	vABI, err := abi.JSON(strings.NewReader(systemcontracts.MasterNodeABI))
+	vABI, err := abi.JSON(strings.NewReader(systemcontracts.MasterNodeLogicABI))
 	if err != nil {
 		return common.Hash{}, err
 	}
@@ -235,7 +235,7 @@ func ChangeMasterNodeIsOfficial(ctx context.Context, blockChainAPI *ethapi.Publi
 
 	args := ethapi.TransactionArgs{
 		From:     &from,
-		To:       &systemcontracts.MasterNodeContractAddr,
+		To:       &systemcontracts.MasterNodeLogicContractAddr,
 		Data:     &msgData,
 		GasPrice: (*hexutil.Big)(gasPrice),
 	}
@@ -248,7 +248,7 @@ func ChangeMasterNodeIsOfficial(ctx context.Context, blockChainAPI *ethapi.Publi
 }
 
 func GetMasterNodeInfo(ctx context.Context, api *ethapi.PublicBlockChainAPI, addr common.Address, blockNrOrHash rpc.BlockNumberOrHash) (*types.MasterNodeInfo, error) {
-	vABI, err := abi.JSON(strings.NewReader(systemcontracts.MasterNodeABI))
+	vABI, err := abi.JSON(strings.NewReader(systemcontracts.MasterNodeStorageABI))
 	if err != nil {
 		return nil, err
 	}
@@ -261,7 +261,7 @@ func GetMasterNodeInfo(ctx context.Context, api *ethapi.PublicBlockChainAPI, add
 
 	msgData := (hexutil.Bytes)(data)
 	args := ethapi.TransactionArgs{
-		To: &systemcontracts.MasterNodeContractAddr,
+		To: &systemcontracts.MasterNodeStorageContractAddr,
 		Data: &msgData,
 	}
 	result, err := api.Call(ctx, args, blockNrOrHash, nil)
@@ -278,7 +278,7 @@ func GetMasterNodeInfo(ctx context.Context, api *ethapi.PublicBlockChainAPI, add
 }
 
 func GetMasterNodeInfoByID(ctx context.Context, api *ethapi.PublicBlockChainAPI, id *big.Int, blockNrOrHash rpc.BlockNumberOrHash) (*types.MasterNodeInfo, error) {
-	vABI, err := abi.JSON(strings.NewReader(systemcontracts.MasterNodeABI))
+	vABI, err := abi.JSON(strings.NewReader(systemcontracts.MasterNodeStorageABI))
 	if err != nil {
 		return nil, err
 	}
@@ -291,7 +291,7 @@ func GetMasterNodeInfoByID(ctx context.Context, api *ethapi.PublicBlockChainAPI,
 
 	msgData := (hexutil.Bytes)(data)
 	args := ethapi.TransactionArgs{
-		To: &systemcontracts.MasterNodeContractAddr,
+		To: &systemcontracts.MasterNodeStorageContractAddr,
 		Data: &msgData,
 	}
 	result, err := api.Call(ctx, args, blockNrOrHash, nil)
@@ -308,7 +308,7 @@ func GetMasterNodeInfoByID(ctx context.Context, api *ethapi.PublicBlockChainAPI,
 }
 
 func GetNextMasterNode(ctx context.Context, api *ethapi.PublicBlockChainAPI, blockNrOrHash rpc.BlockNumberOrHash) (common.Address, error) {
-	vABI, err := abi.JSON(strings.NewReader(systemcontracts.MasterNodeABI))
+	vABI, err := abi.JSON(strings.NewReader(systemcontracts.MasterNodeStorageABI))
 	if err != nil {
 		return common.Address{}, err
 	}
@@ -321,7 +321,7 @@ func GetNextMasterNode(ctx context.Context, api *ethapi.PublicBlockChainAPI, blo
 
 	msgData := (hexutil.Bytes)(data)
 	args := ethapi.TransactionArgs{
-		To: &systemcontracts.MasterNodeContractAddr,
+		To: &systemcontracts.MasterNodeStorageContractAddr,
 		Data: &msgData,
 	}
 
@@ -339,7 +339,7 @@ func GetNextMasterNode(ctx context.Context, api *ethapi.PublicBlockChainAPI, blo
 }
 
 func GetAllMasterNodes(ctx context.Context, api *ethapi.PublicBlockChainAPI, blockNrOrHash rpc.BlockNumberOrHash) ([]types.MasterNodeInfo, error) {
-	vABI, err := abi.JSON(strings.NewReader(systemcontracts.MasterNodeABI))
+	vABI, err := abi.JSON(strings.NewReader(systemcontracts.MasterNodeStorageABI))
 	if err != nil {
 		return nil, err
 	}
@@ -352,7 +352,7 @@ func GetAllMasterNodes(ctx context.Context, api *ethapi.PublicBlockChainAPI, blo
 
 	msgData := (hexutil.Bytes)(data)
 	args := ethapi.TransactionArgs{
-		To: &systemcontracts.MasterNodeContractAddr,
+		To: &systemcontracts.MasterNodeStorageContractAddr,
 		Data: &msgData,
 	}
 	result, err := api.Call(ctx, args, blockNrOrHash, nil)
@@ -369,7 +369,7 @@ func GetAllMasterNodes(ctx context.Context, api *ethapi.PublicBlockChainAPI, blo
 }
 
 func GetOfficialMasterNodes(ctx context.Context, api *ethapi.PublicBlockChainAPI, blockNrOrHash rpc.BlockNumberOrHash) ([]types.MasterNodeInfo, error) {
-	vABI, err := abi.JSON(strings.NewReader(systemcontracts.MasterNodeABI))
+	vABI, err := abi.JSON(strings.NewReader(systemcontracts.MasterNodeStorageABI))
 	if err != nil {
 		return nil, err
 	}
@@ -382,7 +382,7 @@ func GetOfficialMasterNodes(ctx context.Context, api *ethapi.PublicBlockChainAPI
 
 	msgData := (hexutil.Bytes)(data)
 	args := ethapi.TransactionArgs{
-		To: &systemcontracts.MasterNodeContractAddr,
+		To: &systemcontracts.MasterNodeStorageContractAddr,
 		Data: &msgData,
 	}
 	result, err := api.Call(ctx, args, blockNrOrHash, nil)
@@ -399,7 +399,7 @@ func GetOfficialMasterNodes(ctx context.Context, api *ethapi.PublicBlockChainAPI
 }
 
 func GetMasterNodeNum(ctx context.Context, api *ethapi.PublicBlockChainAPI, blockNrOrHash rpc.BlockNumberOrHash) (*big.Int, error) {
-	vABI, err := abi.JSON(strings.NewReader(systemcontracts.MasterNodeABI))
+	vABI, err := abi.JSON(strings.NewReader(systemcontracts.MasterNodeStorageABI))
 	if err != nil {
 		return nil, err
 	}
@@ -412,7 +412,7 @@ func GetMasterNodeNum(ctx context.Context, api *ethapi.PublicBlockChainAPI, bloc
 
 	msgData := (hexutil.Bytes)(data)
 	args := ethapi.TransactionArgs{
-		To: &systemcontracts.MasterNodeContractAddr,
+		To: &systemcontracts.MasterNodeStorageContractAddr,
 		Data: &msgData,
 	}
 	result, err := api.Call(ctx, args, blockNrOrHash, nil)
@@ -429,7 +429,7 @@ func GetMasterNodeNum(ctx context.Context, api *ethapi.PublicBlockChainAPI, bloc
 }
 
 func ExistMasterNode(ctx context.Context, api *ethapi.PublicBlockChainAPI, addr common.Address, blockNrOrHash rpc.BlockNumberOrHash) (bool, error) {
-	vABI, err := abi.JSON(strings.NewReader(systemcontracts.MasterNodeABI))
+	vABI, err := abi.JSON(strings.NewReader(systemcontracts.MasterNodeStorageABI))
 	if err != nil {
 		return false, err
 	}
@@ -442,7 +442,7 @@ func ExistMasterNode(ctx context.Context, api *ethapi.PublicBlockChainAPI, addr 
 
 	msgData := (hexutil.Bytes)(data)
 	args := ethapi.TransactionArgs{
-		To: &systemcontracts.MasterNodeContractAddr,
+		To: &systemcontracts.MasterNodeStorageContractAddr,
 		Data: &msgData,
 	}
 	result, err := api.Call(ctx, args, blockNrOrHash, nil)
@@ -459,7 +459,7 @@ func ExistMasterNode(ctx context.Context, api *ethapi.PublicBlockChainAPI, addr 
 }
 
 func ExistMasterNodeID(ctx context.Context, api *ethapi.PublicBlockChainAPI, id *big.Int, blockNrOrHash rpc.BlockNumberOrHash) (bool, error) {
-	vABI, err := abi.JSON(strings.NewReader(systemcontracts.MasterNodeABI))
+	vABI, err := abi.JSON(strings.NewReader(systemcontracts.MasterNodeStorageABI))
 	if err != nil {
 		return false, err
 	}
@@ -472,7 +472,7 @@ func ExistMasterNodeID(ctx context.Context, api *ethapi.PublicBlockChainAPI, id 
 
 	msgData := (hexutil.Bytes)(data)
 	args := ethapi.TransactionArgs{
-		To: &systemcontracts.MasterNodeContractAddr,
+		To: &systemcontracts.MasterNodeStorageContractAddr,
 		Data: &msgData,
 	}
 	result, err := api.Call(ctx, args, blockNrOrHash, nil)
@@ -489,7 +489,7 @@ func ExistMasterNodeID(ctx context.Context, api *ethapi.PublicBlockChainAPI, id 
 }
 
 func ExistMasterNodeEnode(ctx context.Context, api *ethapi.PublicBlockChainAPI, enode string, blockNrOrHash rpc.BlockNumberOrHash) (bool, error) {
-	vABI, err := abi.JSON(strings.NewReader(systemcontracts.MasterNodeABI))
+	vABI, err := abi.JSON(strings.NewReader(systemcontracts.MasterNodeStorageABI))
 	if err != nil {
 		return false, err
 	}
@@ -502,7 +502,7 @@ func ExistMasterNodeEnode(ctx context.Context, api *ethapi.PublicBlockChainAPI, 
 
 	msgData := (hexutil.Bytes)(data)
 	args := ethapi.TransactionArgs{
-		To: &systemcontracts.MasterNodeContractAddr,
+		To: &systemcontracts.MasterNodeStorageContractAddr,
 		Data: &msgData,
 	}
 	result, err := api.Call(ctx, args, blockNrOrHash, nil)
@@ -519,7 +519,7 @@ func ExistMasterNodeEnode(ctx context.Context, api *ethapi.PublicBlockChainAPI, 
 }
 
 func ExistMasterNodeLockID(ctx context.Context, api *ethapi.PublicBlockChainAPI, addr common.Address, lockID *big.Int, blockNrOrHash rpc.BlockNumberOrHash) (bool, error) {
-	vABI, err := abi.JSON(strings.NewReader(systemcontracts.MasterNodeABI))
+	vABI, err := abi.JSON(strings.NewReader(systemcontracts.MasterNodeStorageABI))
 	if err != nil {
 		return false, err
 	}
@@ -532,7 +532,7 @@ func ExistMasterNodeLockID(ctx context.Context, api *ethapi.PublicBlockChainAPI,
 
 	msgData := (hexutil.Bytes)(data)
 	args := ethapi.TransactionArgs{
-		To: &systemcontracts.MasterNodeContractAddr,
+		To: &systemcontracts.MasterNodeStorageContractAddr,
 		Data: &msgData,
 	}
 	result, err := api.Call(ctx, args, blockNrOrHash, nil)

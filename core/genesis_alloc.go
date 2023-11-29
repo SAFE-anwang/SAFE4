@@ -905,7 +905,6 @@ const SafeAllocData = `{
     "petersburgBlock": 0,
     "istanbulBlock": 0,
     "safe": {
-      "period": 30,
       "epoch": 200
     }
   },

@@ -419,7 +419,13 @@ func (s *Spos) verifyCascadingFields(chain consensus.ChainHeaderReader, header *
 	if parent == nil || parent.Number.Uint64() != number-1 || parent.Hash() != header.ParentHash {
 		return consensus.ErrUnknownAncestor
 	}
-	if parent.Time + s.config.Period > header.Time {
+
+	blockPeriod, err := s.GetBlockPeriod(header)
+	if err != nil {
+		return err
+	}
+
+	if parent.Time + blockPeriod > header.Time {
 		return errInvalidTimestamp
 	}
 
@@ -720,7 +726,13 @@ func (s *Spos) Prepare(chain consensus.ChainHeaderReader, header *types.Header) 
 	if parent == nil {
 		return consensus.ErrUnknownAncestor
 	}
-	header.Time = parent.Time + s.config.Period
+
+	blockPeriod, err := s.GetBlockPeriod(header)
+	if err!= nil {
+		return err
+	}
+
+	header.Time = parent.Time + blockPeriod
 	if header.Time < uint64(time.Now().Unix()) {
 		header.Time = uint64(time.Now().Unix())
 	}
@@ -785,7 +797,12 @@ func (s *Spos) Seal(chain consensus.ChainHeaderReader, block *types.Block, resul
 		return errUnknownBlock
 	}
 
-	if s.config.Period == 0 {
+	blockPeriod,err := s.GetBlockPeriod(header)
+	if err != nil {
+		return err
+	}
+
+	if blockPeriod == 0 {
 		log.Info("Sealing paused")
 		return nil
 	}
@@ -1186,4 +1203,13 @@ func (s *Spos) CheckRewardTransaction(block *types.Block) error{
 	}
 
 	return nil
+}
+
+func (s *Spos) GetBlockPeriod(header *types.Header) (uint64, error){
+	blockPeriod, err := contract_api.GetPropertyValue(s.ctx, s.blockChainAPI, "block_space", rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(header.Number.Int64() - 1)))
+	if err != nil {
+		return 0, err
+	}
+
+	return  blockPeriod.Uint64(), nil
 }

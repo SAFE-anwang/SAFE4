@@ -8,7 +8,6 @@ import (
 	"github.com/ethereum/go-ethereum/core/systemcontracts"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/internal/ethapi"
-	"github.com/ethereum/go-ethereum/params"
 	"github.com/ethereum/go-ethereum/rpc"
 	"math/big"
 	"strings"
@@ -27,19 +26,13 @@ func CreateProposal(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainA
 	}
 
 	msgData := (hexutil.Bytes)(data)
-	gasPrice := big.NewInt(params.GWei)
-	gasPrice, err = GetPropertyValue(ctx, blockChainAPI, "gas_price", rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber))
-	if err != nil {
-		gasPrice = big.NewInt(params.GWei / 100)
-	}
-
 	value := big.NewInt(1000000000000000000) // 1 SAFE
 	args := ethapi.TransactionArgs{
 		From:     &from,
 		To:       &systemcontracts.ProposalContractAddr,
 		Data:     &msgData,
 		Value:    (*hexutil.Big)(value),
-		GasPrice: (*hexutil.Big)(gasPrice),
+		GasPrice: (*hexutil.Big)(GetCurrentGasPrice(ctx, blockChainAPI)),
 	}
 	gas, err := blockChainAPI.EstimateGas(ctx, args, nil)
 	if err != nil {
@@ -62,17 +55,11 @@ func Vote4Proposal(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAP
 	}
 
 	msgData := (hexutil.Bytes)(data)
-	gasPrice := big.NewInt(params.GWei)
-	gasPrice, err = GetPropertyValue(ctx, blockChainAPI, "gas_price", rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber))
-	if err != nil {
-		gasPrice = big.NewInt(params.GWei / 100)
-	}
-
 	args := ethapi.TransactionArgs{
 		From:     &from,
 		To:       &systemcontracts.ProposalContractAddr,
 		Data:     &msgData,
-		GasPrice: (*hexutil.Big)(gasPrice),
+		GasPrice: (*hexutil.Big)(GetCurrentGasPrice(ctx, blockChainAPI)),
 	}
 	gas, err := blockChainAPI.EstimateGas(ctx, args, nil)
 	if err != nil {
@@ -95,17 +82,11 @@ func ChangeProposalTitle(ctx context.Context, blockChainAPI *ethapi.PublicBlockC
 	}
 
 	msgData := (hexutil.Bytes)(data)
-	gasPrice := big.NewInt(params.GWei)
-	gasPrice, err = GetPropertyValue(ctx, blockChainAPI, "gas_price", rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber))
-	if err != nil {
-		gasPrice = big.NewInt(params.GWei / 100)
-	}
-
 	args := ethapi.TransactionArgs{
 		From:     &from,
 		To:       &systemcontracts.ProposalContractAddr,
 		Data:     &msgData,
-		GasPrice: (*hexutil.Big)(gasPrice),
+		GasPrice: (*hexutil.Big)(GetCurrentGasPrice(ctx, blockChainAPI)),
 	}
 	gas, err := blockChainAPI.EstimateGas(ctx, args, nil)
 	if err != nil {
@@ -128,17 +109,11 @@ func ChangeProposalPayAmount(ctx context.Context, blockChainAPI *ethapi.PublicBl
 	}
 
 	msgData := (hexutil.Bytes)(data)
-	gasPrice := big.NewInt(params.GWei)
-	gasPrice, err = GetPropertyValue(ctx, blockChainAPI, "gas_price", rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber))
-	if err != nil {
-		gasPrice = big.NewInt(params.GWei / 100)
-	}
-
 	args := ethapi.TransactionArgs{
 		From:     &from,
 		To:       &systemcontracts.ProposalContractAddr,
 		Data:     &msgData,
-		GasPrice: (*hexutil.Big)(gasPrice),
+		GasPrice: (*hexutil.Big)(GetCurrentGasPrice(ctx, blockChainAPI)),
 	}
 	gas, err := blockChainAPI.EstimateGas(ctx, args, nil)
 	if err != nil {
@@ -161,17 +136,11 @@ func ChangeProposalPayTimes(ctx context.Context, blockChainAPI *ethapi.PublicBlo
 	}
 
 	msgData := (hexutil.Bytes)(data)
-	gasPrice := big.NewInt(params.GWei)
-	gasPrice, err = GetPropertyValue(ctx, blockChainAPI, "gas_price", rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber))
-	if err != nil {
-		gasPrice = big.NewInt(params.GWei / 100)
-	}
-
 	args := ethapi.TransactionArgs{
 		From:     &from,
 		To:       &systemcontracts.ProposalContractAddr,
 		Data:     &msgData,
-		GasPrice: (*hexutil.Big)(gasPrice),
+		GasPrice: (*hexutil.Big)(GetCurrentGasPrice(ctx, blockChainAPI)),
 	}
 	gas, err := blockChainAPI.EstimateGas(ctx, args, nil)
 	if err != nil {
@@ -194,17 +163,11 @@ func ChangeProposalStartPayTime(ctx context.Context, blockChainAPI *ethapi.Publi
 	}
 
 	msgData := (hexutil.Bytes)(data)
-	gasPrice := big.NewInt(params.GWei)
-	gasPrice, err = GetPropertyValue(ctx, blockChainAPI, "gas_price", rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber))
-	if err != nil {
-		gasPrice = big.NewInt(params.GWei / 100)
-	}
-
 	args := ethapi.TransactionArgs{
 		From:     &from,
 		To:       &systemcontracts.ProposalContractAddr,
 		Data:     &msgData,
-		GasPrice: (*hexutil.Big)(gasPrice),
+		GasPrice: (*hexutil.Big)(GetCurrentGasPrice(ctx, blockChainAPI)),
 	}
 	gas, err := blockChainAPI.EstimateGas(ctx, args, nil)
 	if err != nil {
@@ -227,17 +190,11 @@ func ChangeProposalEndPayTime(ctx context.Context, blockChainAPI *ethapi.PublicB
 	}
 
 	msgData := (hexutil.Bytes)(data)
-	gasPrice := big.NewInt(params.GWei)
-	gasPrice, err = GetPropertyValue(ctx, blockChainAPI, "gas_price", rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber))
-	if err != nil {
-		gasPrice = big.NewInt(params.GWei / 100)
-	}
-
 	args := ethapi.TransactionArgs{
 		From:     &from,
 		To:       &systemcontracts.ProposalContractAddr,
 		Data:     &msgData,
-		GasPrice: (*hexutil.Big)(gasPrice),
+		GasPrice: (*hexutil.Big)(GetCurrentGasPrice(ctx, blockChainAPI)),
 	}
 	gas, err := blockChainAPI.EstimateGas(ctx, args, nil)
 	if err != nil {
@@ -260,17 +217,11 @@ func ChangeProposalDescription(ctx context.Context, blockChainAPI *ethapi.Public
 	}
 
 	msgData := (hexutil.Bytes)(data)
-	gasPrice := big.NewInt(params.GWei)
-	gasPrice, err = GetPropertyValue(ctx, blockChainAPI, "gas_price", rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber))
-	if err != nil {
-		gasPrice = big.NewInt(params.GWei / 100)
-	}
-
 	args := ethapi.TransactionArgs{
 		From:     &from,
 		To:       &systemcontracts.ProposalContractAddr,
 		Data:     &msgData,
-		GasPrice: (*hexutil.Big)(gasPrice),
+		GasPrice: (*hexutil.Big)(GetCurrentGasPrice(ctx, blockChainAPI)),
 	}
 	gas, err := blockChainAPI.EstimateGas(ctx, args, nil)
 	if err != nil {

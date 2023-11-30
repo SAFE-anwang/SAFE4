@@ -8,7 +8,6 @@ import (
 	"github.com/ethereum/go-ethereum/core/systemcontracts"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/internal/ethapi"
-	"github.com/ethereum/go-ethereum/params"
 	"github.com/ethereum/go-ethereum/rpc"
 	"math/big"
 	"strings"
@@ -27,17 +26,11 @@ func AddProperty(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI,
 	}
 
 	msgData := (hexutil.Bytes)(data)
-	gasPrice := big.NewInt(params.GWei)
-	gasPrice, err = GetPropertyValue(ctx, blockChainAPI, "gas_price", rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber))
-	if err != nil {
-		gasPrice = big.NewInt(params.GWei / 100)
-	}
-
 	args := ethapi.TransactionArgs{
 		From:     &from,
 		To:       &systemcontracts.PropertyContractAddr,
 		Data:     &msgData,
-		GasPrice: (*hexutil.Big)(gasPrice),
+		GasPrice: (*hexutil.Big)(GetCurrentGasPrice(ctx, blockChainAPI)),
 	}
 	gas, err := blockChainAPI.EstimateGas(ctx, args, nil)
 	if err != nil {
@@ -60,17 +53,11 @@ func ApplyUpdateProperty(ctx context.Context, blockChainAPI *ethapi.PublicBlockC
 	}
 
 	msgData := (hexutil.Bytes)(data)
-	gasPrice := big.NewInt(params.GWei)
-	gasPrice, err = GetPropertyValue(ctx, blockChainAPI, "gas_price", rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber))
-	if err != nil {
-		gasPrice = big.NewInt(params.GWei / 100)
-	}
-
 	args := ethapi.TransactionArgs{
 		From:     &from,
 		To:       &systemcontracts.PropertyContractAddr,
 		Data:     &msgData,
-		GasPrice: (*hexutil.Big)(gasPrice),
+		GasPrice: (*hexutil.Big)(GetCurrentGasPrice(ctx, blockChainAPI)),
 	}
 	gas, err := blockChainAPI.EstimateGas(ctx, args, nil)
 	if err != nil {
@@ -93,17 +80,11 @@ func Vote4UpdateProperty(ctx context.Context, blockChainAPI *ethapi.PublicBlockC
 	}
 
 	msgData := (hexutil.Bytes)(data)
-	gasPrice := big.NewInt(params.GWei)
-	gasPrice, err = GetPropertyValue(ctx, blockChainAPI, "gas_price", rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber))
-	if err != nil {
-		gasPrice = big.NewInt(params.GWei / 100)
-	}
-
 	args := ethapi.TransactionArgs{
 		From:     &from,
 		To:       &systemcontracts.PropertyContractAddr,
 		Data:     &msgData,
-		GasPrice: (*hexutil.Big)(gasPrice),
+		GasPrice: (*hexutil.Big)(GetCurrentGasPrice(ctx, blockChainAPI)),
 	}
 	gas, err := blockChainAPI.EstimateGas(ctx, args, nil)
 	if err != nil {

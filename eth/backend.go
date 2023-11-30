@@ -228,10 +228,7 @@ func New(stack *node.Node, config *ethconfig.Config) (*Ethereum, error) {
 
 	// get gasPrice
 	ctx, _ := context.WithCancel(context.Background())
-	eth.gasPrice, err = contract_api.GetPropertyValue(ctx, ethapi.NewPublicBlockChainAPI(eth.APIBackend), "gas_price", rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber))
-	if err != nil {
-		eth.gasPrice = config.Miner.GasPrice
-	}
+	eth.gasPrice = contract_api.GetCurrentGasPrice(ctx, ethapi.NewPublicBlockChainAPI(eth.APIBackend))
 
 	if config.TxPool.Journal != "" {
 		config.TxPool.Journal = stack.ResolvePath(config.TxPool.Journal)

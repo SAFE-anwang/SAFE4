@@ -8,7 +8,6 @@ import (
 	"github.com/ethereum/go-ethereum/core/systemcontracts"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/internal/ethapi"
-	"github.com/ethereum/go-ethereum/params"
 	"github.com/ethereum/go-ethereum/rpc"
 	"math/big"
 	"strings"
@@ -27,18 +26,12 @@ func RegisterSuperNode(ctx context.Context, blockChainAPI *ethapi.PublicBlockCha
 	}
 
 	msgData := (hexutil.Bytes)(data)
-	gasPrice := big.NewInt(params.GWei)
-	gasPrice, err = GetPropertyValue(ctx, blockChainAPI, "gas_price", rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber))
-	if err != nil {
-		gasPrice = big.NewInt(params.GWei / 100)
-	}
-
 	args := ethapi.TransactionArgs{
 		From:     &from,
 		To:       &systemcontracts.SuperNodeLogicContractAddr,
 		Data:     &msgData,
 		Value:    (*hexutil.Big)(amount),
-		GasPrice: (*hexutil.Big)(gasPrice),
+		GasPrice: (*hexutil.Big)(GetCurrentGasPrice(ctx, blockChainAPI)),
 	}
 	gas, err := blockChainAPI.EstimateGas(ctx, args, nil)
 	if err != nil {
@@ -61,18 +54,12 @@ func AppendRegisterSuperNode(ctx context.Context, blockChainAPI *ethapi.PublicBl
 	}
 
 	msgData := (hexutil.Bytes)(data)
-	gasPrice := big.NewInt(params.GWei)
-	gasPrice, err = GetPropertyValue(ctx, blockChainAPI, "gas_price", rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber))
-	if err != nil {
-		gasPrice = big.NewInt(params.GWei / 100)
-	}
-
 	args := ethapi.TransactionArgs{
 		From:     &from,
 		To:       &systemcontracts.SuperNodeLogicContractAddr,
 		Data:     &msgData,
 		Value:    (*hexutil.Big)(amount),
-		GasPrice: (*hexutil.Big)(gasPrice),
+		GasPrice: (*hexutil.Big)(GetCurrentGasPrice(ctx, blockChainAPI)),
 	}
 	gas, err := blockChainAPI.EstimateGas(ctx, args, nil)
 	if err != nil {
@@ -95,17 +82,11 @@ func TurnRegisterSuperNode(ctx context.Context, blockChainAPI *ethapi.PublicBloc
 	}
 
 	msgData := (hexutil.Bytes)(data)
-	gasPrice := big.NewInt(params.GWei)
-	gasPrice, err = GetPropertyValue(ctx, blockChainAPI, "gas_price", rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber))
-	if err != nil {
-		gasPrice = big.NewInt(params.GWei / 100)
-	}
-
 	args := ethapi.TransactionArgs{
 		From:     &from,
 		To:       &systemcontracts.SuperNodeLogicContractAddr,
 		Data:     &msgData,
-		GasPrice: (*hexutil.Big)(gasPrice),
+		GasPrice: (*hexutil.Big)(GetCurrentGasPrice(ctx, blockChainAPI)),
 	}
 	gas, err := blockChainAPI.EstimateGas(ctx, args, nil)
 	if err != nil {
@@ -128,17 +109,11 @@ func ChangeSuperNodeAddress(ctx context.Context, blockChainAPI *ethapi.PublicBlo
 	}
 
 	msgData := (hexutil.Bytes)(data)
-	gasPrice := big.NewInt(params.GWei)
-	gasPrice, err = GetPropertyValue(ctx, blockChainAPI, "gas_price", rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber))
-	if err != nil {
-		gasPrice = big.NewInt(params.GWei / 100)
-	}
-
 	args := ethapi.TransactionArgs{
 		From:     &from,
 		To:       &systemcontracts.SuperNodeLogicContractAddr,
 		Data:     &msgData,
-		GasPrice: (*hexutil.Big)(gasPrice),
+		GasPrice: (*hexutil.Big)(GetCurrentGasPrice(ctx, blockChainAPI)),
 	}
 	gas, err := blockChainAPI.EstimateGas(ctx, args, nil)
 	if err != nil {
@@ -161,17 +136,11 @@ func ChangeSuperNodeName(ctx context.Context, blockChainAPI *ethapi.PublicBlockC
 	}
 
 	msgData := (hexutil.Bytes)(data)
-	gasPrice := big.NewInt(params.GWei)
-	gasPrice, err = GetPropertyValue(ctx, blockChainAPI, "gas_price", rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber))
-	if err != nil {
-		gasPrice = big.NewInt(params.GWei / 100)
-	}
-
 	args := ethapi.TransactionArgs{
 		From:     &from,
 		To:       &systemcontracts.SuperNodeLogicContractAddr,
 		Data:     &msgData,
-		GasPrice: (*hexutil.Big)(gasPrice),
+		GasPrice: (*hexutil.Big)(GetCurrentGasPrice(ctx, blockChainAPI)),
 	}
 	gas, err := blockChainAPI.EstimateGas(ctx, args, nil)
 	if err != nil {
@@ -194,17 +163,11 @@ func ChangeSuperNodeEnode(ctx context.Context, blockChainAPI *ethapi.PublicBlock
 	}
 
 	msgData := (hexutil.Bytes)(data)
-	gasPrice := big.NewInt(params.GWei)
-	gasPrice, err = GetPropertyValue(ctx, blockChainAPI, "gas_price", rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber))
-	if err != nil {
-		gasPrice = big.NewInt(params.GWei / 100)
-	}
-
 	args := ethapi.TransactionArgs{
 		From:     &from,
 		To:       &systemcontracts.SuperNodeLogicContractAddr,
 		Data:     &msgData,
-		GasPrice: (*hexutil.Big)(gasPrice),
+		GasPrice: (*hexutil.Big)(GetCurrentGasPrice(ctx, blockChainAPI)),
 	}
 	gas, err := blockChainAPI.EstimateGas(ctx, args, nil)
 	if err != nil {
@@ -227,17 +190,11 @@ func ChangeSuperNodeDescription(ctx context.Context, blockChainAPI *ethapi.Publi
 	}
 
 	msgData := (hexutil.Bytes)(data)
-	gasPrice := big.NewInt(params.GWei)
-	gasPrice, err = GetPropertyValue(ctx, blockChainAPI, "gas_price", rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber))
-	if err != nil {
-		gasPrice = big.NewInt(params.GWei / 100)
-	}
-
 	args := ethapi.TransactionArgs{
 		From:     &from,
 		To:       &systemcontracts.SuperNodeLogicContractAddr,
 		Data:     &msgData,
-		GasPrice: (*hexutil.Big)(gasPrice),
+		GasPrice: (*hexutil.Big)(GetCurrentGasPrice(ctx, blockChainAPI)),
 	}
 	gas, err := blockChainAPI.EstimateGas(ctx, args, nil)
 	if err != nil {
@@ -260,17 +217,11 @@ func ChangeSuperNodeIsOfficial(ctx context.Context, blockChainAPI *ethapi.Public
 	}
 
 	msgData := (hexutil.Bytes)(data)
-	gasPrice := big.NewInt(params.GWei)
-	gasPrice, err = GetPropertyValue(ctx, blockChainAPI, "gas_price", rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber))
-	if err != nil {
-		gasPrice = big.NewInt(params.GWei / 100)
-	}
-
 	args := ethapi.TransactionArgs{
 		From:     &from,
 		To:       &systemcontracts.SuperNodeLogicContractAddr,
 		Data:     &msgData,
-		GasPrice: (*hexutil.Big)(gasPrice),
+		GasPrice: (*hexutil.Big)(GetCurrentGasPrice(ctx, blockChainAPI)),
 	}
 	gas, err := blockChainAPI.EstimateGas(ctx, args, nil)
 	if err != nil {

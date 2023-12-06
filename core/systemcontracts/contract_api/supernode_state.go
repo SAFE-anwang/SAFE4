@@ -36,6 +36,7 @@ func UploadSuperNodeStates(ctx context.Context, blockChainAPI *ethapi.PublicBloc
 	if err != nil {
 		return common.Hash{}, err
 	}
+	gas = gas * 3 / 2
 	args.Gas = &gas
 	return transactionPoolAPI.SendTransaction(ctx, args)
 }

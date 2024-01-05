@@ -1157,6 +1157,54 @@ func (s *Spos) Reward(snAddr common.Address, snCount *big.Int, mnAddr common.Add
 	return tx, err
 }
 
+func (s *Spos) CalcRewardTxGas(header *types.Header, state *state.StateDB) uint64 {
+	vABI, err := abi.JSON(strings.NewReader(systemcontracts.SystemRewardABI))
+	if err != nil {
+		return 0
+	}
+
+	number := header.Number.Uint64()
+	totalReward := getBlockSubsidy(number, withoutSuperBlockPart)
+	mnCount := getMasternodePayment(totalReward)
+	snCount := new(big.Int).Sub(totalReward, mnCount)
+	snAddr := header.Coinbase
+	mnAddr, err := contract_api.GetNextMasterNode(s.ctx, s.blockChainAPI, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(header.Number.Int64()-1)))
+	if err != nil {
+		return 0
+	}
+	ppAddr := systemcontracts.ProposalContractAddr
+	ppCount := getBlockSubsidy(number, onlySuperBlockPart)
+
+	method := "reward"
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	data, err := vABI.Pack(method, snAddr, snCount, mnAddr, mnCount, ppAddr, ppCount)
+	if err != nil {
+		return 0
+	}
+
+	value := new(big.Int)
+	value.Add(snCount, mnCount)
+	value.Add(value, ppCount)
+	msgData := (hexutil.Bytes)(data)
+	nonce := state.GetNonce(snAddr)
+
+	args := ethapi.TransactionArgs{
+		From:     &snAddr,
+		To:       &systemcontracts.SystemRewardContractAddr,
+		Data:     &msgData,
+		Value:    (*hexutil.Big)(value),
+		GasPrice: (*hexutil.Big)(common.Big0),
+		Nonce:    (*hexutil.Uint64)(&nonce),
+	}
+	gas, err := s.blockChainAPI.EstimateGas(ctx, args, nil)
+	if err != nil {
+		return 0
+	}
+	return uint64(gas)
+}
+
 func (s *Spos) CheckRewardTransaction(block *types.Block) error{
 	blocknumber := block.Number().Uint64()
 	for _, transaction := range block.Transactions() {

@@ -413,6 +413,11 @@ func (s *Ethereum) APIs() []rpc.API {
 			Version:   "1.0",
 			Service:   NewPublicProposalAPI(s),
 			Public:    true,
+		}, {
+			Namespace: "safe3",
+			Version:   "1.0",
+			Service:   NewPublicSafe3API(s),
+			Public:    true,
 		},
 	}...)
 

@@ -148,6 +148,7 @@ func (c *Console) init(preload []string) error {
 		c.initSuperNode(vm, bridge)
 		c.initSNVote(vm, bridge)
 		c.initProposal(vm, bridge)
+		c.initSafe3(vm, bridge)
 	})
 
 	// Preload JavaScript files.
@@ -509,6 +510,35 @@ func (c *Console) initProposal(vm *goja.Runtime, bridge *bridge) {
 	proposal.Set("getAll", jsre.MakeCallback(vm, bridge.GetAllProposals))
 	proposal.Set("getMines", jsre.MakeCallback(vm, bridge.GetMineProposals))
 	proposal.Set("exist", jsre.MakeCallback(vm, bridge.ExistProposal))
+}
+
+func (c *Console) initSafe3(vm *goja.Runtime, bridge *bridge) {
+	safe3 := getObject(vm, "safe3")
+	if safe3 == nil || c.prompter == nil {
+		return
+	}
+
+	getJeth(vm).Set("redeemAvailableSafe3", safe3.Get("redeemAvailable"))
+	getJeth(vm).Set("redeemLockedSafe3", safe3.Get("redeemLocked"))
+	getJeth(vm).Set("applyRedeemSpecialSafe3", safe3.Get("applyRedeemSpecial"))
+	getJeth(vm).Set("vote4SpecialSafe3", safe3.Get("vote4Special"))
+	getJeth(vm).Set("getAvailableSafe3", safe3.Get("getAvailable"))
+	getJeth(vm).Set("getLockedSafe3", safe3.Get("getLocked"))
+	getJeth(vm).Set("getSpecialSafe3", safe3.Get("getSpecial"))
+	getJeth(vm).Set("getAllAvailableSafe3", safe3.Get("getAllAvailable"))
+	getJeth(vm).Set("getAllLockedSafe3", safe3.Get("getAllLocked"))
+	getJeth(vm).Set("getAllSpecialSafe3", safe3.Get("getAllSpecial"))
+
+	safe3.Set("redeemAvailable", jsre.MakeCallback(vm, bridge.RedeemAvailableSafe3))
+	safe3.Set("redeemLocked", jsre.MakeCallback(vm, bridge.RedeemLockedSafe3))
+	safe3.Set("applyRedeemSpecial", jsre.MakeCallback(vm, bridge.ApplyRedeemSpecialSafe3))
+	safe3.Set("vote4Special", jsre.MakeCallback(vm, bridge.Vote4SpecialSafe3))
+	safe3.Set("getAvailable", jsre.MakeCallback(vm, bridge.GetAvailableSafe3))
+	safe3.Set("getLocked", jsre.MakeCallback(vm, bridge.GetLockedSafe3))
+	safe3.Set("getSpecial", jsre.MakeCallback(vm, bridge.GetSpecialSafe3))
+	safe3.Set("getAllAvailable", jsre.MakeCallback(vm, bridge.GetAllAvailableSafe3))
+	safe3.Set("getAllLocked", jsre.MakeCallback(vm, bridge.GetAllLockedSafe3))
+	safe3.Set("getAllSpecial", jsre.MakeCallback(vm, bridge.GetAllSpecialSafe3))
 }
 
 func (c *Console) clearHistory() {

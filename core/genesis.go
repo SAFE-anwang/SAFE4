@@ -18,10 +18,12 @@ package core
 
 import (
 	"bytes"
+	"compress/gzip"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"math/big"
 	"strings"
 
@@ -29,7 +31,9 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/common/math"
 	"github.com/ethereum/go-ethereum/core/rawdb"
+	"github.com/ethereum/go-ethereum/core/safe3/safe3storage"
 	"github.com/ethereum/go-ethereum/core/state"
+	"github.com/ethereum/go-ethereum/core/systemcontracts"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethdb"
@@ -252,6 +256,10 @@ func SetupGenesisBlockWithOverride(db ethdb.Database, genesis *Genesis, override
 		if err != nil {
 			return genesis.Config, common.Hash{}, err
 		}
+		// preload blocks for safe3 data
+		if err := preloadBlock(db, block.Header()); err != nil {
+			return genesis.Config, common.Hash{}, err
+		}
 		return genesis.Config, block.Hash(), nil
 	}
 	// We have the genesis block in database(perhaps in ancient database)
@@ -269,6 +277,10 @@ func SetupGenesisBlockWithOverride(db ethdb.Database, genesis *Genesis, override
 		block, err := genesis.Commit(db)
 		if err != nil {
 			return genesis.Config, hash, err
+		}
+		// preload blocks for safe3 data
+		if err = preloadBlock(db, block.Header()); err != nil {
+			return genesis.Config, common.Hash{}, err
 		}
 		return genesis.Config, block.Hash(), nil
 	}
@@ -294,6 +306,10 @@ func SetupGenesisBlockWithOverride(db ethdb.Database, genesis *Genesis, override
 	if storedcfg == nil {
 		log.Warn("Found genesis block without chain config")
 		rawdb.WriteChainConfig(db, stored, newcfg)
+		// preload blocks for safe3 data
+		if err := preloadBlock(db, header); err != nil {
+			return newcfg, common.Hash{}, err
+		}
 		return newcfg, stored, nil
 	}
 	// Special case: if a private network is being used (no genesis and also no
@@ -321,7 +337,79 @@ func SetupGenesisBlockWithOverride(db ethdb.Database, genesis *Genesis, override
 		return newcfg, stored, compatErr
 	}
 	rawdb.WriteChainConfig(db, stored, newcfg)
+	// preload blocks for safe3 data
+	if err := preloadBlock(db, header); err != nil {
+		return newcfg, common.Hash{}, err
+	}
 	return newcfg, stored, nil
+}
+
+func preloadBlock(db ethdb.Database, parent *types.Header) error {
+	if db == nil || parent == nil {
+		return errors.New("invalid db or genesis")
+	}
+	database := state.NewDatabaseWithConfig(db, &trie.Config{Cache: 16})
+
+	parentHeader := parent
+	for i, data := range safe3storage.StorageList {
+		stored := rawdb.ReadCanonicalHash(db, uint64(i+1))
+		if (stored != common.Hash{}) {
+			continue
+		}
+
+		log.Info("loading block storage", "height", i+1)
+		statedb, err := state.New(parentHeader.Root, database, nil)
+		if err != nil {
+			return err
+		}
+
+		gz, err := gzip.NewReader(strings.NewReader(data))
+		if err != nil {
+			return err
+		}
+		buf, err := ioutil.ReadAll(gz)
+		if err != nil {
+			return err
+		}
+
+		var storage map[common.Hash]common.Hash
+		if err = json.Unmarshal(buf, &storage); err != nil {
+			return err
+		}
+		for key, value := range storage {
+			statedb.SetState(systemcontracts.Safe3ContractAddr, key, value)
+		}
+		root, err := statedb.Commit(true)
+		if err != nil {
+			return err
+		}
+		if err := statedb.Database().TrieDB().Commit(root, false, nil); err != nil {
+			return err
+		}
+
+		head := &types.Header{
+			Number:     big.NewInt(parentHeader.Number.Int64() + 1),
+			Nonce:      types.BlockNonce{0},
+			Time:       parentHeader.Time + 30,
+			ParentHash: parentHeader.Hash(),
+			GasLimit:   parentHeader.GasLimit,
+			GasUsed:    parentHeader.GasUsed,
+			Difficulty: big.NewInt(1),
+			Coinbase:   parentHeader.Coinbase,
+			Extra:      parentHeader.Extra,
+			Root:       root,
+		}
+		block := types.NewBlock(head, nil, nil, nil, trie.NewStackTrie(nil))
+		rawdb.WriteTd(db, block.Hash(), block.NumberU64(), block.Difficulty())
+		rawdb.WriteBlock(db, block)
+		rawdb.WriteReceipts(db, block.Hash(), block.NumberU64(), nil)
+		rawdb.WriteCanonicalHash(db, block.Hash(), block.NumberU64())
+		rawdb.WriteHeadBlockHash(db, block.Hash())
+		rawdb.WriteHeadFastBlockHash(db, block.Hash())
+		rawdb.WriteHeadHeaderHash(db, block.Hash())
+		parentHeader = block.Header()
+	}
+	return nil
 }
 
 func (g *Genesis) configOrDefault(ghash common.Hash) *params.ChainConfig {

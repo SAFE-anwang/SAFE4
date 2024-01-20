@@ -14617,6 +14617,13 @@ module.exports = XMLHttpRequest;
       var redeemLocked = new Method({
         name: 'redeemLocked',
         call: 'safe3_redeemLocked',
+        params: 3,
+        inputFormatter: [formatters.inputAddressFormatter, formatters.formatInputBytes, formatters.formatInputBytes]
+      });
+
+      var redeemMasterNode = new Method({
+        name: 'redeemMasterNode',
+        call: 'safe3_redeemMasterNode',
         params: 4,
         inputFormatter: [formatters.inputAddressFormatter, formatters.formatInputBytes, formatters.formatInputBytes, formatters.formatInputString]
       });
@@ -14635,59 +14642,100 @@ module.exports = XMLHttpRequest;
         inputFormatter: [formatters.inputAddressFormatter, formatters.formatInputString, formatters.formatInputInt]
       });
 
-      var getAvailable = new Method({
-        name: 'getAvailable',
-        call: 'safe3_getAvailable',
-        params: 2,
-        inputFormatter: [formatters.formatInputString, formatters.inputDefaultBlockNumberFormatter]
-      });
-
-      var getLocked = new Method({
-        name: 'getLocked',
-        call: 'safe3_getLocked',
-        params: 2,
-        inputFormatter: [formatters.formatInputString, formatters.inputDefaultBlockNumberFormatter]
-      });
-
-      var getSpecial = new Method({
-        name: 'getSpecial',
-        call: 'safe3_getSpecial',
-        params: 2,
-        inputFormatter: [formatters.formatInputString, formatters.inputDefaultBlockNumberFormatter]
-      });
-
-      var getAllAvailable = new Method({
-        name: 'getAllAvailable',
-        call: 'safe3_getAllAvailable',
+      var getAllAvailableNum = new Method({
+        name: 'getAllAvailableNum',
+        call: 'safe3_getAllAvailableNum',
         params: 1,
         inputFormatter: [formatters.inputDefaultBlockNumberFormatter]
       });
 
-      var getAllLocked = new Method({
-        name: 'getAllLocked',
-        call: 'safe3_getAllLocked',
+      var getAvailableInfos = new Method({
+        name: 'getAvailableInfos',
+        call: 'safe3_getAvailableInfos',
+        params: 3,
+        inputFormatter: [formatters.formatInputInt, formatters.formatInputInt, formatters.inputDefaultBlockNumberFormatter]
+      });
+
+      var getAvailableInfo = new Method({
+        name: 'getAvailableInfo',
+        call: 'safe3_getAvailableInfo',
+        params: 2,
+        inputFormatter: [formatters.formatInputString, formatters.inputDefaultBlockNumberFormatter]
+      });
+
+      var getAllLockedNum = new Method({
+        name: 'getAllLockedNum',
+        call: 'safe3_getAllLockedNum',
         params: 1,
         inputFormatter: [formatters.inputDefaultBlockNumberFormatter]
       });
 
-      var getAllSpecial = new Method({
-        name: 'getAllSpecial',
-        call: 'safe3_getAllSpecial',
+      var getLockedAddrNum = new Method({
+        name: 'getLockedAddrNum',
+        call: 'safe3_getLockedAddrNum',
         params: 1,
         inputFormatter: [formatters.inputDefaultBlockNumberFormatter]
+      });
+
+      var getLockedAddrs = new Method({
+        name: 'getLockedAddrs',
+        call: 'safe3_getLockedAddrs',
+        params: 3,
+        inputFormatter: [formatters.formatInputInt, formatters.formatInputInt, formatters.inputDefaultBlockNumberFormatter]
+      });
+
+      var getLockedNum = new Method({
+        name: 'getLockedNum',
+        call: 'safe3_getLockedNum',
+        params: 2,
+        inputFormatter: [formatters.formatInputString, formatters.inputDefaultBlockNumberFormatter]
+      });
+
+      var getLockedInfo = new Method({
+        name: 'getLockedInfo',
+        call: 'safe3_getLockedInfo',
+        params: 4,
+        inputFormatter: [formatters.formatInputString, formatters.formatInputInt, formatters.formatInputInt, formatters.inputDefaultBlockNumberFormatter]
+      });
+
+      var getAllSpecialNum = new Method({
+        name: 'getAllSpecialNum',
+        call: 'safe3_getAllSpecialNum',
+        params: 1,
+        inputFormatter: [formatters.inputDefaultBlockNumberFormatter]
+      });
+
+      var getSpecialInfos = new Method({
+        name: 'getSpecialInfos',
+        call: 'safe3_getSpecialInfos',
+        params: 3,
+        inputFormatter: [formatters.formatInputInt, formatters.formatInputInt, formatters.inputDefaultBlockNumberFormatter]
+      });
+
+      var getSpecialInfo = new Method({
+        name: 'getSpecialInfo',
+        call: 'safe3_getSpecialInfo',
+        params: 2,
+        inputFormatter: [formatters.formatInputString, formatters.inputDefaultBlockNumberFormatter]
       });
 
       return [
         redeemAvailable,
         redeemLocked,
+        redeemMasterNode,
         applyRedeemSpecial,
         vote4Special,
-        getAvailable,
-        getLocked,
-        getSpecial,
-        getAllAvailable,
-        getAllLocked,
-        getAllSpecial
+        getAllAvailableNum,
+        getAvailableInfos,
+        getAvailableInfo,
+        getAllLockedNum,
+        getLockedAddrNum,
+        getLockedAddrs,
+        getLockedNum,
+        getLockedInfo,
+        getAllSpecialNum,
+        getSpecialInfos,
+        getSpecialInfo
       ];
     };
 

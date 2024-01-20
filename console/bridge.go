@@ -1259,82 +1259,130 @@ func (b *bridge) ExistProposal(call jsre.Call) (goja.Value, error) {
 
 /****************************** safe3 ******************************/
 
-func (b *bridge) RedeemAvailableSafe3(call jsre.Call) (goja.Value, error) {
-	redeemAvailableSafe3, callable := goja.AssertFunction(getJeth(call.VM).Get("redeemAvailableSafe3"))
+func (b *bridge) RedeemAvailable(call jsre.Call) (goja.Value, error) {
+	redeemAvailable, callable := goja.AssertFunction(getJeth(call.VM).Get("redeemAvailable"))
 	if !callable {
-		return nil, fmt.Errorf("jeth.redeemAvailableSafe3 is not callable")
+		return nil, fmt.Errorf("jeth.redeemAvailable is not callable")
 	}
-	return redeemAvailableSafe3(goja.Null(), call.Argument(0), call.Argument(1), call.Argument(2))
+	return redeemAvailable(goja.Null(), call.Argument(0), call.Argument(1), call.Argument(2))
 }
 
-func (b *bridge) RedeemLockedSafe3(call jsre.Call) (goja.Value, error) {
-	redeemLockedSafe3, callable := goja.AssertFunction(getJeth(call.VM).Get("redeemLockedSafe3"))
+func (b *bridge) RedeemLocked(call jsre.Call) (goja.Value, error) {
+	redeemLocked, callable := goja.AssertFunction(getJeth(call.VM).Get("redeemLocked"))
 	if !callable {
-		return nil, fmt.Errorf("jeth.redeemLockedSafe3 is not callable")
+		return nil, fmt.Errorf("jeth.redeemLocked is not callable")
 	}
-	return redeemLockedSafe3(goja.Null(), call.Argument(0), call.Argument(1), call.Argument(2), call.Argument(3))
+	return redeemLocked(goja.Null(), call.Argument(0), call.Argument(1), call.Argument(2))
 }
 
-func (b *bridge) ApplyRedeemSpecialSafe3(call jsre.Call) (goja.Value, error) {
-	applyRedeemSpecialSafe3, callable := goja.AssertFunction(getJeth(call.VM).Get("applyRedeemSpecialSafe3"))
+func (b *bridge) RedeemMasterNode(call jsre.Call) (goja.Value, error) {
+	redeemMasterNode, callable := goja.AssertFunction(getJeth(call.VM).Get("redeemMasterNode"))
 	if !callable {
-		return nil, fmt.Errorf("jeth.applyRedeemSpecialSafe3 is not callable")
+		return nil, fmt.Errorf("jeth.redeemMasterNode is not callable")
 	}
-	return applyRedeemSpecialSafe3(goja.Null(), call.Argument(0), call.Argument(1), call.Argument(2))
+	return redeemMasterNode(goja.Null(), call.Argument(0), call.Argument(1), call.Argument(2), call.Argument(3))
 }
 
-func (b *bridge) Vote4SpecialSafe3(call jsre.Call) (goja.Value, error) {
-	vote4SpecialSafe3, callable := goja.AssertFunction(getJeth(call.VM).Get("vote4SpecialSafe3"))
+func (b *bridge) ApplyRedeemSpecial(call jsre.Call) (goja.Value, error) {
+	applyRedeemSpecial, callable := goja.AssertFunction(getJeth(call.VM).Get("applyRedeemSpecial"))
 	if !callable {
-		return nil, fmt.Errorf("jeth.vote4SpecialSafe3 is not callable")
+		return nil, fmt.Errorf("jeth.applyRedeemSpecial is not callable")
 	}
-	return vote4SpecialSafe3(goja.Null(), call.Argument(0), call.Argument(1), call.Argument(3))
+	return applyRedeemSpecial(goja.Null(), call.Argument(0), call.Argument(1), call.Argument(2))
 }
 
-func (b *bridge) GetAvailableSafe3(call jsre.Call) (goja.Value, error) {
-	getAvailableSafe3, callable := goja.AssertFunction(getJeth(call.VM).Get("getAvailableSafe3"))
+func (b *bridge) Vote4Special(call jsre.Call) (goja.Value, error) {
+	vote4Special, callable := goja.AssertFunction(getJeth(call.VM).Get("vote4Special"))
 	if !callable {
-		return nil, fmt.Errorf("jeth.getAvailableSafe3 is not callable")
+		return nil, fmt.Errorf("jeth.vote4Special is not callable")
 	}
-	return getAvailableSafe3(goja.Null(), call.Argument(0), call.Argument(1))
+	return vote4Special(goja.Null(), call.Argument(0), call.Argument(1), call.Argument(2))
 }
 
-func (b *bridge) GetLockedSafe3(call jsre.Call) (goja.Value, error) {
-	getLockedSafe3, callable := goja.AssertFunction(getJeth(call.VM).Get("getLockedSafe3"))
+func (b *bridge) GetAllAvailableNum(call jsre.Call) (goja.Value, error) {
+	getAllAvailableNum, callable := goja.AssertFunction(getJeth(call.VM).Get("getAllAvailableNum"))
 	if !callable {
-		return nil, fmt.Errorf("jeth.getLockedSafe3 is not callable")
+		return nil, fmt.Errorf("jeth.getAllAvailableNum is not callable")
 	}
-	return getLockedSafe3(goja.Null(), call.Argument(0), call.Argument(1))
+	return getAllAvailableNum(goja.Null(), call.Argument(0))
 }
 
-func (b *bridge) GetSpecialSafe3(call jsre.Call) (goja.Value, error) {
-	getSpecialSafe3, callable := goja.AssertFunction(getJeth(call.VM).Get("getSpecialSafe3"))
+func (b *bridge) GetAvailableInfos(call jsre.Call) (goja.Value, error) {
+	getAvailableInfos, callable := goja.AssertFunction(getJeth(call.VM).Get("getAvailableInfos"))
 	if !callable {
-		return nil, fmt.Errorf("jeth.getSpecialSafe3 is not callable")
+		return nil, fmt.Errorf("jeth.getAvailableInfos is not callable")
 	}
-	return getSpecialSafe3(goja.Null(), call.Argument(0), call.Argument(1))
+	return getAvailableInfos(goja.Null(), call.Argument(0), call.Argument(1), call.Argument(2))
 }
 
-func (b *bridge) GetAllAvailableSafe3(call jsre.Call) (goja.Value, error) {
-	getAllAvailableSafe3, callable := goja.AssertFunction(getJeth(call.VM).Get("getAllAvailableSafe3"))
+func (b *bridge) GetAvailableInfo(call jsre.Call) (goja.Value, error) {
+	getAvailableInfo, callable := goja.AssertFunction(getJeth(call.VM).Get("getAvailableInfo"))
 	if !callable {
-		return nil, fmt.Errorf("jeth.getAllAvailableSafe3 is not callable")
+		return nil, fmt.Errorf("jeth.getAvailableInfo is not callable")
 	}
-	return getAllAvailableSafe3(goja.Null(), call.Argument(0))
+	return getAvailableInfo(goja.Null(), call.Argument(0), call.Argument(1))
 }
 
-func (b *bridge) GetAllLockedSafe3(call jsre.Call) (goja.Value, error) {
-	getAllLockedSafe3, callable := goja.AssertFunction(getJeth(call.VM).Get("getAllLockedSafe3"))
+func (b *bridge) GetAllLockedNum(call jsre.Call) (goja.Value, error) {
+	getAllLockedNum, callable := goja.AssertFunction(getJeth(call.VM).Get("getAllLockedNum"))
 	if !callable {
-		return nil, fmt.Errorf("jeth.getAllLockedSafe3 is not callable")
+		return nil, fmt.Errorf("jeth.getAllLockedNum is not callable")
 	}
-	return getAllLockedSafe3(goja.Null(), call.Argument(0))
+	return getAllLockedNum(goja.Null(), call.Argument(0))
 }
 
-func (b *bridge) GetAllSpecialSafe3(call jsre.Call) (goja.Value, error) {
-	getAllSpecialSafe3, callable := goja.AssertFunction(getJeth(call.VM).Get("getAllSpecialSafe3"))
+func (b *bridge) GetLockedAddrNum(call jsre.Call) (goja.Value, error) {
+	getLockedAddrNum, callable := goja.AssertFunction(getJeth(call.VM).Get("getLockedAddrNum"))
 	if !callable {
-		return nil, fmt.Errorf("jeth.getAllSpecialSafe3 is not callable")
+		return nil, fmt.Errorf("jeth.getLockedAddrNum is not callable")
 	}
-	return getAllSpecialSafe3(goja.Null(), call.Argument(0))
+	return getLockedAddrNum(goja.Null(), call.Argument(0))
+}
+
+func (b *bridge) GetLockedAddrs(call jsre.Call) (goja.Value, error) {
+	getLockedAddrs, callable := goja.AssertFunction(getJeth(call.VM).Get("getLockedAddrs"))
+	if !callable {
+		return nil, fmt.Errorf("jeth.getLockedAddrs is not callable")
+	}
+	return getLockedAddrs(goja.Null(), call.Argument(0), call.Argument(1), call.Argument(2))
+}
+
+func (b *bridge) GetLockedNum(call jsre.Call) (goja.Value, error) {
+	getLockedNum, callable := goja.AssertFunction(getJeth(call.VM).Get("getLockedNum"))
+	if !callable {
+		return nil, fmt.Errorf("jeth.getLockedNum is not callable")
+	}
+	return getLockedNum(goja.Null(), call.Argument(0), call.Argument(1))
+}
+
+func (b *bridge) GetLockedInfo(call jsre.Call) (goja.Value, error) {
+	getLockedInfo, callable := goja.AssertFunction(getJeth(call.VM).Get("getLockedInfo"))
+	if !callable {
+		return nil, fmt.Errorf("jeth.getLockedInfo is not callable")
+	}
+	return getLockedInfo(goja.Null(), call.Argument(0), call.Argument(1), call.Argument(2), call.Argument(3))
+}
+
+func (b *bridge) GetAllSpecialNum(call jsre.Call) (goja.Value, error) {
+	getAllSpecialNum, callable := goja.AssertFunction(getJeth(call.VM).Get("getAllSpecialNum"))
+	if !callable {
+		return nil, fmt.Errorf("jeth.getAllSpecialNum is not callable")
+	}
+	return getAllSpecialNum(goja.Null(), call.Argument(0))
+}
+
+func (b *bridge) GetSpecialInfos(call jsre.Call) (goja.Value, error) {
+	getSpecialInfos, callable := goja.AssertFunction(getJeth(call.VM).Get("getSpecialInfos"))
+	if !callable {
+		return nil, fmt.Errorf("jeth.getSpecialInfos is not callable")
+	}
+	return getSpecialInfos(goja.Null(), call.Argument(0), call.Argument(1), call.Argument(2))
+}
+
+func (b *bridge) GetSpecialInfo(call jsre.Call) (goja.Value, error) {
+	getSpecialInfo, callable := goja.AssertFunction(getJeth(call.VM).Get("getSpecialInfo"))
+	if !callable {
+		return nil, fmt.Errorf("jeth.getSpecialInfo is not callable")
+	}
+	return getSpecialInfo(goja.Null(), call.Argument(0), call.Argument(1))
 }

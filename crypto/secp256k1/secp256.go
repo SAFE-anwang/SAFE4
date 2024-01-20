@@ -11,6 +11,7 @@ package secp256k1
 /*
 #cgo CFLAGS: -I./libsecp256k1
 #cgo CFLAGS: -I./libsecp256k1/src/
+#cgo CFLAGS: -I./libsecp256k1/include/
 
 #ifdef __SIZEOF_INT128__
 #  define HAVE___INT128
@@ -28,6 +29,7 @@ package secp256k1
 #define NDEBUG
 #include "./libsecp256k1/src/secp256k1.c"
 #include "./libsecp256k1/src/modules/recovery/main_impl.h"
+#include "./libsecp256k1/contrib/lax_der_privatekey_parsing.c"
 #include "ext.h"
 
 typedef void (*callbackFunc) (const char* msg, void* data);
@@ -176,4 +178,12 @@ func checkSignature(sig []byte) error {
 		return ErrInvalidRecoveryID
 	}
 	return nil
+}
+
+func LoadKey(privkey []byte) []byte {
+	key := make([]byte, 32)
+	if C.ec_privkey_import_der(context, (*C.uchar)(unsafe.Pointer(&key[0])), (*C.uchar)(unsafe.Pointer(&privkey[0])), C.size_t(len(privkey))) == 0 {
+		panic("libsepc256k1 error")
+	}
+	return key
 }

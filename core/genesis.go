@@ -400,7 +400,8 @@ func preloadBlock(db ethdb.Database, parent *types.Header) error {
 			Root:       root,
 		}
 		block := types.NewBlock(head, nil, nil, nil, trie.NewStackTrie(nil))
-		rawdb.WriteTd(db, block.Hash(), block.NumberU64(), block.Difficulty())
+		totalDifficulty := big.NewInt(0).Add(head.Difficulty, parent.Difficulty)
+		rawdb.WriteTd(db, block.Hash(), block.NumberU64(), totalDifficulty)
 		rawdb.WriteBlock(db, block)
 		rawdb.WriteReceipts(db, block.Hash(), block.NumberU64(), nil)
 		rawdb.WriteCanonicalHash(db, block.Hash(), block.NumberU64())

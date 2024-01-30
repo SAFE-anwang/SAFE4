@@ -567,12 +567,28 @@ func (b *bridge) GetPropertyValue(call jsre.Call) (goja.Value, error) {
 	return getPropertyValue(goja.Null(), call.Argument(0), call.Argument(1))
 }
 
+func (b *bridge) GetPropertyNum(call jsre.Call) (goja.Value, error) {
+	getPropertyNum, callable := goja.AssertFunction(getJeth(call.VM).Get("getPropertyNum"))
+	if !callable {
+		return nil, fmt.Errorf("jeth.getPropertyNum is not callable")
+	}
+	return getPropertyNum(goja.Null(), call.Argument(0))
+}
+
 func (b *bridge) GetAllProperties(call jsre.Call) (goja.Value, error) {
 	getAllProperties, callable := goja.AssertFunction(getJeth(call.VM).Get("getAllProperties"))
 	if !callable {
 		return nil, fmt.Errorf("jeth.getAllProperties is not callable")
 	}
-	return getAllProperties(goja.Null(), call.Argument(0))
+	return getAllProperties(goja.Null(), call.Argument(0), call.Argument(1), call.Argument(2))
+}
+
+func (b *bridge) GetUnconfirmedPropertyNum(call jsre.Call) (goja.Value, error) {
+	getUnconfirmedPropertyNum, callable := goja.AssertFunction(getJeth(call.VM).Get("getUnconfirmedPropertyNum"))
+	if !callable {
+		return nil, fmt.Errorf("jeth.getUnconfirmedPropertyNum is not callable")
+	}
+	return getUnconfirmedPropertyNum(goja.Null(), call.Argument(0))
 }
 
 func (b *bridge) GetAllUnconfirmedProperties(call jsre.Call) (goja.Value, error) {
@@ -580,7 +596,7 @@ func (b *bridge) GetAllUnconfirmedProperties(call jsre.Call) (goja.Value, error)
 	if !callable {
 		return nil, fmt.Errorf("jeth.getAllUnconfirmedProperties is not callable")
 	}
-	return getAllUnconfirmedProperties(goja.Null(), call.Argument(0))
+	return getAllUnconfirmedProperties(goja.Null(), call.Argument(0), call.Argument(1), call.Argument(2))
 }
 
 func (b *bridge) ExistProperty(call jsre.Call) (goja.Value, error) {
@@ -649,12 +665,28 @@ func (b *bridge) GetTotalAmount(call jsre.Call) (goja.Value, error) {
 	return getTotalAmount(goja.Null(), call.Argument(0), call.Argument(1))
 }
 
+func (b *bridge) GetTotalIDs(call jsre.Call) (goja.Value, error) {
+	getTotalIDs, callable := goja.AssertFunction(getJeth(call.VM).Get("getTotalIDs"))
+	if !callable {
+		return nil, fmt.Errorf("jeth.getTotalIDs is not callable")
+	}
+	return getTotalIDs(goja.Null(), call.Argument(0), call.Argument(1), call.Argument(2), call.Argument(3))
+}
+
 func (b *bridge) GetAvailableAmount(call jsre.Call) (goja.Value, error) {
 	getAvailableAmount, callable := goja.AssertFunction(getJeth(call.VM).Get("getAvailableAmount"))
 	if !callable {
 		return nil, fmt.Errorf("jeth.getAvailableAmount is not callable")
 	}
 	return getAvailableAmount(goja.Null(), call.Argument(0), call.Argument(1))
+}
+
+func (b *bridge) GetAvailableIDs(call jsre.Call) (goja.Value, error) {
+	getAvailableIDs, callable := goja.AssertFunction(getJeth(call.VM).Get("getAvailableIDs"))
+	if !callable {
+		return nil, fmt.Errorf("jeth.getAvailableIDs is not callable")
+	}
+	return getAvailableIDs(goja.Null(), call.Argument(0), call.Argument(1), call.Argument(2), call.Argument(3))
 }
 
 func (b *bridge) GetLockedAmount(call jsre.Call) (goja.Value, error) {
@@ -665,6 +697,14 @@ func (b *bridge) GetLockedAmount(call jsre.Call) (goja.Value, error) {
 	return getLockedAmount(goja.Null(), call.Argument(0), call.Argument(1))
 }
 
+func (b *bridge) GetLockedIDs(call jsre.Call) (goja.Value, error) {
+	getLockedIDs, callable := goja.AssertFunction(getJeth(call.VM).Get("getLockedIDs"))
+	if !callable {
+		return nil, fmt.Errorf("jeth.getLockedIDs is not callable")
+	}
+	return getLockedIDs(goja.Null(), call.Argument(0), call.Argument(1), call.Argument(2), call.Argument(3))
+}
+
 func (b *bridge) GetUsedAmount(call jsre.Call) (goja.Value, error) {
 	getUsedAmount, callable := goja.AssertFunction(getJeth(call.VM).Get("getUsedAmount"))
 	if !callable {
@@ -673,12 +713,12 @@ func (b *bridge) GetUsedAmount(call jsre.Call) (goja.Value, error) {
 	return getUsedAmount(goja.Null(), call.Argument(0), call.Argument(1))
 }
 
-func (b *bridge) GetRecords(call jsre.Call) (goja.Value, error) {
-	getRecords, callable := goja.AssertFunction(getJeth(call.VM).Get("getRecords"))
+func (b *bridge) GetUsedIDs(call jsre.Call) (goja.Value, error) {
+	getUsedIDs, callable := goja.AssertFunction(getJeth(call.VM).Get("getUsedIDs"))
 	if !callable {
-		return nil, fmt.Errorf("jeth.getRecords is not callable")
+		return nil, fmt.Errorf("jeth.getUsedIDs is not callable")
 	}
-	return getRecords(goja.Null(), call.Argument(0), call.Argument(1))
+	return getUsedIDs(goja.Null(), call.Argument(0), call.Argument(1), call.Argument(2), call.Argument(3))
 }
 
 func (b *bridge) GetRecord0(call jsre.Call) (goja.Value, error) {
@@ -811,12 +851,28 @@ func (b *bridge) GetNextMasterNode(call jsre.Call) (goja.Value, error) {
 	return getNextMasterNode(goja.Null(), call.Argument(0))
 }
 
+func (b *bridge) GetMasterNodeNum(call jsre.Call) (goja.Value, error) {
+	getMasterNodeNum, callable := goja.AssertFunction(getJeth(call.VM).Get("getMasterNodeNum"))
+	if !callable {
+		return nil, fmt.Errorf("jeth.getMasterNodeNum is not callable")
+	}
+	return getMasterNodeNum(goja.Null(), call.Argument(0))
+}
+
 func (b *bridge) GetAllMasterNodes(call jsre.Call) (goja.Value, error) {
 	getAllMasterNodes, callable := goja.AssertFunction(getJeth(call.VM).Get("getAllMasterNodes"))
 	if !callable {
 		return nil, fmt.Errorf("jeth.getAllMasterNodes is not callable")
 	}
-	return getAllMasterNodes(goja.Null(), call.Argument(0))
+	return getAllMasterNodes(goja.Null(), call.Argument(0), call.Argument(1), call.Argument(2))
+}
+
+func (b *bridge) GetOfficialMasterNodeNum(call jsre.Call) (goja.Value, error) {
+	getOfficialMasterNodeNum, callable := goja.AssertFunction(getJeth(call.VM).Get("getOfficialMasterNodeNum"))
+	if !callable {
+		return nil, fmt.Errorf("jeth.getOfficialMasterNodeNum is not callable")
+	}
+	return getOfficialMasterNodeNum(goja.Null(), call.Argument(0))
 }
 
 func (b *bridge) GetOfficialMasterNodes(call jsre.Call) (goja.Value, error) {
@@ -824,15 +880,7 @@ func (b *bridge) GetOfficialMasterNodes(call jsre.Call) (goja.Value, error) {
 	if !callable {
 		return nil, fmt.Errorf("jeth.getOfficialMasterNodes is not callable")
 	}
-	return getOfficialMasterNodes(goja.Null(), call.Argument(0))
-}
-
-func (b *bridge) GetMasterNodeNum(call jsre.Call) (goja.Value, error) {
-	getMasterNodeNum, callable := goja.AssertFunction(getJeth(call.VM).Get("getMasterNodeNum"))
-	if !callable {
-		return nil, fmt.Errorf("jeth.getMasterNodeNum is not callable")
-	}
-	return getMasterNodeNum(goja.Null(), call.Argument(0))
+	return getOfficialMasterNodes(goja.Null(), call.Argument(0), call.Argument(1), call.Argument(2))
 }
 
 func (b *bridge) ExistMasterNode(call jsre.Call) (goja.Value, error) {
@@ -981,12 +1029,20 @@ func (b *bridge) GetSuperNodeInfoByID(call jsre.Call) (goja.Value, error) {
 	return getSuperNodeInfoByID(goja.Null(), call.Argument(0), call.Argument(1))
 }
 
+func (b *bridge) GetSuperNodeNum(call jsre.Call) (goja.Value, error) {
+	getSuperNodeNum, callable := goja.AssertFunction(getJeth(call.VM).Get("getSuperNodeNum"))
+	if !callable {
+		return nil, fmt.Errorf("jeth.getSuperNodeNum is not callable")
+	}
+	return getSuperNodeNum(goja.Null(), call.Argument(0))
+}
+
 func (b *bridge) GetAllSuperNodes(call jsre.Call) (goja.Value, error) {
 	getAllSuperNodes, callable := goja.AssertFunction(getJeth(call.VM).Get("getAllSuperNodes"))
 	if !callable {
 		return nil, fmt.Errorf("jeth.getAllSuperNodes is not callable")
 	}
-	return getAllSuperNodes(goja.Null(), call.Argument(0))
+	return getAllSuperNodes(goja.Null(), call.Argument(0), call.Argument(1), call.Argument(2))
 }
 
 func (b *bridge) GetTopSuperNodes(call jsre.Call) (goja.Value, error) {
@@ -997,20 +1053,20 @@ func (b *bridge) GetTopSuperNodes(call jsre.Call) (goja.Value, error) {
 	return getTopSuperNodes(goja.Null(),call.Argument(0))
 }
 
+func (b *bridge) GetOfficialSuperNodeNum(call jsre.Call) (goja.Value, error) {
+	getOfficialSuperNodeNum, callable := goja.AssertFunction(getJeth(call.VM).Get("getOfficialSuperNodeNum"))
+	if !callable {
+		return nil, fmt.Errorf("jeth.getOfficialSuperNodeNum is not callable")
+	}
+	return getOfficialSuperNodeNum(goja.Null(), call.Argument(0))
+}
+
 func (b *bridge) GetOfficialSuperNodes(call jsre.Call) (goja.Value, error) {
 	getOfficialSuperNodes, callable := goja.AssertFunction(getJeth(call.VM).Get("getOfficialSuperNodes"))
 	if !callable {
 		return nil, fmt.Errorf("jeth.getOfficialSuperNodes is not callable")
 	}
-	return getOfficialSuperNodes(goja.Null(), call.Argument(0))
-}
-
-func (b *bridge) GetSuperNodeNum(call jsre.Call) (goja.Value, error) {
-	getSuperNodeNum, callable := goja.AssertFunction(getJeth(call.VM).Get("getSuperNodeNum"))
-	if !callable {
-		return nil, fmt.Errorf("jeth.getSuperNodeNum is not callable")
-	}
-	return getSuperNodeNum(goja.Null(), call.Argument(0))
+	return getOfficialSuperNodes(goja.Null(), call.Argument(0), call.Argument(1), call.Argument(2))
 }
 
 func (b *bridge) ExistSuperNode(call jsre.Call) (goja.Value, error) {
@@ -1095,36 +1151,44 @@ func (b *bridge) ProxyVote(call jsre.Call) (goja.Value, error) {
 	return proxyVote(goja.Null(), call.Argument(0), call.Argument(1))
 }
 
-func (b *bridge) GetSuperNodes4Voter(call jsre.Call) (goja.Value, error) {
-	getSuperNodes4Voter, callable := goja.AssertFunction(getJeth(call.VM).Get("getSuperNodes4Voter"))
+func (b *bridge) GetAmount4Voter(call jsre.Call) (goja.Value, error) {
+	getAmount4Voter, callable := goja.AssertFunction(getJeth(call.VM).Get("getAmount4Voter"))
 	if !callable {
-		return nil, fmt.Errorf("jeth.getSuperNodes4Voter is not callable")
+		return nil, fmt.Errorf("jeth.getAmount4Voter is not callable")
 	}
-	return getSuperNodes4Voter(goja.Null(), call.Argument(0), call.Argument(1))
+	return getAmount4Voter(goja.Null(), call.Argument(0), call.Argument(1))
 }
 
-func (b *bridge) GetRecordIDs4Voter(call jsre.Call) (goja.Value, error) {
-	getRecordIDs4Voter, callable := goja.AssertFunction(getJeth(call.VM).Get("getRecordIDs4Voter"))
+func (b *bridge) GetVoteNum4Voter(call jsre.Call) (goja.Value, error) {
+	getVoteNum4Voter, callable := goja.AssertFunction(getJeth(call.VM).Get("getVoteNum4Voter"))
 	if !callable {
-		return nil, fmt.Errorf("jeth.getRecordIDs4Voter is not callable")
+		return nil, fmt.Errorf("jeth.getVoteNum4Voter is not callable")
 	}
-	return getRecordIDs4Voter(goja.Null(), call.Argument(0), call.Argument(1))
+	return getVoteNum4Voter(goja.Null(), call.Argument(0), call.Argument(1))
 }
 
-func (b *bridge) GetVoters4SN(call jsre.Call) (goja.Value, error) {
-	getVoters4SN, callable := goja.AssertFunction(getJeth(call.VM).Get("getVoters4SN"))
+func (b *bridge) GetSNNum4Voter(call jsre.Call) (goja.Value, error) {
+	getSNNum4Voter, callable := goja.AssertFunction(getJeth(call.VM).Get("getSNNum4Voter"))
 	if !callable {
-		return nil, fmt.Errorf("jeth.getVoters4SN is not callable")
+		return nil, fmt.Errorf("jeth.getSNNum4Voter is not callable")
 	}
-	return getVoters4SN(goja.Null(), call.Argument(0), call.Argument(1))
+	return getSNNum4Voter(goja.Null(), call.Argument(0), call.Argument(1))
 }
 
-func (b *bridge) GetVoteNum4SN(call jsre.Call) (goja.Value, error) {
-	getVoteNum4SN, callable := goja.AssertFunction(getJeth(call.VM).Get("getVoteNum4SN"))
+func (b *bridge) GetSNs4Voter(call jsre.Call) (goja.Value, error) {
+	getSNs4Voter, callable := goja.AssertFunction(getJeth(call.VM).Get("getSNs4Voter"))
 	if !callable {
-		return nil, fmt.Errorf("jeth.getVoteNum4SN is not callable")
+		return nil, fmt.Errorf("jeth.getSNs4Voter is not callable")
 	}
-	return getVoteNum4SN(goja.Null(), call.Argument(0), call.Argument(1))
+	return getSNs4Voter(goja.Null(), call.Argument(0), call.Argument(1), call.Argument(2), call.Argument(3))
+}
+
+func (b *bridge) GetProxyNum4Voter(call jsre.Call) (goja.Value, error) {
+	getProxyNum4Voter, callable := goja.AssertFunction(getJeth(call.VM).Get("getProxyNum4Voter"))
+	if !callable {
+		return nil, fmt.Errorf("jeth.getProxyNum4Voter is not callable")
+	}
+	return getProxyNum4Voter(goja.Null(), call.Argument(0), call.Argument(1))
 }
 
 func (b *bridge) GetProxies4Voter(call jsre.Call) (goja.Value, error) {
@@ -1132,31 +1196,87 @@ func (b *bridge) GetProxies4Voter(call jsre.Call) (goja.Value, error) {
 	if !callable {
 		return nil, fmt.Errorf("jeth.getProxies4Voter is not callable")
 	}
-	return getProxies4Voter(goja.Null(), call.Argument(0), call.Argument(1))
+	return getProxies4Voter(goja.Null(), call.Argument(0), call.Argument(1), call.Argument(2), call.Argument(3))
 }
 
-func (b *bridge) GetProxiedRecordIDs4Voter(call jsre.Call) (goja.Value, error) {
-	getProxiedRecordIDs4Voter, callable := goja.AssertFunction(getJeth(call.VM).Get("getProxiedRecordIDs4Voter"))
+func (b *bridge) GetVotedIDNum4Voter(call jsre.Call) (goja.Value, error) {
+	getVotedIDNum4Voter, callable := goja.AssertFunction(getJeth(call.VM).Get("getVotedIDNum4Voter"))
 	if !callable {
-		return nil, fmt.Errorf("jeth.getProxiedRecordIDs4Voter is not callable")
+		return nil, fmt.Errorf("jeth.getVotedIDNum4Voter is not callable")
 	}
-	return getProxiedRecordIDs4Voter(goja.Null(), call.Argument(0), call.Argument(1))
+	return getVotedIDNum4Voter(goja.Null(), call.Argument(0), call.Argument(1))
 }
 
-func (b *bridge) GetVoters4Proxy(call jsre.Call) (goja.Value, error) {
-	getVoters4Proxy, callable := goja.AssertFunction(getJeth(call.VM).Get("getVoters4Proxy"))
+func (b *bridge) GetVotedIDs4Voter(call jsre.Call) (goja.Value, error) {
+	getVotedIDs4Voter, callable := goja.AssertFunction(getJeth(call.VM).Get("getVotedIDs4Voter"))
 	if !callable {
-		return nil, fmt.Errorf("jeth.getVoters4Proxy is not callable")
+		return nil, fmt.Errorf("jeth.getVotedIDs4Voter is not callable")
 	}
-	return getVoters4Proxy(goja.Null(), call.Argument(0), call.Argument(1))
+	return getVotedIDs4Voter(goja.Null(), call.Argument(0), call.Argument(1), call.Argument(2), call.Argument(3))
 }
 
-func (b *bridge) GetVoteNum4Proxy(call jsre.Call) (goja.Value, error) {
-	getVoteNum4Proxy, callable := goja.AssertFunction(getJeth(call.VM).Get("getVoteNum4Proxy"))
+func (b *bridge) GetProxiedIDNum4Voter(call jsre.Call) (goja.Value, error) {
+	getProxiedIDNum4Voter, callable := goja.AssertFunction(getJeth(call.VM).Get("getProxiedIDNum4Voter"))
 	if !callable {
-		return nil, fmt.Errorf("jeth.getVoteNum4Proxy is not callable")
+		return nil, fmt.Errorf("jeth.getProxiedIDNum4Voter is not callable")
 	}
-	return getVoteNum4Proxy(goja.Null(), call.Argument(0), call.Argument(1))
+	return getProxiedIDNum4Voter(goja.Null(), call.Argument(0), call.Argument(1))
+}
+
+func (b *bridge) GetProxiedIDs4Voter(call jsre.Call) (goja.Value, error) {
+	getProxiedIDs4Voter, callable := goja.AssertFunction(getJeth(call.VM).Get("getProxiedIDs4Voter"))
+	if !callable {
+		return nil, fmt.Errorf("jeth.getProxiedIDs4Voter is not callable")
+	}
+	return getProxiedIDs4Voter(goja.Null(), call.Argument(0), call.Argument(1), call.Argument(2), call.Argument(3))
+}
+
+func (b *bridge) GetTotalAmount4SNOrProxy(call jsre.Call) (goja.Value, error) {
+	getTotalAmount4SNOrProxy, callable := goja.AssertFunction(getJeth(call.VM).Get("getTotalAmount4SNOrProxy"))
+	if !callable {
+		return nil, fmt.Errorf("jeth.getTotalAmount4SNOrProxy is not callable")
+	}
+	return getTotalAmount4SNOrProxy(goja.Null(), call.Argument(0), call.Argument(1))
+}
+
+func (b *bridge) GetTotalVoteNum4SNOrProxy(call jsre.Call) (goja.Value, error) {
+	getTotalVoteNum4SNOrProxy, callable := goja.AssertFunction(getJeth(call.VM).Get("getTotalVoteNum4SNOrProxy"))
+	if !callable {
+		return nil, fmt.Errorf("jeth.getTotalVoteNum4SNOrProxy is not callable")
+	}
+	return getTotalVoteNum4SNOrProxy(goja.Null(), call.Argument(0), call.Argument(1))
+}
+
+func (b *bridge) GetVoterNum4SNOrProxy(call jsre.Call) (goja.Value, error) {
+	getVoterNum4SNOrProxy, callable := goja.AssertFunction(getJeth(call.VM).Get("getVoterNum4SNOrProxy"))
+	if !callable {
+		return nil, fmt.Errorf("jeth.getVoterNum4SNOrProxy is not callable")
+	}
+	return getVoterNum4SNOrProxy(goja.Null(), call.Argument(0), call.Argument(1))
+}
+
+func (b *bridge) GetVoters4SNOrProxy(call jsre.Call) (goja.Value, error) {
+	getVoters4SNOrProxy, callable := goja.AssertFunction(getJeth(call.VM).Get("getVoters4SNOrProxy"))
+	if !callable {
+		return nil, fmt.Errorf("jeth.getVoters4SNOrProxy is not callable")
+	}
+	return getVoters4SNOrProxy(goja.Null(), call.Argument(0), call.Argument(1), call.Argument(2), call.Argument(3))
+}
+
+func (b *bridge) GetIDNum4SNOrProxy(call jsre.Call) (goja.Value, error) {
+	getIDNum4SNOrProxy, callable := goja.AssertFunction(getJeth(call.VM).Get("getIDNum4SNOrProxy"))
+	if !callable {
+		return nil, fmt.Errorf("jeth.getIDNum4SNOrProxy is not callable")
+	}
+	return getIDNum4SNOrProxy(goja.Null(), call.Argument(0), call.Argument(1))
+}
+
+func (b *bridge) GetIDs4SNOrProxy(call jsre.Call) (goja.Value, error) {
+	getIDs4SNOrProxy, callable := goja.AssertFunction(getJeth(call.VM).Get("getIDs4SNOrProxy"))
+	if !callable {
+		return nil, fmt.Errorf("jeth.getIDs4SNOrProxy is not callable")
+	}
+	return getIDs4SNOrProxy(goja.Null(), call.Argument(0), call.Argument(1), call.Argument(2), call.Argument(3))
 }
 
 /****************************** proposal ******************************/
@@ -1233,12 +1353,44 @@ func (b *bridge) GetProposalInfo(call jsre.Call) (goja.Value, error) {
 	return getProposalInfo(goja.Null(), call.Argument(0), call.Argument(1))
 }
 
+func (b *bridge) GetProposalVoterNum(call jsre.Call) (goja.Value, error) {
+	getProposalVoterNum, callable := goja.AssertFunction(getJeth(call.VM).Get("getProposalVoterNum"))
+	if !callable {
+		return nil, fmt.Errorf("jeth.getProposalVoterNum is not callable")
+	}
+	return getProposalVoterNum(goja.Null(), call.Argument(0), call.Argument(1))
+}
+
+func (b *bridge) GetProposalVoteInfo(call jsre.Call) (goja.Value, error) {
+	getProposalVoteInfo, callable := goja.AssertFunction(getJeth(call.VM).Get("getProposalVoteInfo"))
+	if !callable {
+		return nil, fmt.Errorf("jeth.getProposalVoteInfo is not callable")
+	}
+	return getProposalVoteInfo(goja.Null(), call.Argument(0), call.Argument(1), call.Argument(2), call.Argument(3))
+}
+
+func (b *bridge) GetProposalNum(call jsre.Call) (goja.Value, error) {
+	getProposalNum, callable := goja.AssertFunction(getJeth(call.VM).Get("getProposalNum"))
+	if !callable {
+		return nil, fmt.Errorf("jeth.getProposalNum is not callable")
+	}
+	return getProposalNum(goja.Null(), call.Argument(1))
+}
+
 func (b *bridge) GetAllProposals(call jsre.Call) (goja.Value, error) {
 	getAllProposals, callable := goja.AssertFunction(getJeth(call.VM).Get("getAllProposals"))
 	if !callable {
 		return nil, fmt.Errorf("jeth.getAllProposals is not callable")
 	}
-	return getAllProposals(goja.Null(), call.Argument(1))
+	return getAllProposals(goja.Null(), call.Argument(0), call.Argument(1), call.Argument(2))
+}
+
+func (b *bridge) GetMineProposalNum(call jsre.Call) (goja.Value, error) {
+	getMineProposalNum, callable := goja.AssertFunction(getJeth(call.VM).Get("getMineProposalNum"))
+	if !callable {
+		return nil, fmt.Errorf("jeth.getMineProposalNum is not callable")
+	}
+	return getMineProposalNum(goja.Null(), call.Argument(1))
 }
 
 func (b *bridge) GetMineProposals(call jsre.Call) (goja.Value, error) {
@@ -1246,7 +1398,7 @@ func (b *bridge) GetMineProposals(call jsre.Call) (goja.Value, error) {
 	if !callable {
 		return nil, fmt.Errorf("jeth.getMineProposals is not callable")
 	}
-	return getMineProposals(goja.Null(), call.Argument(0), call.Argument(1))
+	return getMineProposals(goja.Null(), call.Argument(0), call.Argument(1), call.Argument(2))
 }
 
 func (b *bridge) ExistProposal(call jsre.Call) (goja.Value, error) {

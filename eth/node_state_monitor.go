@@ -243,13 +243,13 @@ func (monitor *NodeStateMonitor) broadcastLoop() {
 }
 
 func (monitor *NodeStateMonitor) isSuperNode(addr common.Address) bool {
-	infos, err := contract_api.GetTopSuperNodes(monitor.ctx, monitor.blockChainAPI, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(monitor.e.blockchain.CurrentBlock().Number().Int64())))
+	topAddrs, err := contract_api.GetTopSuperNodes(monitor.ctx, monitor.blockChainAPI, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(monitor.e.blockchain.CurrentBlock().Number().Int64())))
 	if err != nil {
 		return false
 	}
 	flag := false
-	for _, info := range infos {
-		if info.Addr == addr && info.Enode == monitor.enode {
+	for i := range topAddrs {
+		if topAddrs[i] == addr { //info.Addr == addr && info.Enode == monitor.enode {
 			flag = true
 			break
 		}
@@ -281,9 +281,9 @@ func (monitor *NodeStateMonitor) collectMasterNodes() ([]*big.Int, []*big.Int) {
 	}
 	for _, info = range infos {
 		id := info.Id.Int64()
-		log.Trace("collect-masternode-state", "id", id, "global-state", info.StateInfo.State, "local-state", monitor.mnMonitorInfos[id].curState, "missNum", monitor.mnMonitorInfos[id].missNum)
+		log.Trace("collect-masternode-state", "id", id, "global-state", info.State, "local-state", monitor.mnMonitorInfos[id].curState, "missNum", monitor.mnMonitorInfos[id].missNum)
 		if v, ok := monitor.mnMonitorInfos[id]; ok {
-			if v.curState != info.StateInfo.State.Int64() {
+			if v.curState != info.State.Int64() {
 				if v.curState == StateRunning || (v.curState == StateStop && v.missNum >= MaxMissNum) {
 					ids = append(ids, info.Id)
 					states = append(states, big.NewInt(v.curState))
@@ -319,9 +319,9 @@ func (monitor *NodeStateMonitor) collectSuperNodes() ([]*big.Int, []*big.Int) {
 	}
 	for _, info = range infos {
 		id := info.Id.Int64()
-		log.Trace("collect-supernode-state", "id", id, "global-state", info.StateInfo.State, "local-state", monitor.snMonitorInfos[id].curState, "missNum", monitor.snMonitorInfos[id].missNum)
+		log.Trace("collect-supernode-state", "id", id, "global-state", info.State, "local-state", monitor.snMonitorInfos[id].curState, "missNum", monitor.snMonitorInfos[id].missNum)
 		if v, ok := monitor.snMonitorInfos[id]; ok {
-			if v.curState != info.StateInfo.State.Int64() {
+			if v.curState != info.State.Int64() {
 				if v.curState == StateRunning || (v.curState == StateStop && v.missNum >= MaxMissNum) {
 					ids = append(ids, info.Id)
 					states = append(states, big.NewInt(v.curState))

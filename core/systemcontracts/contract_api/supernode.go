@@ -321,7 +321,7 @@ func GetAllSuperNodes(ctx context.Context, api *ethapi.PublicBlockChainAPI, bloc
 	return *infos, nil
 }
 
-func GetTopSuperNodes(ctx context.Context, api *ethapi.PublicBlockChainAPI, blockNrOrHash rpc.BlockNumberOrHash) ([]types.SuperNodeInfo, error) {
+func GetTopSuperNodes(ctx context.Context, api *ethapi.PublicBlockChainAPI, blockNrOrHash rpc.BlockNumberOrHash) ([]common.Address, error) {
 	vABI, err := abi.JSON(strings.NewReader(systemcontracts.SuperNodeStorageABI))
 	if err != nil {
 		return nil, err
@@ -344,11 +344,11 @@ func GetTopSuperNodes(ctx context.Context, api *ethapi.PublicBlockChainAPI, bloc
 		return nil, err
 	}
 
-	infos := new([]types.SuperNodeInfo)
-	if err := vABI.UnpackIntoInterface(infos, method, result); err != nil {
+	addrs := new([]common.Address)
+	if err := vABI.UnpackIntoInterface(addrs, method, result); err != nil {
 		return nil, err
 	}
-	return *infos, nil
+	return *addrs, nil
 }
 
 func GetOfficialSuperNodes(ctx context.Context, api *ethapi.PublicBlockChainAPI, blockNrOrHash rpc.BlockNumberOrHash) ([]types.SuperNodeInfo, error) {

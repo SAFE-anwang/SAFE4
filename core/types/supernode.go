@@ -18,18 +18,6 @@ type SuperNodeIncentivePlan struct {
 	Voter   *big.Int        `json:"voter"     gencodec:"required"`
 }
 
-type SuperNodeStateInfo struct {
-	State  	*big.Int        `json:"state"     gencodec:"required"`
-	Height  *big.Int        `json:"height"    gencodec:"required"`
-}
-
-type SuperVoteInfo struct {
-	Voters       []SuperNodeMemberInfo   `json:"voters"      gencodec:"required"`
-	TotalAmount  *big.Int                `json:"totalAmount" gencodec:"required"`
-	TotalNum     *big.Int                `json:"totalNum"    gencodec:"required"`
-	Height       *big.Int                `json:"height"      gencodec:"required"`
-}
-
 type SuperNodeInfo struct {
 	Id                  *big.Int                `json:"id"            gencodec:"required"`
 	Name                string                  `json:"name"          gencodec:"required"`
@@ -38,10 +26,9 @@ type SuperNodeInfo struct {
 	Enode               string                  `json:"enode"         gencodec:"required"`
 	Description         string                  `json:"description"   gencodec:"required"`
 	IsOfficial          bool                    `json:"isOfficial"    gencodec:"required"`
-	StateInfo           SuperNodeStateInfo      `json:"stateInfo"     gencodec:"required"`
+	State               *big.Int                `json:"state"         gencodec:"required"`
 	Founders            []SuperNodeMemberInfo   `json:"founders"      gencodec:"required"`
 	IncentivePlan       SuperNodeIncentivePlan  `json:"incentivePlan" gencodec:"required"`
-	VoteInfo            SuperVoteInfo           `json:"voteInfo"      gencodec:"required"`
 	LastRewardHeight    *big.Int                `json:"lastRewardHeight" gencodec:"required"`
 	CreateHeight        *big.Int                `json:"createHeight"  gencodec:"required"`
 	UpdateHeight        *big.Int                `json:"updateHeight"  gencodec:"required"`

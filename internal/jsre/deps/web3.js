@@ -13729,18 +13729,32 @@ module.exports = XMLHttpRequest;
       inputFormatter: [formatters.formatInputString, formatters.inputDefaultBlockNumberFormatter]
     });
 
+    var getNum = new Method({
+      name: 'getNum',
+      call: 'sysproperty_getNum',
+      params: 1,
+      inputFormatter: [formatters.inputDefaultBlockNumberFormatter]
+    })
+
     var getAll = new Method({
       name: 'getAll',
       call: 'sysproperty_getAll',
+      params: 3,
+      inputFormatter: [formatters.formatInputInt, formatters.formatInputInt, formatters.inputDefaultBlockNumberFormatter]
+    });
+
+    var getUnconfirmedNum = new Method({
+      name: 'getUnconfirmedNum',
+      call: 'sysproperty_getUnconfirmedNum',
       params: 1,
       inputFormatter: [formatters.inputDefaultBlockNumberFormatter]
-    });
+    })
 
     var getAllUnconfirmed = new Method({
       name: 'getAllUnconfirmed',
       call: 'sysproperty_getAllUnconfirmed',
-      params: 1,
-      inputFormatter: [formatters.inputDefaultBlockNumberFormatter]
+      params: 3,
+      inputFormatter: [formatters.formatInputInt, formatters.formatInputInt, formatters.inputDefaultBlockNumberFormatter]
     });
 
     var exist = new Method({
@@ -13764,7 +13778,9 @@ module.exports = XMLHttpRequest;
       getInfo,
       getUnconfirmedInfo,
       getValue,
+      getNum,
       getAll,
+      getUnconfirmedNum,
       getAllUnconfirmed,
       exist,
       existUnconfirmed
@@ -13841,11 +13857,25 @@ module.exports = XMLHttpRequest;
         inputFormatter: [formatters.inputAddressFormatter, formatters.inputDefaultBlockNumberFormatter]
       });
 
+      var getTotalIDs = new Method({
+        name: 'getTotalIDs',
+        call: 'account_getTotalIDs',
+        params: 4,
+        inputFormatter: [formatters.inputAddressFormatter, formatters.formatInputInt, formatters.formatInputInt, formatters.inputDefaultBlockNumberFormatter]
+      });
+
       var getAvailableAmount = new Method({
         name: 'getAvailableAmount',
         call: 'account_getAvailableAmount',
         params: 2,
         inputFormatter: [formatters.inputAddressFormatter, formatters.inputDefaultBlockNumberFormatter]
+      });
+
+      var getAvailableIDs = new Method({
+        name: 'getAvailableIDs',
+        call: 'account_getAvailableIDs',
+        params: 4,
+        inputFormatter: [formatters.inputAddressFormatter, formatters.formatInputInt, formatters.formatInputInt, formatters.inputDefaultBlockNumberFormatter]
       });
 
       var getLockedAmount = new Method({
@@ -13855,6 +13885,13 @@ module.exports = XMLHttpRequest;
         inputFormatter: [formatters.inputAddressFormatter, formatters.inputDefaultBlockNumberFormatter]
       });
 
+      var getLockedIDs = new Method({
+        name: 'getLockedIDs',
+        call: 'account_getLockedIDs',
+        params: 4,
+        inputFormatter: [formatters.inputAddressFormatter, formatters.formatInputInt, formatters.formatInputInt, formatters.inputDefaultBlockNumberFormatter]
+      });
+
       var getUsedAmount = new Method({
         name: 'getUsedAmount',
         call: 'account_getUsedAmount',
@@ -13862,11 +13899,11 @@ module.exports = XMLHttpRequest;
         inputFormatter: [formatters.inputAddressFormatter, formatters.inputDefaultBlockNumberFormatter]
       });
 
-      var getRecords = new Method({
-        name: 'getRecords',
-        call: 'account_getRecords',
-        params: 2,
-        inputFormatter: [formatters.inputAddressFormatter, formatters.inputDefaultBlockNumberFormatter]
+      var getUsedIDs = new Method({
+        name: 'getUsedIDs',
+        call: 'account_getUsedIDs',
+        params: 4,
+        inputFormatter: [formatters.inputAddressFormatter, formatters.formatInputInt, formatters.formatInputInt, formatters.inputDefaultBlockNumberFormatter]
       });
 
       var getRecord0 = new Method({
@@ -13897,10 +13934,13 @@ module.exports = XMLHttpRequest;
         transfer,
         addLockDay,
         getTotalAmount,
+        getTotalIDs,
         getAvailableAmount,
+        getAvailableIDs,
         getLockedAmount,
+        getLockedIDs,
         getUsedAmount,
-        getRecords,
+        getUsedIDs,
         getRecord0,
         getRecordByID,
         getRecordUseInfo
@@ -14026,9 +14066,23 @@ module.exports = XMLHttpRequest;
       inputFormatter: [formatters.inputDefaultBlockNumberFormatter]
     });
 
+    var getNum = new Method({
+      name: 'getNum',
+      call: 'masternode_getNum',
+      params: 1,
+      inputFormatter: [formatters.inputDefaultBlockNumberFormatter]
+    });
+
     var getAll = new Method({
       name: 'getAll',
       call: 'masternode_getAll',
+      params: 3,
+      inputFormatter: [formatters.formatInputInt, formatters.formatInputInt, formatters.inputDefaultBlockNumberFormatter]
+    });
+
+    var getOfficialNum = new Method({
+      name: 'getOfficialNum',
+      call: 'masternode_getOfficialNum',
       params: 1,
       inputFormatter: [formatters.inputDefaultBlockNumberFormatter]
     });
@@ -14036,15 +14090,8 @@ module.exports = XMLHttpRequest;
     var getOfficials = new Method({
       name: 'getOfficials',
       call: 'masternode_getOfficials',
-      params: 1,
-      inputFormatter: [formatters.inputDefaultBlockNumberFormatter]
-    });
-
-    var getNum = new Method({
-      name: 'getNum',
-      call: 'masternode_getNum',
-      params: 1,
-      inputFormatter: [formatters.inputDefaultBlockNumberFormatter]
+      params: 3,
+      inputFormatter: [formatters.formatInputInt, formatters.formatInputInt, formatters.inputDefaultBlockNumberFormatter]
     });
 
     var exist = new Method({
@@ -14096,9 +14143,10 @@ module.exports = XMLHttpRequest;
       getInfo,
       getInfoByID,
       getNext,
-      getAll,
-      getOfficials,
       getNum,
+      getAll,
+      getOfficialNum,
+      getOfficials,
       exist,
       existID,
       existEnode,
@@ -14226,11 +14274,18 @@ module.exports = XMLHttpRequest;
       inputFormatter: [formatters.formatInputInt, formatters.inputDefaultBlockNumberFormatter]
     });
 
+    var getNum = new Method({
+      name: 'getNum',
+      call: 'supernode_getNum',
+      params: 1,
+      inputFormatter: [formatters.inputDefaultBlockNumberFormatter]
+    });
+
     var getAll = new Method({
       name: 'getAll',
       call: 'supernode_getAll',
-      params: 1,
-      inputFormatter: [formatters.inputDefaultBlockNumberFormatter]
+      params: 3,
+      inputFormatter: [formatters.formatInputInt, formatters.formatInputInt, formatters.inputDefaultBlockNumberFormatter]
     });
 
     var getTops = new Method({
@@ -14240,18 +14295,18 @@ module.exports = XMLHttpRequest;
       inputFormatter: [formatters.inputDefaultBlockNumberFormatter]
     });
 
-    var getOfficials = new Method({
-      name: 'getOfficials',
-      call: 'supernode_getOfficials',
+    var getOfficialNum = new Method({
+      name: 'getOfficialNum',
+      call: 'supernode_getOfficialNum',
       params: 1,
       inputFormatter: [formatters.inputDefaultBlockNumberFormatter]
     });
 
-    var getNum = new Method({
-      name: 'getNum',
-      call: 'supernode_getNum',
-      params: 1,
-      inputFormatter: [formatters.inputDefaultBlockNumberFormatter]
+    var getOfficials = new Method({
+      name: 'getOfficials',
+      call: 'supernode_getOfficials',
+      params: 3,
+      inputFormatter: [formatters.formatInputInt, formatters.formatInputInt, formatters.inputDefaultBlockNumberFormatter]
     });
 
     var exist = new Method({
@@ -14317,10 +14372,11 @@ module.exports = XMLHttpRequest;
       changeIsOfficial,
       getInfo,
       getInfoByID,
+      getNum,
       getAll,
       getTops,
+      getOfficialNum,
       getOfficials,
-      getNum,
       exist,
       existID,
       existName,
@@ -14380,30 +14436,37 @@ module.exports = XMLHttpRequest;
         inputFormatter: [formatters.inputAddressFormatter, formatters.inputAddressFormatter]
       });
 
-      var getSuperNodes4Voter = new Method({
-        name: 'getSuperNodes4Voter',
-        call: 'snvote_getSuperNodes4Voter',
+      var getAmount4Voter = new Method({
+        name: 'getAmount4Voter',
+        call: 'snvote_getAmount4Voter',
         params: 2,
         inputFormatter: [formatters.inputAddressFormatter, formatters.inputDefaultBlockNumberFormatter]
       });
 
-      var getRecordIDs4Voter = new Method({
-        name: 'getRecordIDs4Voter',
-        call: 'snvote_getRecordIDs4Voter',
+      var getVoteNum4Voter = new Method({
+        name: 'getVoteNum4Voter',
+        call: 'snvote_getVoteNum4Voter',
         params: 2,
         inputFormatter: [formatters.inputAddressFormatter, formatters.inputDefaultBlockNumberFormatter]
       });
 
-      var getVoters4SN = new Method({
-        name: 'getVoters4SN',
-        call: 'snvote_getVoters4SN',
+      var getSNNum4Voter = new Method({
+        name: 'getSNNum4Voter',
+        call: 'snvote_getSNNum4Voter',
         params: 2,
         inputFormatter: [formatters.inputAddressFormatter, formatters.inputDefaultBlockNumberFormatter]
       });
 
-      var getVoteNum4SN = new Method({
-        name: 'getVoteNum4SN',
-        call: 'snvote_getVoteNum4SN',
+      var getSNs4Voter = new Method({
+        name: 'getSNs4Voter',
+        call: 'snvote_getSNs4Voter',
+        params: 4,
+        inputFormatter: [formatters.inputAddressFormatter, formatters.formatInputInt, formatters.formatInputInt, formatters.inputDefaultBlockNumberFormatter]
+      });
+
+      var getProxyNum4Voter = new Method({
+        name: 'getProxyNum4Voter',
+        call: 'snvote_getProxyNum4Voter',
         params: 2,
         inputFormatter: [formatters.inputAddressFormatter, formatters.inputDefaultBlockNumberFormatter]
       });
@@ -14411,43 +14474,100 @@ module.exports = XMLHttpRequest;
       var getProxies4Voter = new Method({
         name: 'getProxies4Voter',
         call: 'snvote_getProxies4Voter',
+        params: 4,
+        inputFormatter: [formatters.inputAddressFormatter, formatters.formatInputInt, formatters.formatInputInt, formatters.inputDefaultBlockNumberFormatter]
+      });
+
+      var getVotedIDNum4Voter = new Method({
+        name: 'getVotedIDNum4Voter',
+        call: 'snvote_getVotedIDNum4Voter',
         params: 2,
         inputFormatter: [formatters.inputAddressFormatter, formatters.inputDefaultBlockNumberFormatter]
       });
 
-      var getProxiedRecordIDs4Voter = new Method({
-        name: 'getProxiedRecordIDs4Voter',
-        call: 'snvote_getProxiedRecordIDs4Voter',
+      var getVotedIDs4Voter = new Method({
+        name: 'getVotedIDs4Voter',
+        call: 'snvote_getVotedIDs4Voter',
+        params: 4,
+        inputFormatter: [formatters.inputAddressFormatter, formatters.formatInputInt, formatters.formatInputInt, formatters.inputDefaultBlockNumberFormatter]
+      });
+
+      var getProxiedIDNum4Voter = new Method({
+        name: 'getProxiedIDNum4Voter',
+        call: 'snvote_getProxiedIDNum4Voter',
         params: 2,
         inputFormatter: [formatters.inputAddressFormatter, formatters.inputDefaultBlockNumberFormatter]
       });
 
-      var getVoters4Proxy = new Method({
-        name: 'getVoters4Proxy',
-        call: 'snvote_getVoters4Proxy',
+      var getProxiedIDs4Voter = new Method({
+        name: 'getProxiedIDs4Voter',
+        call: 'snvote_getProxiedIDs4Voter',
+        params: 4,
+        inputFormatter: [formatters.inputAddressFormatter, formatters.formatInputInt, formatters.formatInputInt, formatters.inputDefaultBlockNumberFormatter]
+      });
+
+      var getTotalAmount = new Method({
+        name: 'getTotalAmount',
+        call: 'snvote_getTotalAmount',
         params: 2,
         inputFormatter: [formatters.inputAddressFormatter, formatters.inputDefaultBlockNumberFormatter]
       });
 
-      var getVoteNum4Proxy = new Method({
-        name: 'getVoteNum4Proxy',
-        call: 'snvote_getVoteNum4Proxy',
+      var getTotalVoteNum = new Method({
+        name: 'getTotalVoteNum',
+        call: 'snvote_getTotalVoteNum',
         params: 2,
         inputFormatter: [formatters.inputAddressFormatter, formatters.inputDefaultBlockNumberFormatter]
+      });
+
+      var getVoterNum = new Method({
+        name: 'getVoterNum',
+        call: 'snvote_getVoterNum',
+        params: 2,
+        inputFormatter: [formatters.inputAddressFormatter, formatters.inputDefaultBlockNumberFormatter]
+      });
+
+      var getVoters = new Method({
+        name: 'getVoters',
+        call: 'snvote_getVoters',
+        params: 4,
+        inputFormatter: [formatters.inputAddressFormatter, formatters.formatInputInt, formatters.formatInputInt, formatters.inputDefaultBlockNumberFormatter]
+      });
+
+      var getIDNum = new Method({
+        name: 'getIDNum',
+        call: 'snvote_getIDNum',
+        params: 2,
+        inputFormatter: [formatters.inputAddressFormatter, formatters.inputDefaultBlockNumberFormatter]
+      });
+
+      var getIDs = new Method({
+        name: 'getIDs',
+        call: 'snvote_getIDs',
+        params: 4,
+        inputFormatter: [formatters.inputAddressFormatter, formatters.formatInputInt, formatters.formatInputInt, formatters.inputDefaultBlockNumberFormatter]
       });
 
       return [
         voteOrApproval,
         removeVoteOrApproval,
         proxyVote,
-        getSuperNodes4Voter,
-        getRecordIDs4Voter,
-        getVoters4SN,
-        getVoteNum4SN,
+        getAmount4Voter,
+        getVoteNum4Voter,
+        getSNNum4Voter,
+        getSNs4Voter,
+        getProxyNum4Voter,
         getProxies4Voter,
-        getProxiedRecordIDs4Voter,
-        getVoters4Proxy,
-        getVoteNum4Proxy
+        getVotedIDNum4Voter,
+        getVotedIDs4Voter,
+        getProxiedIDNum4Voter,
+        getProxiedIDs4Voter,
+        getTotalAmount,
+        getTotalVoteNum,
+        getVoterNum,
+        getVoters,
+        getIDNum,
+        getIDs
       ];
     };
 
@@ -14542,9 +14662,37 @@ module.exports = XMLHttpRequest;
         inputFormatter: [formatters.formatInputInt, formatters.inputDefaultBlockNumberFormatter]
       });
 
+      var getVoterNum = new Method({
+        name: 'getVoterNum',
+        call: 'proposal_getVoterNum',
+        params: 2,
+        inputFormatter: [formatters.formatInputInt, formatters.inputDefaultBlockNumberFormatter]
+      });
+
+      var getVoteInfo = new Method({
+        name: 'getVoteInfo',
+        call: 'proposal_getVoteInfo',
+        params: 4,
+        inputFormatter: [formatters.formatInputInt, formatters.formatInputInt, formatters.formatInputInt, formatters.inputDefaultBlockNumberFormatter]
+      });
+
+      var getNum = new Method({
+        name: 'getNum',
+        call: 'proposal_getNum',
+        params: 1,
+        inputFormatter: [formatters.inputDefaultBlockNumberFormatter]
+      });
+
       var getAll = new Method({
         name: 'getAll',
         call: 'proposal_getAll',
+        params: 3,
+        inputFormatter: [formatters.formatInputInt, formatters.formatInputInt, formatters.inputDefaultBlockNumberFormatter]
+      });
+
+      var getMineNum = new Method({
+        name: 'getMineNum',
+        call: 'proposal_getMineNum',
         params: 1,
         inputFormatter: [formatters.inputDefaultBlockNumberFormatter]
       });
@@ -14552,8 +14700,8 @@ module.exports = XMLHttpRequest;
       var getMines = new Method({
         name: 'getMines',
         call: 'proposal_getMines',
-        params: 2,
-        inputFormatter: [formatters.inputAddressFormatter, formatters.inputDefaultBlockNumberFormatter]
+        params: 3,
+        inputFormatter: [formatters.formatInputInt, formatters.formatInputInt, formatters.inputDefaultBlockNumberFormatter]
       });
 
       var exist = new Method({
@@ -14573,7 +14721,11 @@ module.exports = XMLHttpRequest;
         changeEndPayTime,
         changeDescription,
         getInfo,
+        getVoterNum,
+        getVoteInfo,
+        getNum,
         getAll,
+        getMineNum,
         getMines,
         exist
       ];

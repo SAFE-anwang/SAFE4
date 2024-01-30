@@ -106,7 +106,7 @@ func (api *PublicSuperNodeAPI) GetAll(ctx context.Context, blockNrOrHash rpc.Blo
 	return contract_api.GetAllSuperNodes(ctx, api.blockChainAPI, blockNrOrHash)
 }
 
-func (api *PublicSuperNodeAPI) GetTops(ctx context.Context, blockNrOrHash rpc.BlockNumberOrHash) ([]types.SuperNodeInfo, error) {
+func (api *PublicSuperNodeAPI) GetTops(ctx context.Context, blockNrOrHash rpc.BlockNumberOrHash) ([]common.Address, error) {
 	return contract_api.GetTopSuperNodes(ctx, api.blockChainAPI, blockNrOrHash)
 }
 

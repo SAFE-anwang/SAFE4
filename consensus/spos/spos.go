@@ -547,14 +547,14 @@ func (s *Spos) snapshot(chain consensus.ChainHeaderReader, number uint64, hash c
 						signersmap[signer] = struct{}{}
 					}
 				}else { //TODO Call the contract to get the super node list
-					superNodeInfos, err := contract_api.GetTopSuperNodes(s.ctx, s.blockChainAPI, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(number)))
+					topAddrs, err := contract_api.GetTopSuperNodes(s.ctx, s.blockChainAPI, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(number)))
 					if err != nil {
 						log.Error("Failed to GetTopSN", "error", err)
 						return nil, err
 					}
 
-					for i := range superNodeInfos {
-						signersmap[superNodeInfos[i].Addr] = struct{}{}
+					for i := range topAddrs {
+						signersmap[topAddrs[i]] = struct{}{}
 					}
 				}
 

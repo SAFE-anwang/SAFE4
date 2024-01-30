@@ -867,20 +867,12 @@ func (b *bridge) GetAllMasterNodes(call jsre.Call) (goja.Value, error) {
 	return getAllMasterNodes(goja.Null(), call.Argument(0), call.Argument(1), call.Argument(2))
 }
 
-func (b *bridge) GetOfficialMasterNodeNum(call jsre.Call) (goja.Value, error) {
-	getOfficialMasterNodeNum, callable := goja.AssertFunction(getJeth(call.VM).Get("getOfficialMasterNodeNum"))
-	if !callable {
-		return nil, fmt.Errorf("jeth.getOfficialMasterNodeNum is not callable")
-	}
-	return getOfficialMasterNodeNum(goja.Null(), call.Argument(0))
-}
-
 func (b *bridge) GetOfficialMasterNodes(call jsre.Call) (goja.Value, error) {
 	getOfficialMasterNodes, callable := goja.AssertFunction(getJeth(call.VM).Get("getOfficialMasterNodes"))
 	if !callable {
 		return nil, fmt.Errorf("jeth.getOfficialMasterNodes is not callable")
 	}
-	return getOfficialMasterNodes(goja.Null(), call.Argument(0), call.Argument(1), call.Argument(2))
+	return getOfficialMasterNodes(goja.Null(), call.Argument(0))
 }
 
 func (b *bridge) ExistMasterNode(call jsre.Call) (goja.Value, error) {
@@ -1053,20 +1045,12 @@ func (b *bridge) GetTopSuperNodes(call jsre.Call) (goja.Value, error) {
 	return getTopSuperNodes(goja.Null(),call.Argument(0))
 }
 
-func (b *bridge) GetOfficialSuperNodeNum(call jsre.Call) (goja.Value, error) {
-	getOfficialSuperNodeNum, callable := goja.AssertFunction(getJeth(call.VM).Get("getOfficialSuperNodeNum"))
-	if !callable {
-		return nil, fmt.Errorf("jeth.getOfficialSuperNodeNum is not callable")
-	}
-	return getOfficialSuperNodeNum(goja.Null(), call.Argument(0))
-}
-
 func (b *bridge) GetOfficialSuperNodes(call jsre.Call) (goja.Value, error) {
 	getOfficialSuperNodes, callable := goja.AssertFunction(getJeth(call.VM).Get("getOfficialSuperNodes"))
 	if !callable {
 		return nil, fmt.Errorf("jeth.getOfficialSuperNodes is not callable")
 	}
-	return getOfficialSuperNodes(goja.Null(), call.Argument(0), call.Argument(1), call.Argument(2))
+	return getOfficialSuperNodes(goja.Null(), call.Argument(0))
 }
 
 func (b *bridge) ExistSuperNode(call jsre.Call) (goja.Value, error) {

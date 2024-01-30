@@ -14080,18 +14080,11 @@ module.exports = XMLHttpRequest;
       inputFormatter: [formatters.formatInputInt, formatters.formatInputInt, formatters.inputDefaultBlockNumberFormatter]
     });
 
-    var getOfficialNum = new Method({
-      name: 'getOfficialNum',
-      call: 'masternode_getOfficialNum',
-      params: 1,
-      inputFormatter: [formatters.inputDefaultBlockNumberFormatter]
-    });
-
     var getOfficials = new Method({
       name: 'getOfficials',
       call: 'masternode_getOfficials',
-      params: 3,
-      inputFormatter: [formatters.formatInputInt, formatters.formatInputInt, formatters.inputDefaultBlockNumberFormatter]
+      params: 1,
+      inputFormatter: [formatters.inputDefaultBlockNumberFormatter]
     });
 
     var exist = new Method({
@@ -14145,7 +14138,6 @@ module.exports = XMLHttpRequest;
       getNext,
       getNum,
       getAll,
-      getOfficialNum,
       getOfficials,
       exist,
       existID,
@@ -14295,18 +14287,11 @@ module.exports = XMLHttpRequest;
       inputFormatter: [formatters.inputDefaultBlockNumberFormatter]
     });
 
-    var getOfficialNum = new Method({
-      name: 'getOfficialNum',
-      call: 'supernode_getOfficialNum',
-      params: 1,
-      inputFormatter: [formatters.inputDefaultBlockNumberFormatter]
-    });
-
     var getOfficials = new Method({
       name: 'getOfficials',
       call: 'supernode_getOfficials',
-      params: 3,
-      inputFormatter: [formatters.formatInputInt, formatters.formatInputInt, formatters.inputDefaultBlockNumberFormatter]
+      params: 1,
+      inputFormatter: [formatters.inputDefaultBlockNumberFormatter]
     });
 
     var exist = new Method({
@@ -14375,7 +14360,6 @@ module.exports = XMLHttpRequest;
       getNum,
       getAll,
       getTops,
-      getOfficialNum,
       getOfficials,
       exist,
       existID,

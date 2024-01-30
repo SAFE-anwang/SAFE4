@@ -695,6 +695,13 @@ func (s *Spos) Prepare(chain consensus.ChainHeaderReader, header *types.Header) 
 	header.Coinbase = s.signer
 	header.Nonce = types.BlockNonce{}
 
+	for true {
+		if s.blockChainAPI != nil {
+			break
+		}
+		time.Sleep(1 * time.Second)
+	}
+
 	number := header.Number.Uint64()
 	// Assemble the voting snapshot to check which votes make sense
 	snap, err := s.snapshot(chain, number - 1, header.ParentHash, nil)

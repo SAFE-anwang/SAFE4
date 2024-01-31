@@ -184,14 +184,44 @@ func GetPropertyValue(ctx context.Context, api *ethapi.PublicBlockChainAPI, name
 	return value, nil
 }
 
-func GetAllProperties(ctx context.Context, api *ethapi.PublicBlockChainAPI, blockNrOrHash rpc.BlockNumberOrHash) ([]types.PropertyInfo, error) {
+func GetPropertyNum(ctx context.Context, api *ethapi.PublicBlockChainAPI, blockNrOrHash rpc.BlockNumberOrHash) (*big.Int, error) {
+	vABI, err := abi.JSON(strings.NewReader(systemcontracts.PropertyABI))
+	if err != nil {
+		return nil, err
+	}
+
+	method := "getNum"
+	data, err := vABI.Pack(method)
+	if err != nil {
+		return nil, err
+	}
+
+	msgData := (hexutil.Bytes)(data)
+	args := ethapi.TransactionArgs{
+		To: &systemcontracts.PropertyContractAddr,
+		Data: &msgData,
+	}
+	result, err := api.Call(ctx, args, blockNrOrHash, nil)
+
+	if err != nil {
+		return nil, err
+	}
+
+	value := new(big.Int)
+	if err := vABI.UnpackIntoInterface(&value, method, result); err != nil {
+		return nil, err
+	}
+	return value, nil
+}
+
+func GetAllProperties(ctx context.Context, api *ethapi.PublicBlockChainAPI, start *big.Int, count *big.Int, blockNrOrHash rpc.BlockNumberOrHash) ([]string, error) {
 	vABI, err := abi.JSON(strings.NewReader(systemcontracts.PropertyABI))
 	if err != nil {
 		return nil, err
 	}
 
 	method := "getAll"
-	data, err := vABI.Pack(method)
+	data, err := vABI.Pack(method, start, count)
 	if err != nil {
 		return nil, err
 	}
@@ -207,20 +237,20 @@ func GetAllProperties(ctx context.Context, api *ethapi.PublicBlockChainAPI, bloc
 		return nil, err
 	}
 
-	infos := new([]types.PropertyInfo)
+	infos := new([]string)
 	if err := vABI.UnpackIntoInterface(infos, method, result); err != nil {
 		return nil, err
 	}
 	return *infos, nil
 }
 
-func GetAllUnconfirmedProperties(ctx context.Context, api *ethapi.PublicBlockChainAPI, blockNrOrHash rpc.BlockNumberOrHash) ([]types.UnconfirmedPropertyInfo, error) {
+func GetUnconfirmedPropertyNum(ctx context.Context, api *ethapi.PublicBlockChainAPI, blockNrOrHash rpc.BlockNumberOrHash) (*big.Int, error) {
 	vABI, err := abi.JSON(strings.NewReader(systemcontracts.PropertyABI))
 	if err != nil {
 		return nil, err
 	}
 
-	method := "getAllUnconfirmed"
+	method := "getUnconfirmedNum"
 	data, err := vABI.Pack(method)
 	if err != nil {
 		return nil, err
@@ -237,7 +267,37 @@ func GetAllUnconfirmedProperties(ctx context.Context, api *ethapi.PublicBlockCha
 		return nil, err
 	}
 
-	infos := new([]types.UnconfirmedPropertyInfo)
+	value := new(big.Int)
+	if err := vABI.UnpackIntoInterface(&value, method, result); err != nil {
+		return nil, err
+	}
+	return value, nil
+}
+
+func GetAllUnconfirmedProperties(ctx context.Context, api *ethapi.PublicBlockChainAPI, start *big.Int, count *big.Int, blockNrOrHash rpc.BlockNumberOrHash) ([]string, error) {
+	vABI, err := abi.JSON(strings.NewReader(systemcontracts.PropertyABI))
+	if err != nil {
+		return nil, err
+	}
+
+	method := "getAllUnconfirmed"
+	data, err := vABI.Pack(method, start, count)
+	if err != nil {
+		return nil, err
+	}
+
+	msgData := (hexutil.Bytes)(data)
+	args := ethapi.TransactionArgs{
+		To: &systemcontracts.PropertyContractAddr,
+		Data: &msgData,
+	}
+	result, err := api.Call(ctx, args, blockNrOrHash, nil)
+
+	if err != nil {
+		return nil, err
+	}
+
+	infos := new([]string)
 	if err := vABI.UnpackIntoInterface(infos, method, result); err != nil {
 		return nil, err
 	}

@@ -13704,7 +13704,7 @@ module.exports = XMLHttpRequest;
     var vote4Update = new Method({
       name: 'vote4Update',
       call: 'sysproperty_vote4Update',
-      params: 4,
+      params: 3,
       inputFormatter: [formatters.inputAddressFormatter, formatters.formatInputString, formatters.formatInputInt]
     });
 

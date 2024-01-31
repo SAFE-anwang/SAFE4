@@ -44,12 +44,20 @@ func (api *PublicSysPropertyAPI) GetValue(ctx context.Context, name string, bloc
 	return contract_api.GetPropertyValue(ctx, api.blockChainAPI, name, blockNrOrHash)
 }
 
-func (api *PublicSysPropertyAPI) GetAll(ctx context.Context, blockNrOrHash rpc.BlockNumberOrHash) ([]types.PropertyInfo, error) {
-	return contract_api.GetAllProperties(ctx, api.blockChainAPI, blockNrOrHash)
+func (api *PublicSysPropertyAPI) GetNum(ctx context.Context, blockNrOrHash rpc.BlockNumberOrHash) (*big.Int, error) {
+	return contract_api.GetPropertyNum(ctx, api.blockChainAPI, blockNrOrHash)
 }
 
-func (api *PublicSysPropertyAPI) GetAllUnconfirmed(ctx context.Context, blockNrOrHash rpc.BlockNumberOrHash) ([]types.UnconfirmedPropertyInfo, error) {
-	return contract_api.GetAllUnconfirmedProperties(ctx, api.blockChainAPI, blockNrOrHash)
+func (api *PublicSysPropertyAPI) GetAll(ctx context.Context, start *big.Int, count *big.Int, blockNrOrHash rpc.BlockNumberOrHash) ([]string, error) {
+	return contract_api.GetAllProperties(ctx, api.blockChainAPI, start, count, blockNrOrHash)
+}
+
+func (api *PublicSysPropertyAPI) GetUnconfirmedNum(ctx context.Context, blockNrOrHash rpc.BlockNumberOrHash) (*big.Int, error) {
+	return contract_api.GetUnconfirmedPropertyNum(ctx, api.blockChainAPI, blockNrOrHash)
+}
+
+func (api *PublicSysPropertyAPI) GetAllUnconfirmed(ctx context.Context, start *big.Int, count *big.Int, blockNrOrHash rpc.BlockNumberOrHash) ([]string, error) {
+	return contract_api.GetAllUnconfirmedProperties(ctx, api.blockChainAPI, start, count, blockNrOrHash)
 }
 
 func (api *PublicSysPropertyAPI) Exist(ctx context.Context, name string, blockNrOrHash rpc.BlockNumberOrHash) (bool, error) {

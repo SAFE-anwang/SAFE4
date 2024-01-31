@@ -102,15 +102,15 @@ func (api *PublicSuperNodeAPI) GetInfoByID(ctx context.Context, id *big.Int, blo
 	return contract_api.GetSuperNodeInfoByID(ctx, api.blockChainAPI, id, blockNrOrHash)
 }
 
-func (api *PublicSuperNodeAPI) GetAll(ctx context.Context, blockNrOrHash rpc.BlockNumberOrHash) ([]types.SuperNodeInfo, error) {
-	return contract_api.GetAllSuperNodes(ctx, api.blockChainAPI, blockNrOrHash)
+func (api *PublicSuperNodeAPI) GetAll(ctx context.Context, start *big.Int, count *big.Int, blockNrOrHash rpc.BlockNumberOrHash) ([]common.Address, error) {
+	return contract_api.GetAllSuperNodes(ctx, api.blockChainAPI, start, count, blockNrOrHash)
 }
 
 func (api *PublicSuperNodeAPI) GetTops(ctx context.Context, blockNrOrHash rpc.BlockNumberOrHash) ([]common.Address, error) {
 	return contract_api.GetTopSuperNodes(ctx, api.blockChainAPI, blockNrOrHash)
 }
 
-func (api *PublicSuperNodeAPI) GetOfficials(ctx context.Context, blockNrOrHash rpc.BlockNumberOrHash) ([]types.SuperNodeInfo, error) {
+func (api *PublicSuperNodeAPI) GetOfficials(ctx context.Context, blockNrOrHash rpc.BlockNumberOrHash) ([]common.Address, error) {
 	return contract_api.GetOfficialSuperNodes(ctx, api.blockChainAPI, blockNrOrHash)
 }
 

@@ -243,18 +243,21 @@ func (monitor *NodeStateMonitor) broadcastLoop() {
 }
 
 func (monitor *NodeStateMonitor) isSuperNode(addr common.Address) bool {
-	topAddrs, err := contract_api.GetTopSuperNodes(monitor.ctx, monitor.blockChainAPI, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(monitor.e.blockchain.CurrentBlock().Number().Int64())))
+	blockNrOrHash := rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(monitor.e.blockchain.CurrentBlock().Number().Int64()))
+	topAddrs, err := contract_api.GetTopSuperNodes(monitor.ctx, monitor.blockChainAPI, blockNrOrHash)
 	if err != nil {
 		return false
 	}
-	flag := false
-	for i := range topAddrs {
-		if topAddrs[i] == addr { //info.Addr == addr && info.Enode == monitor.enode {
-			flag = true
-			break
+	for _, snAddr := range topAddrs {
+		info, err := contract_api.GetSuperNodeInfo(monitor.ctx, monitor.blockChainAPI, snAddr, blockNrOrHash)
+		if err != nil {
+			continue
+		}
+		if info.Addr == addr && info.Enode == monitor.enode {
+			return true
 		}
 	}
-	return flag
+	return false
 }
 
 func (monitor *NodeStateMonitor) collectMasterNodes() ([]*big.Int, []*big.Int) {
@@ -322,10 +325,33 @@ func (monitor *NodeStateMonitor) collectMasterNodes() ([]*big.Int, []*big.Int) {
 func (monitor *NodeStateMonitor) collectSuperNodes() ([]*big.Int, []*big.Int) {
 	var ids []*big.Int
 	var states []*big.Int
-	infos, err := contract_api.GetAllSuperNodes(monitor.ctx, monitor.blockChainAPI, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(monitor.e.blockchain.CurrentBlock().Number().Int64())))
+
+	blockNrOrHash := rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(monitor.e.blockchain.CurrentBlock().Number().Int64()))
+	num, err := contract_api.GetSuperNodeNum(monitor.ctx, monitor.blockChainAPI, blockNrOrHash)
 	if err != nil {
 		return ids, states
 	}
+
+	batch := num.Int64() / 100
+	if num.Int64() % 100 != 0 {
+		batch++
+	}
+
+	var infos []types.SuperNodeInfo
+	for i := int64(0); i < batch; i++ {
+		snAddrs, err := contract_api.GetAllSuperNodes(monitor.ctx, monitor.blockChainAPI, big.NewInt(i*100), big.NewInt(100), blockNrOrHash)
+		if err != nil {
+			return ids, states
+		}
+		for _, addr := range snAddrs {
+			info, err := contract_api.GetSuperNodeInfo(monitor.ctx, monitor.blockChainAPI, addr, blockNrOrHash)
+			if err != nil {
+				continue
+			}
+			infos = append(infos, *info)
+		}
+	}
+
 	curTime := time.Now().Unix()
 	var info types.SuperNodeInfo
 	for _, info = range infos {
@@ -341,6 +367,7 @@ func (monitor *NodeStateMonitor) collectSuperNodes() ([]*big.Int, []*big.Int) {
 			monitor.snMonitorInfos[id] = MonitorInfo{StateStop, 1, curTime}
 		}
 	}
+
 	for _, info = range infos {
 		id := info.Id.Int64()
 		log.Trace("collect-supernode-state", "id", id, "global-state", info.State, "local-state", monitor.snMonitorInfos[id].curState, "missNum", monitor.snMonitorInfos[id].missNum)

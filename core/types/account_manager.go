@@ -25,5 +25,5 @@ type AccountRecordUseInfo struct {
 
 type AccountAmountInfo struct {
 	Amount      *big.Int            `json:"amount"      gencodec:"required"`
-	IDs         []*big.Int          `json:"ids"         gencodec:"required"`
+	Num         *big.Int            `json:"num"         gencodec:"required"`
 }

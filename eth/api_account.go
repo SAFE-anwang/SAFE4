@@ -44,20 +44,32 @@ func (api *PublicAccountAPI) GetTotalAmount(ctx context.Context, addr common.Add
 	return contract_api.GetAccountTotalAmount(ctx, api.blockChainAPI, addr, blockNrOrHash)
 }
 
+func (api *PublicAccountAPI) GetTotalIDs(ctx context.Context, addr common.Address, start *big.Int, count *big.Int, blockNrOrHash rpc.BlockNumberOrHash) ([]*big.Int, error) {
+	return contract_api.GetAccountTotalIDs(ctx, api.blockChainAPI, addr, start, count, blockNrOrHash)
+}
+
 func (api *PublicAccountAPI) GetAvailableAmount(ctx context.Context, addr common.Address, blockNrOrHash rpc.BlockNumberOrHash) (*types.AccountAmountInfo, error) {
 	return contract_api.GetAccountAvailableAmount(ctx, api.blockChainAPI, addr, blockNrOrHash)
+}
+
+func (api *PublicAccountAPI) GetAvailableIDs(ctx context.Context, addr common.Address, start *big.Int, count *big.Int, blockNrOrHash rpc.BlockNumberOrHash) ([]*big.Int, error) {
+	return contract_api.GetAccountAvailableIDs(ctx, api.blockChainAPI, addr, start, count, blockNrOrHash)
 }
 
 func (api *PublicAccountAPI) GetLockedAmount(ctx context.Context, addr common.Address, blockNrOrHash rpc.BlockNumberOrHash) (*types.AccountAmountInfo, error) {
 	return contract_api.GetAccountLockedAmount(ctx, api.blockChainAPI, addr, blockNrOrHash)
 }
 
+func (api *PublicAccountAPI) GetLockedIDs(ctx context.Context, addr common.Address, start *big.Int, count *big.Int, blockNrOrHash rpc.BlockNumberOrHash) ([]*big.Int, error) {
+	return contract_api.GetAccountLockedIDs(ctx, api.blockChainAPI, addr, start, count, blockNrOrHash)
+}
+
 func (api *PublicAccountAPI) GetUsedAmount(ctx context.Context, addr common.Address, blockNrOrHash rpc.BlockNumberOrHash) (*types.AccountAmountInfo, error) {
 	return contract_api.GetAccountUsedAmount(ctx, api.blockChainAPI, addr, blockNrOrHash)
 }
 
-func (api *PublicAccountAPI) GetRecords(ctx context.Context, addr common.Address, blockNrOrHash rpc.BlockNumberOrHash) ([]types.AccountRecord, error) {
-	return contract_api.GetAccountRecords(ctx, api.blockChainAPI, addr, blockNrOrHash)
+func (api *PublicAccountAPI) GetUsedIDs(ctx context.Context, addr common.Address, start *big.Int, count *big.Int, blockNrOrHash rpc.BlockNumberOrHash) ([]*big.Int, error) {
+	return contract_api.GetAccountUsedIDs(ctx, api.blockChainAPI, addr, start, count, blockNrOrHash)
 }
 
 func (api *PublicAccountAPI) GetRecord0(ctx context.Context, addr common.Address, blockNrOrHash rpc.BlockNumberOrHash) (*types.AccountRecord, error) {

@@ -195,18 +195,33 @@ func getAccountAmountInfo(ctx context.Context, api *ethapi.PublicBlockChainAPI, 
 
 	info := new(types.AccountAmountInfo)
 	info.Amount = unpacked[0].(*big.Int)
-	info.IDs = unpacked[1].([]*big.Int)
+	info.Num = unpacked[1].(*big.Int)
 	return info, nil
 }
 
-func GetAccountRecords(ctx context.Context, api *ethapi.PublicBlockChainAPI, addr common.Address, blockNrOrHash rpc.BlockNumberOrHash) ([]types.AccountRecord, error) {
+func GetAccountTotalIDs(ctx context.Context, api *ethapi.PublicBlockChainAPI, addr common.Address, start *big.Int, count *big.Int, blockNrOrHash rpc.BlockNumberOrHash) ([]*big.Int, error) {
+	return getAccountIDs(ctx, api, "getTotalIDs", addr, start, count, blockNrOrHash)
+}
+
+func GetAccountAvailableIDs(ctx context.Context, api *ethapi.PublicBlockChainAPI, addr common.Address, start *big.Int, count *big.Int, blockNrOrHash rpc.BlockNumberOrHash) ([]*big.Int, error) {
+	return getAccountIDs(ctx, api, "getAvailableIDs", addr, start, count, blockNrOrHash)
+}
+
+func GetAccountLockedIDs(ctx context.Context, api *ethapi.PublicBlockChainAPI, addr common.Address, start *big.Int, count *big.Int, blockNrOrHash rpc.BlockNumberOrHash) ([]*big.Int, error) {
+	return getAccountIDs(ctx, api, "getLockedIDs", addr, start, count, blockNrOrHash)
+}
+
+func GetAccountUsedIDs(ctx context.Context, api *ethapi.PublicBlockChainAPI, addr common.Address, start *big.Int, count *big.Int, blockNrOrHash rpc.BlockNumberOrHash) ([]*big.Int, error) {
+	return getAccountIDs(ctx, api, "getUsedIDs", addr, start, count, blockNrOrHash)
+}
+
+func getAccountIDs(ctx context.Context, api *ethapi.PublicBlockChainAPI, method string, addr common.Address, start *big.Int, count *big.Int, blockNrOrHash rpc.BlockNumberOrHash) ([]*big.Int, error) {
 	vABI, err := abi.JSON(strings.NewReader(systemcontracts.AccountManagerABI))
 	if err != nil {
 		return nil, err
 	}
 
-	method := "getRecords"
-	data, err := vABI.Pack(method, addr)
+	data, err := vABI.Pack(method, addr, start, count)
 	if err != nil {
 		return nil, err
 	}
@@ -222,7 +237,7 @@ func GetAccountRecords(ctx context.Context, api *ethapi.PublicBlockChainAPI, add
 		return nil, err
 	}
 
-	records := new([]types.AccountRecord)
+	records := new([]*big.Int)
 	if err := vABI.UnpackIntoInterface(records, method, result); err != nil {
 		return nil, err
 	}

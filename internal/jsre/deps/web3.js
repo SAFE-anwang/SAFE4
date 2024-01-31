@@ -3980,11 +3980,10 @@ var outputSyncingFormatter = function(result) {
 };
 
 var inputArrayFormatter = function(arr) {
-    return utils.isArray(arr)
-};
-
-var outputArrayFormatter = function(result) {
-    return utils.isArray(result)
+    if(utils.isArray(arr)) {
+        return arr;
+    }
+    throw new Error('invalid array');
 };
 
 module.exports = {
@@ -4001,8 +4000,7 @@ module.exports = {
     outputBlockFormatter: outputBlockFormatter,
     outputLogFormatter: outputLogFormatter,
     outputPostFormatter: outputPostFormatter,
-    outputSyncingFormatter: outputSyncingFormatter,
-    outputArrayFormatter: outputArrayFormatter
+    outputSyncingFormatter: outputSyncingFormatter
 };
 
 

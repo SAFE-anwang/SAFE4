@@ -295,66 +295,6 @@ func GetNextMasterNode(ctx context.Context, api *ethapi.PublicBlockChainAPI, blo
 	return *addr, nil
 }
 
-func GetAllMasterNodes(ctx context.Context, api *ethapi.PublicBlockChainAPI, blockNrOrHash rpc.BlockNumberOrHash) ([]types.MasterNodeInfo, error) {
-	vABI, err := abi.JSON(strings.NewReader(systemcontracts.MasterNodeStorageABI))
-	if err != nil {
-		return nil, err
-	}
-
-	method := "getAll"
-	data, err := vABI.Pack(method)
-	if err != nil {
-		return nil, err
-	}
-
-	msgData := (hexutil.Bytes)(data)
-	args := ethapi.TransactionArgs{
-		To: &systemcontracts.MasterNodeStorageContractAddr,
-		Data: &msgData,
-	}
-	result, err := api.Call(ctx, args, blockNrOrHash, nil)
-
-	if err != nil {
-		return nil, err
-	}
-
-	infos := new([]types.MasterNodeInfo)
-	if err := vABI.UnpackIntoInterface(infos, method, result); err != nil {
-		return nil, err
-	}
-	return *infos, nil
-}
-
-func GetOfficialMasterNodes(ctx context.Context, api *ethapi.PublicBlockChainAPI, blockNrOrHash rpc.BlockNumberOrHash) ([]types.MasterNodeInfo, error) {
-	vABI, err := abi.JSON(strings.NewReader(systemcontracts.MasterNodeStorageABI))
-	if err != nil {
-		return nil, err
-	}
-
-	method := "getOfficials"
-	data, err := vABI.Pack(method)
-	if err != nil {
-		return nil, err
-	}
-
-	msgData := (hexutil.Bytes)(data)
-	args := ethapi.TransactionArgs{
-		To: &systemcontracts.MasterNodeStorageContractAddr,
-		Data: &msgData,
-	}
-	result, err := api.Call(ctx, args, blockNrOrHash, nil)
-
-	if err != nil {
-		return nil, err
-	}
-
-	infos := new([]types.MasterNodeInfo)
-	if err := vABI.UnpackIntoInterface(infos, method, result); err != nil {
-		return nil, err
-	}
-	return *infos, nil
-}
-
 func GetMasterNodeNum(ctx context.Context, api *ethapi.PublicBlockChainAPI, blockNrOrHash rpc.BlockNumberOrHash) (*big.Int, error) {
 	vABI, err := abi.JSON(strings.NewReader(systemcontracts.MasterNodeStorageABI))
 	if err != nil {
@@ -383,6 +323,66 @@ func GetMasterNodeNum(ctx context.Context, api *ethapi.PublicBlockChainAPI, bloc
 		return nil, err
 	}
 	return count, nil
+}
+
+func GetAllMasterNodes(ctx context.Context, api *ethapi.PublicBlockChainAPI, start *big.Int, count *big.Int, blockNrOrHash rpc.BlockNumberOrHash) ([]common.Address, error) {
+	vABI, err := abi.JSON(strings.NewReader(systemcontracts.MasterNodeStorageABI))
+	if err != nil {
+		return nil, err
+	}
+
+	method := "getAll"
+	data, err := vABI.Pack(method, start, count)
+	if err != nil {
+		return nil, err
+	}
+
+	msgData := (hexutil.Bytes)(data)
+	args := ethapi.TransactionArgs{
+		To: &systemcontracts.MasterNodeStorageContractAddr,
+		Data: &msgData,
+	}
+	result, err := api.Call(ctx, args, blockNrOrHash, nil)
+
+	if err != nil {
+		return nil, err
+	}
+
+	infos := new([]common.Address)
+	if err := vABI.UnpackIntoInterface(infos, method, result); err != nil {
+		return nil, err
+	}
+	return *infos, nil
+}
+
+func GetOfficialMasterNodes(ctx context.Context, api *ethapi.PublicBlockChainAPI, blockNrOrHash rpc.BlockNumberOrHash) ([]common.Address, error) {
+	vABI, err := abi.JSON(strings.NewReader(systemcontracts.MasterNodeStorageABI))
+	if err != nil {
+		return nil, err
+	}
+
+	method := "getOfficials"
+	data, err := vABI.Pack(method)
+	if err != nil {
+		return nil, err
+	}
+
+	msgData := (hexutil.Bytes)(data)
+	args := ethapi.TransactionArgs{
+		To: &systemcontracts.MasterNodeStorageContractAddr,
+		Data: &msgData,
+	}
+	result, err := api.Call(ctx, args, blockNrOrHash, nil)
+
+	if err != nil {
+		return nil, err
+	}
+
+	infos := new([]common.Address)
+	if err := vABI.UnpackIntoInterface(infos, method, result); err != nil {
+		return nil, err
+	}
+	return *infos, nil
 }
 
 func ExistMasterNode(ctx context.Context, api *ethapi.PublicBlockChainAPI, addr common.Address, blockNrOrHash rpc.BlockNumberOrHash) (bool, error) {

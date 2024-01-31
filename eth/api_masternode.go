@@ -102,16 +102,16 @@ func (api *PublicMasterNodeAPI) GetNext(ctx context.Context, blockNrOrHash rpc.B
 	return contract_api.GetNextMasterNode(ctx, api.blockChainAPI, blockNrOrHash)
 }
 
-func (api *PublicMasterNodeAPI) GetAll(ctx context.Context, blockNrOrHash rpc.BlockNumberOrHash) ([]types.MasterNodeInfo, error) {
-	return contract_api.GetAllMasterNodes(ctx, api.blockChainAPI, blockNrOrHash)
-}
-
-func (api *PublicMasterNodeAPI) GetOfficials(ctx context.Context, blockNrOrHash rpc.BlockNumberOrHash) ([]types.MasterNodeInfo, error) {
-	return contract_api.GetOfficialMasterNodes(ctx, api.blockChainAPI, blockNrOrHash)
-}
-
 func (api *PublicMasterNodeAPI) GetNum(ctx context.Context, blockNrOrHash rpc.BlockNumberOrHash) (*big.Int, error) {
 	return contract_api.GetMasterNodeNum(ctx, api.blockChainAPI, blockNrOrHash)
+}
+
+func (api *PublicMasterNodeAPI) GetAll(ctx context.Context, start *big.Int, count *big.Int, blockNrOrHash rpc.BlockNumberOrHash) ([]common.Address, error) {
+	return contract_api.GetAllMasterNodes(ctx, api.blockChainAPI, start, count, blockNrOrHash)
+}
+
+func (api *PublicMasterNodeAPI) GetOfficials(ctx context.Context, blockNrOrHash rpc.BlockNumberOrHash) ([]common.Address, error) {
+	return contract_api.GetOfficialMasterNodes(ctx, api.blockChainAPI, blockNrOrHash)
 }
 
 func (api *PublicMasterNodeAPI) Exist(ctx context.Context, addr common.Address, blockNrOrHash rpc.BlockNumberOrHash) (bool, error) {

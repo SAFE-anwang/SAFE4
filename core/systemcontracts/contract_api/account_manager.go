@@ -102,7 +102,7 @@ func TransferAccount(ctx context.Context, blockChainAPI *ethapi.PublicBlockChain
 	}
 
 	method := "transfer"
-	data, err := vABI.Pack(method, to, amount, lockDay)
+	data, err := vABI.Pack(method, to, amount.ToInt(), lockDay)
 	if err != nil {
 		return common.Hash{}, err
 	}

@@ -3705,6 +3705,10 @@ var Iban = require('./iban');
  * @param {String|Number|BigNumber}
  * @returns {BigNumber} object
  */
+var inputBigNumberFormatter = function (number) {
+  return utils.fromDecimal(number);
+}
+
 var outputBigNumberFormatter = function (number) {
     return utils.toBigNumber(number);
 };
@@ -3994,6 +3998,7 @@ module.exports = {
     inputAddressFormatter: inputAddressFormatter,
     inputPostFormatter: inputPostFormatter,
     inputArrayFormatter: inputArrayFormatter,
+    inputBigNumberFormatter: inputBigNumberFormatter,
     outputBigNumberFormatter: outputBigNumberFormatter,
     outputTransactionFormatter: outputTransactionFormatter,
     outputTransactionReceiptFormatter: outputTransactionReceiptFormatter,
@@ -13817,7 +13822,7 @@ module.exports = XMLHttpRequest;
         name: 'deposit',
         call: 'account_deposit',
         params: 4,
-        inputFormatter: [formatters.inputAddressFormatter, formatters.formatInputInt, formatters.inputAddressFormatter, formatters.formatInputInt]
+        inputFormatter: [formatters.inputAddressFormatter, formatters.inputBigNumberFormatter, formatters.inputAddressFormatter, formatters.formatInputInt]
       });
 
       var withdraw = new Method({
@@ -13838,7 +13843,7 @@ module.exports = XMLHttpRequest;
         name: 'transfer',
         call: 'account_transfer',
         params: 4,
-        inputFormatter: [formatters.inputAddressFormatter, formatters.inputAddressFormatter, formatters.formatInputInt, formatters.formatInputInt]
+        inputFormatter: [formatters.inputAddressFormatter, formatters.inputAddressFormatter, formatters.inputBigNumberFormatter, formatters.formatInputInt]
       });
 
       var addLockDay = new Method({
@@ -13998,14 +14003,14 @@ module.exports = XMLHttpRequest;
       name: 'register',
       call: 'masternode_register',
       params: 9,
-      inputFormatter: [formatters.inputAddressFormatter, formatters.formatInputInt, formatters.formatInputBool, formatters.inputAddressFormatter, formatters.formatInputInt, formatters.formatInputString, formatters.formatInputString, formatters.formatInputInt, formatters.formatInputInt]
+      inputFormatter: [formatters.inputAddressFormatter, formatters.inputBigNumberFormatter, formatters.formatInputBool, formatters.inputAddressFormatter, formatters.formatInputInt, formatters.formatInputString, formatters.formatInputString, formatters.formatInputInt, formatters.formatInputInt]
     });
 
     var appendRegister = new Method({
       name: 'appendRegister',
       call: 'masternode_appendRegister',
       params: 4,
-      inputFormatter: [formatters.inputAddressFormatter, formatters.formatInputInt, formatters.inputAddressFormatter, formatters.formatInputInt]
+      inputFormatter: [formatters.inputAddressFormatter, formatters.inputBigNumberFormatter, formatters.inputAddressFormatter, formatters.formatInputInt]
     });
 
     var turnRegister = new Method({
@@ -14198,14 +14203,14 @@ module.exports = XMLHttpRequest;
       name: 'register',
       call: 'supernode_register',
       params: 11,
-      inputFormatter: [formatters.inputAddressFormatter, formatters.formatInputInt, formatters.formatInputBool, formatters.inputAddressFormatter, formatters.formatInputInt, formatters.formatInputString, formatters.formatInputString, formatters.formatInputString, formatters.formatInputInt, formatters.formatInputInt, formatters.formatInputInt]
+      inputFormatter: [formatters.inputAddressFormatter, formatters.inputBigNumberFormatter, formatters.formatInputBool, formatters.inputAddressFormatter, formatters.formatInputInt, formatters.formatInputString, formatters.formatInputString, formatters.formatInputString, formatters.formatInputInt, formatters.formatInputInt, formatters.formatInputInt]
     });
 
     var appendRegister = new Method({
       name: 'appendRegister',
       call: 'supernode_appendRegister',
       params: 4,
-      inputFormatter: [formatters.inputAddressFormatter, formatters.formatInputInt, formatters.inputAddressFormatter, formatters.formatInputInt]
+      inputFormatter: [formatters.inputAddressFormatter, formatters.inputBigNumberFormatter, formatters.inputAddressFormatter, formatters.formatInputInt]
     });
 
     var turnRegister = new Method({

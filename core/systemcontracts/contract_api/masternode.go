@@ -13,7 +13,7 @@ import (
 	"strings"
 )
 
-func RegisterMasterNode(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, transactionPoolAPI *ethapi.PublicTransactionPoolAPI, from common.Address, amount *big.Int, isUnion bool, addr common.Address, lockDay *big.Int, enode string, description string, creatorIncentive *big.Int, partnerIncentive *big.Int) (common.Hash, error) {
+func RegisterMasterNode(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, transactionPoolAPI *ethapi.PublicTransactionPoolAPI, from common.Address, amount *hexutil.Big, isUnion bool, addr common.Address, lockDay *big.Int, enode string, description string, creatorIncentive *big.Int, partnerIncentive *big.Int) (common.Hash, error) {
 	vABI, err := abi.JSON(strings.NewReader(systemcontracts.MasterNodeLogicABI))
 	if err != nil {
 		return common.Hash{}, err
@@ -30,7 +30,7 @@ func RegisterMasterNode(ctx context.Context, blockChainAPI *ethapi.PublicBlockCh
 		From:     &from,
 		To:       &systemcontracts.MasterNodeLogicContractAddr,
 		Data:     &msgData,
-		Value:    (*hexutil.Big)(amount),
+		Value:    amount,
 		GasPrice: (*hexutil.Big)(GetCurrentGasPrice(ctx, blockChainAPI)),
 	}
 	gas, err := blockChainAPI.EstimateGas(ctx, args, nil)
@@ -41,7 +41,7 @@ func RegisterMasterNode(ctx context.Context, blockChainAPI *ethapi.PublicBlockCh
 	return transactionPoolAPI.SendTransaction(ctx, args)
 }
 
-func AppendRegisterMasterNode(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, transactionPoolAPI *ethapi.PublicTransactionPoolAPI, from common.Address, amount *big.Int, addr common.Address, lockDay *big.Int) (common.Hash, error) {
+func AppendRegisterMasterNode(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, transactionPoolAPI *ethapi.PublicTransactionPoolAPI, from common.Address, amount *hexutil.Big, addr common.Address, lockDay *big.Int) (common.Hash, error) {
 	vABI, err := abi.JSON(strings.NewReader(systemcontracts.MasterNodeLogicABI))
 	if err != nil {
 		return common.Hash{}, err
@@ -58,7 +58,7 @@ func AppendRegisterMasterNode(ctx context.Context, blockChainAPI *ethapi.PublicB
 		From:     &from,
 		To:       &systemcontracts.MasterNodeLogicContractAddr,
 		Data:     &msgData,
-		Value:    (*hexutil.Big)(amount),
+		Value:    amount,
 		GasPrice: (*hexutil.Big)(GetCurrentGasPrice(ctx, blockChainAPI)),
 	}
 	gas, err := blockChainAPI.EstimateGas(ctx, args, nil)

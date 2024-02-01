@@ -13,7 +13,7 @@ import (
 	"strings"
 )
 
-func RegisterSuperNode(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, transactionPoolAPI *ethapi.PublicTransactionPoolAPI, from common.Address, amount *big.Int, isUnion bool, addr common.Address, lockDay *big.Int, name string, enode string, description string, creatorIncentive *big.Int, partnerIncentive *big.Int, voterIncentive *big.Int) (common.Hash, error) {
+func RegisterSuperNode(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, transactionPoolAPI *ethapi.PublicTransactionPoolAPI, from common.Address, amount *hexutil.Big, isUnion bool, addr common.Address, lockDay *big.Int, name string, enode string, description string, creatorIncentive *big.Int, partnerIncentive *big.Int, voterIncentive *big.Int) (common.Hash, error) {
 	vABI, err := abi.JSON(strings.NewReader(systemcontracts.SuperNodeLogicABI))
 	if err != nil {
 		return common.Hash{}, err
@@ -30,7 +30,7 @@ func RegisterSuperNode(ctx context.Context, blockChainAPI *ethapi.PublicBlockCha
 		From:     &from,
 		To:       &systemcontracts.SuperNodeLogicContractAddr,
 		Data:     &msgData,
-		Value:    (*hexutil.Big)(amount),
+		Value:    amount,
 		GasPrice: (*hexutil.Big)(GetCurrentGasPrice(ctx, blockChainAPI)),
 	}
 	gas, err := blockChainAPI.EstimateGas(ctx, args, nil)
@@ -41,7 +41,7 @@ func RegisterSuperNode(ctx context.Context, blockChainAPI *ethapi.PublicBlockCha
 	return transactionPoolAPI.SendTransaction(ctx, args)
 }
 
-func AppendRegisterSuperNode(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, transactionPoolAPI *ethapi.PublicTransactionPoolAPI, from common.Address, amount *big.Int, addr common.Address, lockDay *big.Int) (common.Hash, error) {
+func AppendRegisterSuperNode(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, transactionPoolAPI *ethapi.PublicTransactionPoolAPI, from common.Address, amount *hexutil.Big, addr common.Address, lockDay *big.Int) (common.Hash, error) {
 	vABI, err := abi.JSON(strings.NewReader(systemcontracts.SuperNodeLogicABI))
 	if err != nil {
 		return common.Hash{}, err
@@ -58,7 +58,7 @@ func AppendRegisterSuperNode(ctx context.Context, blockChainAPI *ethapi.PublicBl
 		From:     &from,
 		To:       &systemcontracts.SuperNodeLogicContractAddr,
 		Data:     &msgData,
-		Value:    (*hexutil.Big)(amount),
+		Value:    amount,
 		GasPrice: (*hexutil.Big)(GetCurrentGasPrice(ctx, blockChainAPI)),
 	}
 	gas, err := blockChainAPI.EstimateGas(ctx, args, nil)

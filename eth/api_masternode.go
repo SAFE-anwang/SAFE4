@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/core/systemcontracts/contract_api"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -62,11 +63,11 @@ func (api *PublicMasterNodeAPI) Restart(ctx context.Context, addr common.Address
 	return true, nil
 }
 
-func (api *PublicMasterNodeAPI) Register(ctx context.Context, from common.Address, amount *big.Int, isUnion bool, addr common.Address, lockDay *big.Int, enode string, description string, creatorIncentive *big.Int, partnerIncentive *big.Int) (common.Hash, error) {
+func (api *PublicMasterNodeAPI) Register(ctx context.Context, from common.Address, amount *hexutil.Big, isUnion bool, addr common.Address, lockDay *big.Int, enode string, description string, creatorIncentive *big.Int, partnerIncentive *big.Int) (common.Hash, error) {
 	return contract_api.RegisterMasterNode(ctx, api.blockChainAPI, api.transactionPoolAPI, from, amount, isUnion, addr, lockDay, enode, description, creatorIncentive, partnerIncentive)
 }
 
-func (api *PublicMasterNodeAPI) AppendRegister(ctx context.Context, from common.Address, amount *big.Int, addr common.Address, lockDay *big.Int) (common.Hash, error) {
+func (api *PublicMasterNodeAPI) AppendRegister(ctx context.Context, from common.Address, amount *hexutil.Big, addr common.Address, lockDay *big.Int) (common.Hash, error) {
 	return contract_api.AppendRegisterMasterNode(ctx, api.blockChainAPI, api.transactionPoolAPI, from, amount, addr, lockDay)
 }
 

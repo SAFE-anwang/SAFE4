@@ -13,7 +13,7 @@ import (
 	"strings"
 )
 
-func DepositAccount(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, transactionPoolAPI *ethapi.PublicTransactionPoolAPI, from common.Address, amount *big.Int, to common.Address, lockDay *big.Int) (common.Hash, error) {
+func DepositAccount(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, transactionPoolAPI *ethapi.PublicTransactionPoolAPI, from common.Address, amount *hexutil.Big, to common.Address, lockDay *big.Int) (common.Hash, error) {
 	vABI, err := abi.JSON(strings.NewReader(systemcontracts.AccountManagerABI))
 	if err != nil {
 		return common.Hash{}, err
@@ -30,7 +30,7 @@ func DepositAccount(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainA
 		From:     &from,
 		To:       &systemcontracts.AccountManagerContractAddr,
 		Data:     &msgData,
-		Value:    (*hexutil.Big)(amount),
+		Value:    amount,
 		GasPrice: (*hexutil.Big)(GetCurrentGasPrice(ctx, blockChainAPI)),
 	}
 	gas, err := blockChainAPI.EstimateGas(ctx, args, nil)
@@ -95,7 +95,7 @@ func WithdrawAccountByID(ctx context.Context, blockChainAPI *ethapi.PublicBlockC
 	return transactionPoolAPI.SendTransaction(ctx, args)
 }
 
-func TransferAccount(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, transactionPoolAPI *ethapi.PublicTransactionPoolAPI, from common.Address, to common.Address, amount *big.Int, lockDay *big.Int) (common.Hash, error) {
+func TransferAccount(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, transactionPoolAPI *ethapi.PublicTransactionPoolAPI, from common.Address, to common.Address, amount *hexutil.Big, lockDay *big.Int) (common.Hash, error) {
 	vABI, err := abi.JSON(strings.NewReader(systemcontracts.AccountManagerABI))
 	if err != nil {
 		return common.Hash{}, err

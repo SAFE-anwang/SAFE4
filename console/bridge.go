@@ -1329,6 +1329,14 @@ func (b *bridge) ChangeProposalDescription(call jsre.Call) (goja.Value, error) {
 	return changeProposalDescription(goja.Null(), call.Argument(0), call.Argument(1), call.Argument(2))
 }
 
+func (b *bridge) GetProposalBalance(call jsre.Call) (goja.Value, error) {
+	getProposalBalance, callable := goja.AssertFunction(getJeth(call.VM).Get("getProposalBalance"))
+	if !callable {
+		return nil, fmt.Errorf("jeth.getProposalBalance is not callable")
+	}
+	return getProposalBalance(goja.Null(), call.Argument(0))
+}
+
 func (b *bridge) GetProposalInfo(call jsre.Call) (goja.Value, error) {
 	getProposalInfo, callable := goja.AssertFunction(getJeth(call.VM).Get("getProposalInfo"))
 	if !callable {
@@ -1358,7 +1366,7 @@ func (b *bridge) GetProposalNum(call jsre.Call) (goja.Value, error) {
 	if !callable {
 		return nil, fmt.Errorf("jeth.getProposalNum is not callable")
 	}
-	return getProposalNum(goja.Null(), call.Argument(1))
+	return getProposalNum(goja.Null(), call.Argument(0))
 }
 
 func (b *bridge) GetAllProposals(call jsre.Call) (goja.Value, error) {
@@ -1374,7 +1382,7 @@ func (b *bridge) GetMineProposalNum(call jsre.Call) (goja.Value, error) {
 	if !callable {
 		return nil, fmt.Errorf("jeth.getMineProposalNum is not callable")
 	}
-	return getMineProposalNum(goja.Null(), call.Argument(1))
+	return getMineProposalNum(goja.Null(), call.Argument(0), call.Argument(1))
 }
 
 func (b *bridge) GetMineProposals(call jsre.Call) (goja.Value, error) {
@@ -1382,7 +1390,7 @@ func (b *bridge) GetMineProposals(call jsre.Call) (goja.Value, error) {
 	if !callable {
 		return nil, fmt.Errorf("jeth.getMineProposals is not callable")
 	}
-	return getMineProposals(goja.Null(), call.Argument(0), call.Argument(1), call.Argument(2))
+	return getMineProposals(goja.Null(), call.Argument(0), call.Argument(1), call.Argument(2), call.Argument(3))
 }
 
 func (b *bridge) ExistProposal(call jsre.Call) (goja.Value, error) {

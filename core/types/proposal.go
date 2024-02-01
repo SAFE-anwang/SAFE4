@@ -14,9 +14,12 @@ type ProposalInfo struct {
 	StartPayTime *big.Int           `json:"startPayTime"            gencodec:"required"`
 	EndPayTime   *big.Int           `json:"endPayTime"              gencodec:"required"`
 	Description  string             `json:"description"             gencodec:"required"`
-	Voters       []common.Address   `json:"voters"                  gencodec:"required"`
-	VoteResults  []*big.Int         `json:"voteResults"             gencodec:"required"`
 	State        *big.Int           `json:"state"                   gencodec:"required"`
 	CreateHeight *big.Int           `json:"createHeight"            gencodec:"required"`
 	UpdateHeight *big.Int           `json:"UpdateHeight"            gencodec:"required"`
+}
+
+type ProposalVoteInfo struct {
+	Voter        common.Address     `json:"voter"                   gencodec:"required"`
+	VoteResult   *big.Int           `json:"voteResult"              gencodec:"required"`
 }

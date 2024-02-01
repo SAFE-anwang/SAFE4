@@ -13,7 +13,7 @@ import (
 	"strings"
 )
 
-func CreateProposal(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, transactionPoolAPI *ethapi.PublicTransactionPoolAPI, from common.Address, title string, payAmount *big.Int, payTimes *big.Int, startPayTime *big.Int, endPayTime *big.Int, description string) (common.Hash, error) {
+func CreateProposal(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, transactionPoolAPI *ethapi.PublicTransactionPoolAPI, from common.Address, title string, payAmount *hexutil.Big, payTimes *big.Int, startPayTime *big.Int, endPayTime *big.Int, description string) (common.Hash, error) {
 	vABI, err := abi.JSON(strings.NewReader(systemcontracts.ProposalABI))
 	if err != nil {
 		return common.Hash{}, err
@@ -96,7 +96,7 @@ func ChangeProposalTitle(ctx context.Context, blockChainAPI *ethapi.PublicBlockC
 	return transactionPoolAPI.SendTransaction(ctx, args)
 }
 
-func ChangeProposalPayAmount(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, transactionPoolAPI *ethapi.PublicTransactionPoolAPI, from common.Address, id *big.Int, payAmount *big.Int) (common.Hash, error) {
+func ChangeProposalPayAmount(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, transactionPoolAPI *ethapi.PublicTransactionPoolAPI, from common.Address, id *big.Int, payAmount *hexutil.Big) (common.Hash, error) {
 	vABI, err := abi.JSON(strings.NewReader(systemcontracts.ProposalABI))
 	if err != nil {
 		return common.Hash{}, err
@@ -231,6 +231,36 @@ func ChangeProposalDescription(ctx context.Context, blockChainAPI *ethapi.Public
 	return transactionPoolAPI.SendTransaction(ctx, args)
 }
 
+func GetProposalBalance(ctx context.Context, api *ethapi.PublicBlockChainAPI, blockNrOrHash rpc.BlockNumberOrHash) (*big.Int, error) {
+	vABI, err := abi.JSON(strings.NewReader(systemcontracts.ProposalABI))
+	if err != nil {
+		return nil, err
+	}
+
+	method := "getBalance"
+	data, err := vABI.Pack(method)
+	if err != nil {
+		return nil, err
+	}
+
+	msgData := (hexutil.Bytes)(data)
+	args := ethapi.TransactionArgs{
+		To: &systemcontracts.ProposalContractAddr,
+		Data: &msgData,
+	}
+	result, err := api.Call(ctx, args, blockNrOrHash, nil)
+
+	if err != nil {
+		return nil, err
+	}
+
+	ret := new(big.Int)
+	if err := vABI.UnpackIntoInterface(&ret, method, result); err != nil {
+		return nil, err
+	}
+	return ret, nil
+}
+
 func GetProposalInfo(ctx context.Context, api *ethapi.PublicBlockChainAPI, id *big.Int, blockNrOrHash rpc.BlockNumberOrHash) (*types.ProposalInfo, error) {
 	vABI, err := abi.JSON(strings.NewReader(systemcontracts.ProposalABI))
 	if err != nil {
@@ -254,20 +284,80 @@ func GetProposalInfo(ctx context.Context, api *ethapi.PublicBlockChainAPI, id *b
 		return nil, err
 	}
 
-	info := new(types.ProposalInfo)
-	if err := vABI.UnpackIntoInterface(&info, method, result); err != nil {
+	ret := new(types.ProposalInfo)
+	if err := vABI.UnpackIntoInterface(&ret, method, result); err != nil {
 		return nil, err
 	}
-	return info, nil
+	return ret, nil
 }
 
-func GetAllProposals(ctx context.Context, api *ethapi.PublicBlockChainAPI, blockNrOrHash rpc.BlockNumberOrHash) ([]types.ProposalInfo, error) {
+func GetProposalVoterNum(ctx context.Context, api *ethapi.PublicBlockChainAPI, id *big.Int, blockNrOrHash rpc.BlockNumberOrHash) (*big.Int, error) {
 	vABI, err := abi.JSON(strings.NewReader(systemcontracts.ProposalABI))
 	if err != nil {
 		return nil, err
 	}
 
-	method := "getAll"
+	method := "getVoterNum"
+	data, err := vABI.Pack(method, id)
+	if err != nil {
+		return nil, err
+	}
+
+	msgData := (hexutil.Bytes)(data)
+	args := ethapi.TransactionArgs{
+		To: &systemcontracts.ProposalContractAddr,
+		Data: &msgData,
+	}
+	result, err := api.Call(ctx, args, blockNrOrHash, nil)
+
+	if err != nil {
+		return nil, err
+	}
+
+	ret := new(big.Int)
+	if err := vABI.UnpackIntoInterface(&ret, method, result); err != nil {
+		return nil, err
+	}
+	return ret, nil
+}
+
+func GetProposalVoteInfo(ctx context.Context, api *ethapi.PublicBlockChainAPI, id *big.Int, start *big.Int, count *big.Int, blockNrOrHash rpc.BlockNumberOrHash) (*types.ProposalVoteInfo, error) {
+	vABI, err := abi.JSON(strings.NewReader(systemcontracts.ProposalABI))
+	if err != nil {
+		return nil, err
+	}
+
+	method := "getVoteInfo"
+	data, err := vABI.Pack(method, id, start, count)
+	if err != nil {
+		return nil, err
+	}
+
+	msgData := (hexutil.Bytes)(data)
+	args := ethapi.TransactionArgs{
+		To: &systemcontracts.ProposalContractAddr,
+		Data: &msgData,
+	}
+	result, err := api.Call(ctx, args, blockNrOrHash, nil)
+
+	if err != nil {
+		return nil, err
+	}
+
+	ret := new(types.ProposalVoteInfo)
+	if err := vABI.UnpackIntoInterface(&ret, method, result); err != nil {
+		return nil, err
+	}
+	return ret, nil
+}
+
+func GetProposalNum(ctx context.Context, api *ethapi.PublicBlockChainAPI, blockNrOrHash rpc.BlockNumberOrHash) (*big.Int, error) {
+	vABI, err := abi.JSON(strings.NewReader(systemcontracts.ProposalABI))
+	if err != nil {
+		return nil, err
+	}
+
+	method := "getNum"
 	data, err := vABI.Pack(method)
 	if err != nil {
 		return nil, err
@@ -284,20 +374,50 @@ func GetAllProposals(ctx context.Context, api *ethapi.PublicBlockChainAPI, block
 		return nil, err
 	}
 
-	infos := new([]types.ProposalInfo)
+	ret := new(big.Int)
+	if err := vABI.UnpackIntoInterface(&ret, method, result); err != nil {
+		return nil, err
+	}
+	return ret, nil
+}
+
+func GetAllProposals(ctx context.Context, api *ethapi.PublicBlockChainAPI, start *big.Int, count *big.Int, blockNrOrHash rpc.BlockNumberOrHash) ([]*big.Int, error) {
+	vABI, err := abi.JSON(strings.NewReader(systemcontracts.ProposalABI))
+	if err != nil {
+		return nil, err
+	}
+
+	method := "getAll"
+	data, err := vABI.Pack(method, start, count)
+	if err != nil {
+		return nil, err
+	}
+
+	msgData := (hexutil.Bytes)(data)
+	args := ethapi.TransactionArgs{
+		To: &systemcontracts.ProposalContractAddr,
+		Data: &msgData,
+	}
+	result, err := api.Call(ctx, args, blockNrOrHash, nil)
+
+	if err != nil {
+		return nil, err
+	}
+
+	infos := new([]*big.Int)
 	if err := vABI.UnpackIntoInterface(infos, method, result); err != nil {
 		return nil, err
 	}
 	return *infos, nil
 }
 
-func GetMineProposals(ctx context.Context, api *ethapi.PublicBlockChainAPI, from common.Address, blockNrOrHash rpc.BlockNumberOrHash) ([]types.ProposalInfo, error) {
+func GetMineProposalNum(ctx context.Context, api *ethapi.PublicBlockChainAPI, from common.Address, blockNrOrHash rpc.BlockNumberOrHash) (*big.Int, error) {
 	vABI, err := abi.JSON(strings.NewReader(systemcontracts.ProposalABI))
 	if err != nil {
 		return nil, err
 	}
 
-	method := "getMines"
+	method := "getMineNum"
 	data, err := vABI.Pack(method)
 	if err != nil {
 		return nil, err
@@ -315,11 +435,42 @@ func GetMineProposals(ctx context.Context, api *ethapi.PublicBlockChainAPI, from
 		return nil, err
 	}
 
-	infos := new([]types.ProposalInfo)
-	if err := vABI.UnpackIntoInterface(infos, method, result); err != nil {
+	ret := new(big.Int)
+	if err := vABI.UnpackIntoInterface(&ret, method, result); err != nil {
 		return nil, err
 	}
-	return *infos, nil
+	return ret, nil
+}
+
+func GetMineProposals(ctx context.Context, api *ethapi.PublicBlockChainAPI, from common.Address, start *big.Int, count *big.Int, blockNrOrHash rpc.BlockNumberOrHash) ([]*big.Int, error) {
+	vABI, err := abi.JSON(strings.NewReader(systemcontracts.ProposalABI))
+	if err != nil {
+		return nil, err
+	}
+
+	method := "getMines"
+	data, err := vABI.Pack(method, start, count)
+	if err != nil {
+		return nil, err
+	}
+
+	msgData := (hexutil.Bytes)(data)
+	args := ethapi.TransactionArgs{
+		From: &from,
+		To: &systemcontracts.ProposalContractAddr,
+		Data: &msgData,
+	}
+	result, err := api.Call(ctx, args, blockNrOrHash, nil)
+
+	if err != nil {
+		return nil, err
+	}
+
+	ret := new([]*big.Int)
+	if err := vABI.UnpackIntoInterface(ret, method, result); err != nil {
+		return nil, err
+	}
+	return *ret, nil
 }
 
 func ExistProposal(ctx context.Context, api *ethapi.PublicBlockChainAPI, id *big.Int, blockNrOrHash rpc.BlockNumberOrHash) (bool, error) {
@@ -345,9 +496,9 @@ func ExistProposal(ctx context.Context, api *ethapi.PublicBlockChainAPI, id *big
 		return false, err
 	}
 
-	value := new(bool)
-	if err := vABI.UnpackIntoInterface(&value, method, result); err != nil {
+	ret := new(bool)
+	if err := vABI.UnpackIntoInterface(&ret, method, result); err != nil {
 		return false, err
 	}
-	return *value, nil
+	return *ret, nil
 }

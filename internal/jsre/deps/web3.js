@@ -14642,6 +14642,13 @@ module.exports = XMLHttpRequest;
         inputFormatter: [formatters.inputAddressFormatter, formatters.formatInputInt, formatters.formatInputString]
       });
 
+      var getBalance = new Method({
+        name: 'getBalance',
+        call: 'proposal_getBalance',
+        params: 1,
+        inputFormatter: [formatters.inputDefaultBlockNumberFormatter]
+      });
+
       var getInfo = new Method({
         name: 'getInfo',
         call: 'proposal_getInfo',
@@ -14680,15 +14687,15 @@ module.exports = XMLHttpRequest;
       var getMineNum = new Method({
         name: 'getMineNum',
         call: 'proposal_getMineNum',
-        params: 1,
-        inputFormatter: [formatters.inputDefaultBlockNumberFormatter]
+        params: 2,
+        inputFormatter: [formatters.inputAddressFormatter, formatters.inputDefaultBlockNumberFormatter]
       });
 
       var getMines = new Method({
         name: 'getMines',
         call: 'proposal_getMines',
-        params: 3,
-        inputFormatter: [formatters.formatInputInt, formatters.formatInputInt, formatters.inputDefaultBlockNumberFormatter]
+        params: 4,
+        inputFormatter: [formatters.inputAddressFormatter, formatters.formatInputInt, formatters.formatInputInt, formatters.inputDefaultBlockNumberFormatter]
       });
 
       var exist = new Method({
@@ -14707,6 +14714,7 @@ module.exports = XMLHttpRequest;
         changeStartPayTime,
         changeEndPayTime,
         changeDescription,
+        getBalance,
         getInfo,
         getVoterNum,
         getVoteInfo,

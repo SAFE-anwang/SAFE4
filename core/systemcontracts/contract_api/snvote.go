@@ -94,14 +94,104 @@ func ProxyVote(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, t
 	return transactionPoolAPI.SendTransaction(ctx, args)
 }
 
-func GetSuperNodes4Voter(ctx context.Context, api *ethapi.PublicBlockChainAPI, voterAddr common.Address, blockNrOrHash rpc.BlockNumberOrHash) (*types.SNVoteRetInfo, error) {
+func GetAmount4Voter(ctx context.Context, api *ethapi.PublicBlockChainAPI, voterAddr common.Address, blockNrOrHash rpc.BlockNumberOrHash) (*big.Int, error) {
 	vABI, err := abi.JSON(strings.NewReader(systemcontracts.SNVoteABI))
 	if err != nil {
 		return nil, err
 	}
 
-	method := "getSuperNodes4Voter"
+	method := "getAmount4Voter"
 	data, err := vABI.Pack(method, voterAddr)
+	if err != nil {
+		return nil, err
+	}
+
+	msgData := (hexutil.Bytes)(data)
+	args := ethapi.TransactionArgs{
+		To: &systemcontracts.SNVoteContractAddr,
+		Data: &msgData,
+	}
+	result, err := api.Call(ctx, args, blockNrOrHash, nil)
+
+	if err != nil {
+		return nil, err
+	}
+
+	ret := new(big.Int)
+	if err := vABI.UnpackIntoInterface(&ret, method, result); err != nil {
+		return nil, err
+	}
+	return ret, nil
+}
+
+func GetVoteNum4Voter(ctx context.Context, api *ethapi.PublicBlockChainAPI, voterAddr common.Address, blockNrOrHash rpc.BlockNumberOrHash) (*big.Int, error) {
+	vABI, err := abi.JSON(strings.NewReader(systemcontracts.SNVoteABI))
+	if err != nil {
+		return nil, err
+	}
+
+	method := "getVoteNum4Voter"
+	data, err := vABI.Pack(method, voterAddr)
+	if err != nil {
+		return nil, err
+	}
+
+	msgData := (hexutil.Bytes)(data)
+	args := ethapi.TransactionArgs{
+		To: &systemcontracts.SNVoteContractAddr,
+		Data: &msgData,
+	}
+	result, err := api.Call(ctx, args, blockNrOrHash, nil)
+
+	if err != nil {
+		return nil, err
+	}
+
+	ret := new(big.Int)
+	if err := vABI.UnpackIntoInterface(&ret, method, result); err != nil {
+		return nil, err
+	}
+	return ret, nil
+}
+
+func GetSNNum4Voter(ctx context.Context, api *ethapi.PublicBlockChainAPI, voterAddr common.Address, blockNrOrHash rpc.BlockNumberOrHash) (*big.Int, error) {
+	vABI, err := abi.JSON(strings.NewReader(systemcontracts.SNVoteABI))
+	if err != nil {
+		return nil, err
+	}
+
+	method := "getSNNum4Voter"
+	data, err := vABI.Pack(method, voterAddr)
+	if err != nil {
+		return nil, err
+	}
+
+	msgData := (hexutil.Bytes)(data)
+	args := ethapi.TransactionArgs{
+		To: &systemcontracts.SNVoteContractAddr,
+		Data: &msgData,
+	}
+	result, err := api.Call(ctx, args, blockNrOrHash, nil)
+
+	if err != nil {
+		return nil, err
+	}
+
+	ret := new(big.Int)
+	if err := vABI.UnpackIntoInterface(&ret, method, result); err != nil {
+		return nil, err
+	}
+	return ret, nil
+}
+
+func GetSNs4Voter(ctx context.Context, api *ethapi.PublicBlockChainAPI, voterAddr common.Address, start *big.Int, count *big.Int, blockNrOrHash rpc.BlockNumberOrHash) (*types.SNVoteRetInfo, error) {
+	vABI, err := abi.JSON(strings.NewReader(systemcontracts.SNVoteABI))
+	if err != nil {
+		return nil, err
+	}
+
+	method := "getSNs4Voter"
+	data, err := vABI.Pack(method, voterAddr, start, count)
 	if err != nil {
 		return nil, err
 	}
@@ -122,19 +212,19 @@ func GetSuperNodes4Voter(ctx context.Context, api *ethapi.PublicBlockChainAPI, v
 		return nil, err
 	}
 
-	info := new(types.SNVoteRetInfo)
-	info.Addrs = unpacked[0].([]common.Address)
-	info.VoteNums = unpacked[1].([]*big.Int)
-	return info, nil
+	ret := new(types.SNVoteRetInfo)
+	ret.Addrs = unpacked[0].([]common.Address)
+	ret.VoteNums = unpacked[1].([]*big.Int)
+	return ret, nil
 }
 
-func GetRecordIDs4Voter(ctx context.Context, api *ethapi.PublicBlockChainAPI, voterAddr common.Address, blockNrOrHash rpc.BlockNumberOrHash) ([]big.Int, error) {
+func GetProxyNum4Voter(ctx context.Context, api *ethapi.PublicBlockChainAPI, voterAddr common.Address, blockNrOrHash rpc.BlockNumberOrHash) (*big.Int, error) {
 	vABI, err := abi.JSON(strings.NewReader(systemcontracts.SNVoteABI))
 	if err != nil {
 		return nil, err
 	}
 
-	method := "getRecordIDs4Voter"
+	method := "getProxyNum4Voter"
 	data, err := vABI.Pack(method, voterAddr)
 	if err != nil {
 		return nil, err
@@ -151,85 +241,21 @@ func GetRecordIDs4Voter(ctx context.Context, api *ethapi.PublicBlockChainAPI, vo
 		return nil, err
 	}
 
-	recordIDs := new([]big.Int)
-	if err := vABI.UnpackIntoInterface(&recordIDs, method, result); err != nil {
+	ret := new(big.Int)
+	if err := vABI.UnpackIntoInterface(&ret, method, result); err != nil {
 		return nil, err
 	}
-	return *recordIDs, nil
+	return ret, nil
 }
 
-func GetVoters4SN(ctx context.Context, api *ethapi.PublicBlockChainAPI, snAddr common.Address, blockNrOrHash rpc.BlockNumberOrHash) (*types.SNVoteRetInfo, error) {
-	vABI, err := abi.JSON(strings.NewReader(systemcontracts.SNVoteABI))
-	if err != nil {
-		return nil, err
-	}
-
-	method := "getVoters4SN"
-	data, err := vABI.Pack(method, snAddr)
-	if err != nil {
-		return nil, err
-	}
-
-	msgData := (hexutil.Bytes)(data)
-	args := ethapi.TransactionArgs{
-		To: &systemcontracts.SNVoteContractAddr,
-		Data: &msgData,
-	}
-	result, err := api.Call(ctx, args, blockNrOrHash, nil)
-
-	if err != nil {
-		return nil, err
-	}
-
-	unpacked, err := vABI.Unpack(method, result)
-	if err != nil {
-		return nil, err
-	}
-
-	info := new(types.SNVoteRetInfo)
-	info.Addrs = unpacked[0].([]common.Address)
-	info.VoteNums = unpacked[1].([]*big.Int)
-	return info, nil
-}
-
-func GetVoteNum4SN(ctx context.Context, api *ethapi.PublicBlockChainAPI, snAddr common.Address, blockNrOrHash rpc.BlockNumberOrHash) (*big.Int, error) {
-	vABI, err := abi.JSON(strings.NewReader(systemcontracts.SNVoteABI))
-	if err != nil {
-		return nil, err
-	}
-
-	method := "getVoteNum4SN"
-	data, err := vABI.Pack(method, snAddr)
-	if err != nil {
-		return nil, err
-	}
-
-	msgData := (hexutil.Bytes)(data)
-	args := ethapi.TransactionArgs{
-		To: &systemcontracts.SNVoteContractAddr,
-		Data: &msgData,
-	}
-	result, err := api.Call(ctx, args, blockNrOrHash, nil)
-
-	if err != nil {
-		return nil, err
-	}
-
-	num := new(big.Int)
-	if err := vABI.UnpackIntoInterface(&num, method, result); err != nil {
-		return nil, err
-	}
-	return num, nil
-}
-
-func GetProxies4Voter(ctx context.Context, api *ethapi.PublicBlockChainAPI, voterAddr common.Address, blockNrOrHash rpc.BlockNumberOrHash) (*types.SNVoteRetInfo, error) {
+func GetProxies4Voter(ctx context.Context, api *ethapi.PublicBlockChainAPI, voterAddr common.Address, start *big.Int, count *big.Int, blockNrOrHash rpc.BlockNumberOrHash) (*types.SNVoteRetInfo, error) {
 	vABI, err := abi.JSON(strings.NewReader(systemcontracts.SNVoteABI))
 	if err != nil {
 		return nil, err
 	}
 
 	method := "getProxies4Voter"
-	data, err := vABI.Pack(method, voterAddr)
+	data, err := vABI.Pack(method, voterAddr, start, count)
 	if err != nil {
 		return nil, err
 	}
@@ -250,19 +276,19 @@ func GetProxies4Voter(ctx context.Context, api *ethapi.PublicBlockChainAPI, vote
 		return nil, err
 	}
 
-	info := new(types.SNVoteRetInfo)
-	info.Addrs = unpacked[0].([]common.Address)
-	info.VoteNums = unpacked[1].([]*big.Int)
-	return info, nil
+	ret := new(types.SNVoteRetInfo)
+	ret.Addrs = unpacked[0].([]common.Address)
+	ret.VoteNums = unpacked[1].([]*big.Int)
+	return ret, nil
 }
 
-func GetProxiedRecordIDs4Voter(ctx context.Context, api *ethapi.PublicBlockChainAPI, voterAddr common.Address, blockNrOrHash rpc.BlockNumberOrHash) ([]big.Int, error) {
+func GetVotedIDNum4Voter(ctx context.Context, api *ethapi.PublicBlockChainAPI, voterAddr common.Address, blockNrOrHash rpc.BlockNumberOrHash) (*big.Int, error) {
 	vABI, err := abi.JSON(strings.NewReader(systemcontracts.SNVoteABI))
 	if err != nil {
 		return nil, err
 	}
 
-	method := "getProxiedRecordIDs4Voter"
+	method := "getVotedIDNum4Voter"
 	data, err := vABI.Pack(method, voterAddr)
 	if err != nil {
 		return nil, err
@@ -279,21 +305,201 @@ func GetProxiedRecordIDs4Voter(ctx context.Context, api *ethapi.PublicBlockChain
 		return nil, err
 	}
 
-	recordIDs := new([]big.Int)
-	if err := vABI.UnpackIntoInterface(&recordIDs, method, result); err != nil {
+	ret := new(big.Int)
+	if err := vABI.UnpackIntoInterface(&ret, method, result); err != nil {
 		return nil, err
 	}
-	return *recordIDs, nil
+	return ret, nil
 }
 
-func GetVoters4Proxy(ctx context.Context, api *ethapi.PublicBlockChainAPI, proxyAddr common.Address, blockNrOrHash rpc.BlockNumberOrHash) (*types.SNVoteRetInfo, error) {
+func GetVotedIDs4Voter(ctx context.Context, api *ethapi.PublicBlockChainAPI, voterAddr common.Address, start *big.Int, count *big.Int, blockNrOrHash rpc.BlockNumberOrHash) ([]*big.Int, error) {
 	vABI, err := abi.JSON(strings.NewReader(systemcontracts.SNVoteABI))
 	if err != nil {
 		return nil, err
 	}
 
-	method := "getVoters4Proxy"
-	data, err := vABI.Pack(method, proxyAddr)
+	method := "getVotedIDs4Voter"
+	data, err := vABI.Pack(method, voterAddr, start, count)
+	if err != nil {
+		return nil, err
+	}
+
+	msgData := (hexutil.Bytes)(data)
+	args := ethapi.TransactionArgs{
+		To: &systemcontracts.SNVoteContractAddr,
+		Data: &msgData,
+	}
+	result, err := api.Call(ctx, args, blockNrOrHash, nil)
+
+	if err != nil {
+		return nil, err
+	}
+
+	ret := new([]*big.Int)
+	if err := vABI.UnpackIntoInterface(ret, method, result); err != nil {
+		return nil, err
+	}
+	return *ret, nil
+}
+
+func GetProxiedIDNum4Voter(ctx context.Context, api *ethapi.PublicBlockChainAPI, voterAddr common.Address, blockNrOrHash rpc.BlockNumberOrHash) (*big.Int, error) {
+	vABI, err := abi.JSON(strings.NewReader(systemcontracts.SNVoteABI))
+	if err != nil {
+		return nil, err
+	}
+
+	method := "getProxiedIDNum4Voter"
+	data, err := vABI.Pack(method, voterAddr)
+	if err != nil {
+		return nil, err
+	}
+
+	msgData := (hexutil.Bytes)(data)
+	args := ethapi.TransactionArgs{
+		To: &systemcontracts.SNVoteContractAddr,
+		Data: &msgData,
+	}
+	result, err := api.Call(ctx, args, blockNrOrHash, nil)
+
+	if err != nil {
+		return nil, err
+	}
+
+	ret := new(big.Int)
+	if err := vABI.UnpackIntoInterface(&ret, method, result); err != nil {
+		return nil, err
+	}
+	return ret, nil
+}
+
+func GetProxiedIDs4Voter(ctx context.Context, api *ethapi.PublicBlockChainAPI, voterAddr common.Address, start *big.Int, count *big.Int, blockNrOrHash rpc.BlockNumberOrHash) ([]*big.Int, error) {
+	vABI, err := abi.JSON(strings.NewReader(systemcontracts.SNVoteABI))
+	if err != nil {
+		return nil, err
+	}
+
+	method := "getProxiedIDs4Voter"
+	data, err := vABI.Pack(method, voterAddr, start, count)
+	if err != nil {
+		return nil, err
+	}
+
+	msgData := (hexutil.Bytes)(data)
+	args := ethapi.TransactionArgs{
+		To: &systemcontracts.SNVoteContractAddr,
+		Data: &msgData,
+	}
+	result, err := api.Call(ctx, args, blockNrOrHash, nil)
+
+	if err != nil {
+		return nil, err
+	}
+
+	ret := new([]*big.Int)
+	if err := vABI.UnpackIntoInterface(ret, method, result); err != nil {
+		return nil, err
+	}
+	return *ret, nil
+}
+
+func GetTotalAmount4SNOrProxy(ctx context.Context, api *ethapi.PublicBlockChainAPI, dstAddr common.Address, blockNrOrHash rpc.BlockNumberOrHash) (*big.Int, error) {
+	vABI, err := abi.JSON(strings.NewReader(systemcontracts.SNVoteABI))
+	if err != nil {
+		return nil, err
+	}
+
+	method := "getTotalAmount"
+	data, err := vABI.Pack(method, dstAddr)
+	if err != nil {
+		return nil, err
+	}
+
+	msgData := (hexutil.Bytes)(data)
+	args := ethapi.TransactionArgs{
+		To: &systemcontracts.SNVoteContractAddr,
+		Data: &msgData,
+	}
+	result, err := api.Call(ctx, args, blockNrOrHash, nil)
+
+	if err != nil {
+		return nil, err
+	}
+
+	ret := new(big.Int)
+	if err := vABI.UnpackIntoInterface(&ret, method, result); err != nil {
+		return nil, err
+	}
+	return ret, nil
+}
+
+func GetTotalVoteNum4SNOrProxy(ctx context.Context, api *ethapi.PublicBlockChainAPI, dstAddr common.Address, blockNrOrHash rpc.BlockNumberOrHash) (*big.Int, error) {
+	vABI, err := abi.JSON(strings.NewReader(systemcontracts.SNVoteABI))
+	if err != nil {
+		return nil, err
+	}
+
+	method := "getTotalVoteNum"
+	data, err := vABI.Pack(method, dstAddr)
+	if err != nil {
+		return nil, err
+	}
+
+	msgData := (hexutil.Bytes)(data)
+	args := ethapi.TransactionArgs{
+		To: &systemcontracts.SNVoteContractAddr,
+		Data: &msgData,
+	}
+	result, err := api.Call(ctx, args, blockNrOrHash, nil)
+
+	if err != nil {
+		return nil, err
+	}
+
+	ret := new(big.Int)
+	if err := vABI.UnpackIntoInterface(&ret, method, result); err != nil {
+		return nil, err
+	}
+	return ret, nil
+}
+
+func GetVoterNum4SNOrProxy(ctx context.Context, api *ethapi.PublicBlockChainAPI, dstAddr common.Address, blockNrOrHash rpc.BlockNumberOrHash) (*big.Int, error) {
+	vABI, err := abi.JSON(strings.NewReader(systemcontracts.SNVoteABI))
+	if err != nil {
+		return nil, err
+	}
+
+	method := "getVoterNum"
+	data, err := vABI.Pack(method, dstAddr)
+	if err != nil {
+		return nil, err
+	}
+
+	msgData := (hexutil.Bytes)(data)
+	args := ethapi.TransactionArgs{
+		To: &systemcontracts.SNVoteContractAddr,
+		Data: &msgData,
+	}
+	result, err := api.Call(ctx, args, blockNrOrHash, nil)
+
+	if err != nil {
+		return nil, err
+	}
+
+	ret := new(big.Int)
+	if err := vABI.UnpackIntoInterface(&ret, method, result); err != nil {
+		return nil, err
+	}
+	return ret, nil
+}
+
+func GetVoters4SNOrProxy(ctx context.Context, api *ethapi.PublicBlockChainAPI, dstAddr common.Address, start *big.Int, count *big.Int, blockNrOrHash rpc.BlockNumberOrHash) (*types.SNVoteRetInfo, error) {
+	vABI, err := abi.JSON(strings.NewReader(systemcontracts.SNVoteABI))
+	if err != nil {
+		return nil, err
+	}
+
+	method := "getVoters"
+	data, err := vABI.Pack(method, dstAddr, start, count)
 	if err != nil {
 		return nil, err
 	}
@@ -314,20 +520,20 @@ func GetVoters4Proxy(ctx context.Context, api *ethapi.PublicBlockChainAPI, proxy
 		return nil, err
 	}
 
-	info := new(types.SNVoteRetInfo)
-	info.Addrs = unpacked[0].([]common.Address)
-	info.VoteNums = unpacked[1].([]*big.Int)
-	return info, nil
+	ret := new(types.SNVoteRetInfo)
+	ret.Addrs = unpacked[0].([]common.Address)
+	ret.VoteNums = unpacked[1].([]*big.Int)
+	return ret, nil
 }
 
-func GetVoteNum4Proxy(ctx context.Context, api *ethapi.PublicBlockChainAPI, proxyAddr common.Address, blockNrOrHash rpc.BlockNumberOrHash) (*big.Int, error) {
+func GetIDNum4SNOrProxy(ctx context.Context, api *ethapi.PublicBlockChainAPI, dstAddr common.Address, blockNrOrHash rpc.BlockNumberOrHash) (*big.Int, error) {
 	vABI, err := abi.JSON(strings.NewReader(systemcontracts.SNVoteABI))
 	if err != nil {
 		return nil, err
 	}
 
-	method := "getVoteNum4Proxy"
-	data, err := vABI.Pack(method, proxyAddr)
+	method := "getIDNum"
+	data, err := vABI.Pack(method, dstAddr)
 	if err != nil {
 		return nil, err
 	}
@@ -343,9 +549,39 @@ func GetVoteNum4Proxy(ctx context.Context, api *ethapi.PublicBlockChainAPI, prox
 		return nil, err
 	}
 
-	num := new(big.Int)
-	if err := vABI.UnpackIntoInterface(&num, method, result); err != nil {
+	ret := new(big.Int)
+	if err := vABI.UnpackIntoInterface(&ret, method, result); err != nil {
 		return nil, err
 	}
-	return num, nil
+	return ret, nil
+}
+
+func GetIDs4SNOrProxy(ctx context.Context, api *ethapi.PublicBlockChainAPI, dstAddr common.Address, start *big.Int, count *big.Int, blockNrOrHash rpc.BlockNumberOrHash) ([]*big.Int, error) {
+	vABI, err := abi.JSON(strings.NewReader(systemcontracts.SNVoteABI))
+	if err != nil {
+		return nil, err
+	}
+
+	method := "getIDs"
+	data, err := vABI.Pack(method, dstAddr, start, count)
+	if err != nil {
+		return nil, err
+	}
+
+	msgData := (hexutil.Bytes)(data)
+	args := ethapi.TransactionArgs{
+		To: &systemcontracts.SNVoteContractAddr,
+		Data: &msgData,
+	}
+	result, err := api.Call(ctx, args, blockNrOrHash, nil)
+
+	if err != nil {
+		return nil, err
+	}
+
+	ret := new([]*big.Int)
+	if err := vABI.UnpackIntoInterface(ret, method, result); err != nil {
+		return nil, err
+	}
+	return *ret, nil
 }

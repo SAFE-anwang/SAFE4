@@ -65,7 +65,7 @@ func (api *PublicProposalAPI) GetVoterNum(ctx context.Context, id *big.Int, bloc
 	return contract_api.GetProposalVoterNum(ctx, api.blockChainAPI, id, blockNrOrHash)
 }
 
-func (api *PublicProposalAPI) GetVoteInfo(ctx context.Context, id *big.Int, start *big.Int, count *big.Int, blockNrOrHash rpc.BlockNumberOrHash) (*types.ProposalVoteInfo, error) {
+func (api *PublicProposalAPI) GetVoteInfo(ctx context.Context, id *big.Int, start *big.Int, count *big.Int, blockNrOrHash rpc.BlockNumberOrHash) ([]types.ProposalVoteInfo, error) {
 	return contract_api.GetProposalVoteInfo(ctx, api.blockChainAPI, id, start, count, blockNrOrHash)
 }
 

@@ -14590,7 +14590,7 @@ module.exports = XMLHttpRequest;
         name: 'create',
         call: 'proposal_create',
         params: 7,
-        inputFormatter: [formatters.inputAddressFormatter, formatters.formatInputString, formatters.formatInputInt, formatters.formatInputInt, formatters.formatInputInt, formatters.formatInputInt, formatters.formatInputString]
+        inputFormatter: [formatters.inputAddressFormatter, formatters.formatInputString, formatters.inputBigNumberFormatter, formatters.formatInputInt, formatters.formatInputInt, formatters.formatInputInt, formatters.formatInputString]
       });
 
       var vote = new Method({
@@ -14611,7 +14611,7 @@ module.exports = XMLHttpRequest;
         name: 'changePayAmount',
         call: 'proposal_changePayAmount',
         params: 3,
-        inputFormatter: [formatters.inputAddressFormatter, formatters.formatInputInt, formatters.formatInputInt]
+        inputFormatter: [formatters.inputAddressFormatter, formatters.formatInputInt, formatters.inputBigNumberFormatter]
       });
 
       var changePayTimes = new Method({

@@ -20,7 +20,7 @@ func CreateProposal(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainA
 	}
 
 	method := "create"
-	data, err := vABI.Pack(method, title, payAmount, payTimes, startPayTime, endPayTime, description)
+	data, err := vABI.Pack(method, title, payAmount.ToInt(), payTimes, startPayTime, endPayTime, description)
 	if err != nil {
 		return common.Hash{}, err
 	}
@@ -103,7 +103,7 @@ func ChangeProposalPayAmount(ctx context.Context, blockChainAPI *ethapi.PublicBl
 	}
 
 	method := "changePayAmount"
-	data, err := vABI.Pack(method, id, payAmount)
+	data, err := vABI.Pack(method, id, payAmount.ToInt())
 	if err != nil {
 		return common.Hash{}, err
 	}
@@ -321,7 +321,7 @@ func GetProposalVoterNum(ctx context.Context, api *ethapi.PublicBlockChainAPI, i
 	return ret, nil
 }
 
-func GetProposalVoteInfo(ctx context.Context, api *ethapi.PublicBlockChainAPI, id *big.Int, start *big.Int, count *big.Int, blockNrOrHash rpc.BlockNumberOrHash) (*types.ProposalVoteInfo, error) {
+func GetProposalVoteInfo(ctx context.Context, api *ethapi.PublicBlockChainAPI, id *big.Int, start *big.Int, count *big.Int, blockNrOrHash rpc.BlockNumberOrHash) ([]types.ProposalVoteInfo, error) {
 	vABI, err := abi.JSON(strings.NewReader(systemcontracts.ProposalABI))
 	if err != nil {
 		return nil, err
@@ -344,11 +344,11 @@ func GetProposalVoteInfo(ctx context.Context, api *ethapi.PublicBlockChainAPI, i
 		return nil, err
 	}
 
-	ret := new(types.ProposalVoteInfo)
-	if err := vABI.UnpackIntoInterface(&ret, method, result); err != nil {
+	ret := new([]types.ProposalVoteInfo)
+	if err := vABI.UnpackIntoInterface(ret, method, result); err != nil {
 		return nil, err
 	}
-	return ret, nil
+	return *ret, nil
 }
 
 func GetProposalNum(ctx context.Context, api *ethapi.PublicBlockChainAPI, blockNrOrHash rpc.BlockNumberOrHash) (*big.Int, error) {

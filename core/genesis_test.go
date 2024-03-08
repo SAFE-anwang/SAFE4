@@ -70,8 +70,8 @@ func TestSetupGenesis(t *testing.T) {
 			fn: func(db ethdb.Database) (*params.ChainConfig, common.Hash, error) {
 				return SetupGenesisBlock(db, nil)
 			},
-			wantHash:   params.MainnetGenesisHash,
-			wantConfig: params.MainnetChainConfig,
+			wantHash:   params.SafeGenesisHash,
+			wantConfig: params.SafeChainConfig,
 		},
 		{
 			name: "mainnet block in DB, genesis == nil",
@@ -92,14 +92,14 @@ func TestSetupGenesis(t *testing.T) {
 			wantConfig: customg.Config,
 		},
 		{
-			name: "custom block in DB, genesis == ropsten",
+			name: "custom block in DB, genesis == safetest",
 			fn: func(db ethdb.Database) (*params.ChainConfig, common.Hash, error) {
 				customg.MustCommit(db)
-				return SetupGenesisBlock(db, DefaultRopstenGenesisBlock())
+				return SetupGenesisBlock(db, DefaultSafeTestGenesisBlock())
 			},
-			wantErr:    &GenesisMismatchError{Stored: customghash, New: params.RopstenGenesisHash},
-			wantHash:   params.RopstenGenesisHash,
-			wantConfig: params.RopstenChainConfig,
+			wantErr:    &GenesisMismatchError{Stored: customghash, New: params.SafeTestGenesisHash},
+			wantHash:   params.SafeTestGenesisHash,
+			wantConfig: params.SafeTestChainConfig,
 		},
 		{
 			name: "compatible config in DB",
@@ -168,10 +168,6 @@ func TestGenesisHashes(t *testing.T) {
 		want    common.Hash
 	}{
 		{DefaultGenesisBlock(), params.MainnetGenesisHash},
-		{DefaultGoerliGenesisBlock(), params.GoerliGenesisHash},
-		{DefaultRopstenGenesisBlock(), params.RopstenGenesisHash},
-		{DefaultRinkebyGenesisBlock(), params.RinkebyGenesisHash},
-		{DefaultSepoliaGenesisBlock(), params.SepoliaGenesisHash},
 	} {
 		// Test via MustCommit
 		if have := c.genesis.MustCommit(rawdb.NewMemoryDatabase()).Hash(); have != c.want {

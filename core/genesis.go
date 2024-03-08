@@ -173,16 +173,10 @@ func CommitGenesisState(db ethdb.Database, hash common.Hash) error {
 		switch hash {
 		case params.MainnetGenesisHash:
 			genesis = DefaultGenesisBlock()
-		case params.RopstenGenesisHash:
-			genesis = DefaultRopstenGenesisBlock()
-		case params.RinkebyGenesisHash:
-			genesis = DefaultRinkebyGenesisBlock()
-		case params.GoerliGenesisHash:
-			genesis = DefaultGoerliGenesisBlock()
-		case params.SepoliaGenesisHash:
-			genesis = DefaultSepoliaGenesisBlock()
 		case params.SafeGenesisHash:
 			genesis = DefaultSafeGenesisBlock()
+		case params.SafeTestGenesisHash:
+			genesis = DefaultSafeTestGenesisBlock()
 		}
 		if genesis != nil {
 			alloc = genesis.Alloc
@@ -338,7 +332,8 @@ func SetupGenesisBlockWithOverride(db ethdb.Database, genesis *Genesis, override
 	// chain config as that would be AllProtocolChanges (applying any new fork
 	// on top of an existing private network genesis block). In that case, only
 	// apply the overrides.
-	if genesis == nil && stored != params.MainnetGenesisHash {
+	if genesis == nil && stored != params.MainnetGenesisHash &&
+		stored != params.SafeTestGenesisHash && stored != params.SafeGenesisHash {
 		newcfg = storedcfg
 		if overrideGrayGlacier != nil {
 			newcfg.GrayGlacierBlock = overrideGrayGlacier
@@ -367,18 +362,10 @@ func (g *Genesis) configOrDefault(ghash common.Hash) *params.ChainConfig {
 		return g.Config
 	case ghash == params.MainnetGenesisHash:
 		return params.MainnetChainConfig
-	case ghash == params.RopstenGenesisHash:
-		return params.RopstenChainConfig
-	case ghash == params.SepoliaGenesisHash:
-		return params.SepoliaChainConfig
-	case ghash == params.RinkebyGenesisHash:
-		return params.RinkebyChainConfig
-	case ghash == params.GoerliGenesisHash:
-		return params.GoerliChainConfig
-	case ghash == params.KilnGenesisHash:
-		return DefaultKilnGenesisBlock().Config
 	case ghash == params.SafeGenesisHash:
 		return params.SafeChainConfig
+	case ghash == params.SafeTestGenesisHash:
+		return params.SafeTestChainConfig
 	default:
 		return params.AllEthashProtocolChanges
 	}
@@ -540,6 +527,16 @@ func DefaultSepoliaGenesisBlock() *Genesis {
 func DefaultSafeGenesisBlock() *Genesis {
 	g := new(Genesis)
 	reader := strings.NewReader(SafeAllocData)
+	if err := json.NewDecoder(reader).Decode(g); err != nil {
+		panic(err)
+	}
+	return g
+}
+
+// DefaultSafeTestGenesisBlock returns the safe network genesis block.
+func DefaultSafeTestGenesisBlock() *Genesis {
+	g := new(Genesis)
+	reader := strings.NewReader(SafeTestAllocData)
 	if err := json.NewDecoder(reader).Decode(g); err != nil {
 		panic(err)
 	}

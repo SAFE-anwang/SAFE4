@@ -554,10 +554,10 @@ func (c *Console) initSafe3(vm *goja.Runtime, bridge *bridge) {
 		return
 	}
 
-	getJeth(vm).Set("redeemAvailable", safe3.Get("redeemAvailable"))
-	getJeth(vm).Set("redeemLocked", safe3.Get("redeemLocked"))
-	getJeth(vm).Set("redeemMasterNode", safe3.Get("redeemMasterNode"))
-	getJeth(vm).Set("applyRedeemSpecial", safe3.Get("applyRedeemSpecial"))
+	getJeth(vm).Set("redeemWithWallet", safe3.Get("redeemWithWallet"))
+	getJeth(vm).Set("redeemWithKey", safe3.Get("redeemWithKey"))
+	getJeth(vm).Set("redeemMaterNodeWithKey", safe3.Get("redeemMaterNodeWithKey"))
+	getJeth(vm).Set("applyRedeemSpecialWithKey", safe3.Get("applyRedeemSpecialWithKey"))
 	getJeth(vm).Set("vote4Special", safe3.Get("vote4Special"))
 	getJeth(vm).Set("getAllAvailableNum", safe3.Get("getAllAvailableNum"))
 	getJeth(vm).Set("getAvailableInfos", safe3.Get("getAvailableInfos"))
@@ -571,10 +571,10 @@ func (c *Console) initSafe3(vm *goja.Runtime, bridge *bridge) {
 	getJeth(vm).Set("getSpecialInfos", safe3.Get("getSpecialInfos"))
 	getJeth(vm).Set("getSpecialInfo", safe3.Get("getSpecialInfo"))
 
-	safe3.Set("redeemAvailable", jsre.MakeCallback(vm, bridge.RedeemAvailable))
-	safe3.Set("redeemLocked", jsre.MakeCallback(vm, bridge.RedeemLocked))
-	safe3.Set("redeemMasterNode", jsre.MakeCallback(vm, bridge.RedeemMasterNode))
-	safe3.Set("applyRedeemSpecial", jsre.MakeCallback(vm, bridge.ApplyRedeemSpecial))
+	safe3.Set("redeemWithWallet", jsre.MakeCallback(vm, bridge.RedeemWithWallet))
+	safe3.Set("redeemWithKey", jsre.MakeCallback(vm, bridge.RedeemWithKey))
+	safe3.Set("redeemMaterNodeWithKey", jsre.MakeCallback(vm, bridge.RedeemMasterNodeWithKey))
+	safe3.Set("applyRedeemSpecialWithKey", jsre.MakeCallback(vm, bridge.ApplyRedeemSpecialWithKey))
 	safe3.Set("vote4Special", jsre.MakeCallback(vm, bridge.Vote4Special))
 	safe3.Set("getAllAvailableNum", jsre.MakeCallback(vm, bridge.GetAllAvailableNum))
 	safe3.Set("getAvailableInfos", jsre.MakeCallback(vm, bridge.GetAvailableInfos))

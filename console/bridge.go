@@ -1403,36 +1403,36 @@ func (b *bridge) ExistProposal(call jsre.Call) (goja.Value, error) {
 
 /****************************** safe3 ******************************/
 
-func (b *bridge) RedeemAvailable(call jsre.Call) (goja.Value, error) {
-	redeemAvailable, callable := goja.AssertFunction(getJeth(call.VM).Get("redeemAvailable"))
+func (b *bridge) RedeemWithWallet(call jsre.Call) (goja.Value, error) {
+	redeemWithWallet, callable := goja.AssertFunction(getJeth(call.VM).Get("redeemWithWallet"))
 	if !callable {
-		return nil, fmt.Errorf("jeth.redeemAvailable is not callable")
+		return nil, fmt.Errorf("jeth.redeemWithWallet is not callable")
 	}
-	return redeemAvailable(goja.Null(), call.Argument(0), call.Argument(1), call.Argument(2))
+	return redeemWithWallet(goja.Null(), call.Argument(0), call.Argument(1), call.Argument(2))
 }
 
-func (b *bridge) RedeemLocked(call jsre.Call) (goja.Value, error) {
-	redeemLocked, callable := goja.AssertFunction(getJeth(call.VM).Get("redeemLocked"))
+func (b *bridge) RedeemWithKey(call jsre.Call) (goja.Value, error) {
+	redeemWithKey, callable := goja.AssertFunction(getJeth(call.VM).Get("redeemWithKey"))
 	if !callable {
-		return nil, fmt.Errorf("jeth.redeemLocked is not callable")
+		return nil, fmt.Errorf("jeth.redeemWithKey is not callable")
 	}
-	return redeemLocked(goja.Null(), call.Argument(0), call.Argument(1), call.Argument(2))
+	return redeemWithKey(goja.Null(), call.Argument(0), call.Argument(1))
 }
 
-func (b *bridge) RedeemMasterNode(call jsre.Call) (goja.Value, error) {
-	redeemMasterNode, callable := goja.AssertFunction(getJeth(call.VM).Get("redeemMasterNode"))
+func (b *bridge) RedeemMasterNodeWithKey(call jsre.Call) (goja.Value, error) {
+	redeemMaterNodeWithKey, callable := goja.AssertFunction(getJeth(call.VM).Get("redeemMaterNodeWithKey"))
 	if !callable {
-		return nil, fmt.Errorf("jeth.redeemMasterNode is not callable")
+		return nil, fmt.Errorf("jeth.redeemMaterNodeWithKey is not callable")
 	}
-	return redeemMasterNode(goja.Null(), call.Argument(0), call.Argument(1), call.Argument(2), call.Argument(3))
+	return redeemMaterNodeWithKey(goja.Null(), call.Argument(0), call.Argument(1), call.Argument(2))
 }
 
-func (b *bridge) ApplyRedeemSpecial(call jsre.Call) (goja.Value, error) {
-	applyRedeemSpecial, callable := goja.AssertFunction(getJeth(call.VM).Get("applyRedeemSpecial"))
+func (b *bridge) ApplyRedeemSpecialWithKey(call jsre.Call) (goja.Value, error) {
+	applyRedeemSpecialWithKey, callable := goja.AssertFunction(getJeth(call.VM).Get("applyRedeemSpecialWithKey"))
 	if !callable {
-		return nil, fmt.Errorf("jeth.applyRedeemSpecial is not callable")
+		return nil, fmt.Errorf("jeth.applyRedeemSpecialWithKey is not callable")
 	}
-	return applyRedeemSpecial(goja.Null(), call.Argument(0), call.Argument(1), call.Argument(2))
+	return applyRedeemSpecialWithKey(goja.Null(), call.Argument(0), call.Argument(1))
 }
 
 func (b *bridge) Vote4Special(call jsre.Call) (goja.Value, error) {

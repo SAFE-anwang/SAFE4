@@ -14754,32 +14754,32 @@ module.exports = XMLHttpRequest;
     }
 
     var methods = function () {
-      var redeemAvailable = new Method({
-        name: 'redeemAvailable',
-        call: 'safe3_redeemAvailable',
+      var redeemWithWallet = new Method({
+        name: 'redeemWithWallet',
+        call: 'safe3_redeemWithWallet',
         params: 3,
-        inputFormatter: [formatters.inputAddressFormatter, formatters.formatInputBytes, formatters.formatInputBytes]
+        inputFormatter: [formatters.inputAddressFormatter, formatters.formatInputString, formatters.formatInputString]
       });
 
-      var redeemLocked = new Method({
-        name: 'redeemLocked',
-        call: 'safe3_redeemLocked',
-        params: 3,
-        inputFormatter: [formatters.inputAddressFormatter, formatters.formatInputBytes, formatters.formatInputBytes]
+      var redeemWithKey = new Method({
+        name: 'redeemWithKey',
+        call: 'safe3_redeemWithKey',
+        params: 2,
+        inputFormatter: [formatters.inputAddressFormatter, formatters.formatInputString]
       });
 
-      var redeemMasterNode = new Method({
-        name: 'redeemMasterNode',
-        call: 'safe3_redeemMasterNode',
-        params: 4,
-        inputFormatter: [formatters.inputAddressFormatter, formatters.formatInputBytes, formatters.formatInputBytes, formatters.formatInputString]
+      var redeemMaterNodeWithKey = new Method({
+        name: 'redeemMaterNodeWithKey',
+        call: 'safe3_redeemMaterNodeWithKey',
+        params: 3,
+        inputFormatter: [formatters.inputAddressFormatter, formatters.formatInputString, formatters.formatInputString]
       });
 
-      var applyRedeemSpecial = new Method({
-        name: 'applyRedeemSpecial',
-        call: 'safe3_applyRedeemSpecial',
-        params: 3,
-        inputFormatter: [formatters.inputAddressFormatter, formatters.formatInputBytes, formatters.formatInputBytes]
+      var applyRedeemSpecialWithKey = new Method({
+        name: 'applyRedeemSpecialWithKey',
+        call: 'safe3_applyRedeemSpecialWithKey',
+        params: 2,
+        inputFormatter: [formatters.inputAddressFormatter, formatters.formatInputString]
       });
 
       var vote4Special = new Method({
@@ -14867,10 +14867,10 @@ module.exports = XMLHttpRequest;
       });
 
       return [
-        redeemAvailable,
-        redeemLocked,
-        redeemMasterNode,
-        applyRedeemSpecial,
+        redeemWithWallet,
+        redeemWithKey,
+        redeemMaterNodeWithKey,
+        applyRedeemSpecialWithKey,
         vote4Special,
         getAllAvailableNum,
         getAvailableInfos,

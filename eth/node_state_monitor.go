@@ -208,7 +208,7 @@ func (monitor *NodeStateMonitor) broadcastLoop() {
 			curTime := time.Now().Unix()
 			curBlock := monitor.e.blockchain.CurrentBlock()
 			info1, err := contract_api.GetSuperNodeInfo(monitor.ctx, monitor.blockChainAPI, addr, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(curBlock.Number().Int64())))
-			if err == nil {
+			if err == nil && info1.Id.Int64() != 0 {
 				if monitor.enode != info1.Enode {
 					if lastAddr != addr {
 						log.Error("broadcast-supernode-state", "local", monitor.enode, "state", info1.Enode, "error", "incompatible enode")
@@ -223,7 +223,7 @@ func (monitor *NodeStateMonitor) broadcastLoop() {
 				monitor.lock.Unlock()
 			} else {
 				info2, err := contract_api.GetMasterNodeInfo(monitor.ctx, monitor.blockChainAPI, addr, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(curBlock.Number().Int64())))
-				if err == nil {
+				if err == nil && info2.Id.Int64() != 0 {
 					if monitor.enode != info2.Enode {
 						if lastAddr != addr {
 							log.Error("broadcast-masternode-state", "local", monitor.enode, "state", info2.Enode, "error", "incompatible enode")
@@ -250,7 +250,7 @@ func (monitor *NodeStateMonitor) isSuperNode(addr common.Address) bool {
 	}
 	for _, snAddr := range topAddrs {
 		info, err := contract_api.GetSuperNodeInfo(monitor.ctx, monitor.blockChainAPI, snAddr, blockNrOrHash)
-		if err != nil {
+		if err != nil || info.Id.Int64() == 0 {
 			continue
 		}
 		if info.Addr == addr && info.Enode == monitor.enode {
@@ -283,7 +283,7 @@ func (monitor *NodeStateMonitor) collectMasterNodes() ([]*big.Int, []*big.Int) {
 		}
 		for _, addr := range mnAddrs {
 			info, err := contract_api.GetMasterNodeInfo(monitor.ctx, monitor.blockChainAPI, addr, blockNrOrHash)
-			if err != nil {
+			if err != nil || info.Id.Int64() == 0 {
 				continue
 			}
 			infos = append(infos, *info)
@@ -345,7 +345,7 @@ func (monitor *NodeStateMonitor) collectSuperNodes() ([]*big.Int, []*big.Int) {
 		}
 		for _, addr := range snAddrs {
 			info, err := contract_api.GetSuperNodeInfo(monitor.ctx, monitor.blockChainAPI, addr, blockNrOrHash)
-			if err != nil {
+			if err != nil || info.Id.Int64() == 0 {
 				continue
 			}
 			infos = append(infos, *info)

@@ -3,7 +3,6 @@ package eth
 import (
 	"context"
 	"crypto/sha256"
-	"fmt"
 	"github.com/btcsuite/btcutil/base58"
 	"github.com/ethereum/go-ethereum/accounts"
 	"github.com/ethereum/go-ethereum/common"
@@ -230,19 +229,19 @@ func (api *PublicSafe3API) GetSpecialInfo(ctx context.Context, safe3Addr string,
 }
 
 func getKeyID(pubkey []byte) []byte {
-	fmt.Printf("%s\n", hexutils.BytesToHex(pubkey))
+	//fmt.Printf("%s\n", hexutils.BytesToHex(pubkey))
 	h := sha256.Sum256(pubkey)
-	fmt.Printf("hash: %s\n", hexutils.BytesToHex(h[:]))
+	//fmt.Printf("hash: %s\n", hexutils.BytesToHex(h[:]))
 	ripemd := ripemd160.New()
 	ripemd.Write(h[:])
 	r := ripemd.Sum(nil)
-	fmt.Printf("ripemd160: %s\n", hexutils.BytesToHex(r))
+	//fmt.Printf("ripemd160: %s\n", hexutils.BytesToHex(r))
 	t := append([]byte{0x4c}, r...)
 	h = sha256.Sum256(t)
 	h = sha256.Sum256(h[:])
-	fmt.Printf("h: %s\n", hexutils.BytesToHex(h[:]))
+	//fmt.Printf("h: %s\n", hexutils.BytesToHex(h[:]))
 	t = append(t, h[0:4]...)
-	fmt.Printf("t: %s\n", hexutils.BytesToHex(t))
+	//fmt.Printf("t: %s\n", hexutils.BytesToHex(t))
 	return t
 }
 

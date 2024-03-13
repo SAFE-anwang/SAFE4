@@ -7,7 +7,6 @@ import (
     "crypto/sha512"
     "encoding/binary"
     "errors"
-    "fmt"
     "github.com/btcsuite/btcutil/base58"
     "github.com/ethereum/go-ethereum/berkeleydb"
     "github.com/ethereum/go-ethereum/crypto"
@@ -78,7 +77,7 @@ func GetKeyFromWallet(walletName string, password string) (KeyPair, error) {
     }
 
     for pubkey, privkey := range keys {
-        fmt.Printf("key, pubkey: %s, privkey: %s\n", pubkey, privkey)
+        //fmt.Printf("key, pubkey: %s, privkey: %s\n", pubkey, privkey)
         key, err := crypto.ToECDSA(secp256k1.LoadKey(hexutils.HexToBytes(privkey)))
         if err != nil {
             return nil, err
@@ -90,31 +89,31 @@ func GetKeyFromWallet(walletName string, password string) (KeyPair, error) {
         }
     }
 
-    for id, masterkey := range mkeys {
-        fmt.Printf("mkey, id: %d, masterKey: %s, %s, %d, %d, %s\n", id, masterkey.cryptedKey, masterkey.salt, masterkey.derivationMethod, masterkey.deriveIterations, masterkey.otherDerivationParameters)
+    for _, masterkey := range mkeys {
+        //fmt.Printf("mkey, id: %d, masterKey: %s, %s, %d, %d, %s\n", id, masterkey.cryptedKey, masterkey.salt, masterkey.derivationMethod, masterkey.deriveIterations, masterkey.otherDerivationParameters)
         aesKey, aesIV := bytesToKeyAES256CBC([]byte(password), hexutils.HexToBytes(masterkey.salt), masterkey.deriveIterations)
-        fmt.Printf("aes, key: %s, iv: %s\n", hexutils.BytesToHex(aesKey), hexutils.BytesToHex(aesIV))
+        //fmt.Printf("aes, key: %s, iv: %s\n", hexutils.BytesToHex(aesKey), hexutils.BytesToHex(aesIV))
         plainText, err := decrypt(hexutils.HexToBytes(masterkey.cryptedKey), aesKey, aesIV)
         if err != nil {
             return nil, err
         }
-        fmt.Printf("cipherText: %s, plainText: %s\n", masterkey.cryptedKey, hexutils.BytesToHex(plainText))
+        //fmt.Printf("cipherText: %s, plainText: %s\n", masterkey.cryptedKey, hexutils.BytesToHex(plainText))
         for pubkey, cprivkey := range ckeys {
-            fmt.Printf("ckey, pubkey: %s, cprivkey: %s\n", pubkey, cprivkey)
+            //fmt.Printf("ckey, pubkey: %s, cprivkey: %s\n", pubkey, cprivkey)
             iv := sha256.Sum256(hexutils.HexToBytes(pubkey))
             iv = sha256.Sum256(iv[:])
-            fmt.Printf("key: %s, iv: %s\n", cprivkey, hexutils.BytesToHex(iv[:]))
+            //fmt.Printf("key: %s, iv: %s\n", cprivkey, hexutils.BytesToHex(iv[:]))
             privkey, err := decrypt(hexutils.HexToBytes(cprivkey), plainText, iv[:16])
             if err != nil {
                 return nil, err
             }
-            fmt.Printf("privkey: %s\n", hexutils.BytesToHex(privkey))
+            //fmt.Printf("privkey: %s\n", hexutils.BytesToHex(privkey))
             retPair[pubkey] = hexutils.BytesToHex(privkey)
         }
     }
-    for pubkey, privkey := range retPair {
-        fmt.Printf("key, pubkey: %s, privkey: %s\n", pubkey, privkey)
-    }
+    //for pubkey, privkey := range retPair {
+    //    fmt.Printf("key, pubkey: %s, privkey: %s\n", pubkey, privkey)
+    //}
 
     return retPair, nil
 }
@@ -174,7 +173,7 @@ func pkcs7Unpad(in []byte) []byte {
 }
 
 func ParseKey(key string) []byte {
-    fmt.Printf("%s\n", hexutils.BytesToHex(base58.Decode(key)))
-    fmt.Printf("%s\n", hexutils.BytesToHex(base58.Decode(key)[1:32]))
+    //fmt.Printf("%s\n", hexutils.BytesToHex(base58.Decode(key)))
+    //fmt.Printf("%s\n", hexutils.BytesToHex(base58.Decode(key)[1:32]))
     return base58.Decode(key)[1:32]
 }

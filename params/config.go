@@ -29,7 +29,7 @@ import (
 var (
 	MainnetGenesisHash  = common.HexToHash("0xd4e56740f876aef8c010b86a40d5f56745a118d0906a34e69aec8c0db1cb8fa3")
 	SafeGenesisHash     = common.HexToHash("0x0dedea1dcf76cf7ab1170b36740a9e6804b39dcc29b9f4e144d1204b8952ca28")
-	SafeTestGenesisHash = common.HexToHash("0x0dedea1dcf76cf7ab1170b36740a9e6804b39dcc29b9f4e144d1204b8952ca28")
+	SafeTestGenesisHash = common.HexToHash("0x8bf63b8945b40e97c40123da421f43bddb6b026d7199e6664e94b6f73e1c9015")
 )
 
 // TrustedCheckpoints associates each known checkpoint with the genesis hash of
@@ -176,7 +176,7 @@ var (
 	}
 
 	SafeChainConfig = &ChainConfig{
-		ChainID:             big.NewInt(6666666),
+		ChainID:             big.NewInt(6666665),
 		HomesteadBlock:      big.NewInt(0),
 		EIP150Block:         big.NewInt(0),
 		EIP155Block:         big.NewInt(0),
@@ -198,7 +198,7 @@ var (
 	}
 
 	SafeTestChainConfig = &ChainConfig{
-		ChainID:             big.NewInt(6666667),
+		ChainID:             big.NewInt(6666666),
 		HomesteadBlock:      big.NewInt(0),
 		EIP150Block:         big.NewInt(0),
 		EIP155Block:         big.NewInt(0),

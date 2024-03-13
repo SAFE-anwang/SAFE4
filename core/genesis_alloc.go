@@ -894,7 +894,7 @@ const KilnAllocData = `{
   }`
 const SafeAllocData = `{
   "config": {
-    "chainId": 6666666,
+    "chainId": 6666665,
     "homesteadBlock": 0,
     "eip150Block": 0,
     "eip150Hash": "0x0000000000000000000000000000000000000000000000000000000000000000",
@@ -1720,7 +1720,7 @@ const SafeAllocData = `{
 }`
 const SafeTestAllocData = `{
   "config": {
-    "chainId": 6666667,
+    "chainId": 6666666,
     "homesteadBlock": 0,
     "eip150Block": 0,
     "eip150Hash": "0x0000000000000000000000000000000000000000000000000000000000000000",

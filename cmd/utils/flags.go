@@ -1663,13 +1663,13 @@ func SetEthConfig(ctx *cli.Context, stack *node.Node, cfg *ethconfig.Config) {
 	switch {
 	case ctx.GlobalBool(SAFEMainnetFlag.Name):
 		if !ctx.GlobalIsSet(NetworkIdFlag.Name) {
-			cfg.NetworkId = 6666666
+			cfg.NetworkId = 6666665
 		}
 		cfg.Genesis = core.DefaultSafeGenesisBlock()
 		SetDNSDiscoveryDefaults(cfg, params.SafeGenesisHash)
 	case ctx.GlobalBool(SAFEtestFlag.Name):
 		if !ctx.GlobalIsSet(NetworkIdFlag.Name) {
-			cfg.NetworkId = 6666667
+			cfg.NetworkId = 6666666
 		}
 		cfg.Genesis = core.DefaultSafeTestGenesisBlock()
 		SetDNSDiscoveryDefaults(cfg, params.SafeTestGenesisHash)

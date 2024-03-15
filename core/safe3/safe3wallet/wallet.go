@@ -174,6 +174,6 @@ func pkcs7Unpad(in []byte) []byte {
 
 func ParseKey(key string) []byte {
     //fmt.Printf("%s\n", hexutils.BytesToHex(base58.Decode(key)))
-    //fmt.Printf("%s\n", hexutils.BytesToHex(base58.Decode(key)[1:32]))
-    return base58.Decode(key)[1:32]
+    //fmt.Printf("%s\n", hexutils.BytesToHex(base58.Decode(key)[1:33]))
+    return base58.Decode(key)[1:33]
 }

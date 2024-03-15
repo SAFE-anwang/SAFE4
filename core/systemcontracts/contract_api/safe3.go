@@ -13,7 +13,7 @@ import (
     "strings"
 )
 
-func RedeemAvailable(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, transactionPoolAPI *ethapi.PublicTransactionPoolAPI, from common.Address, pubkey hexutil.Bytes, sig hexutil.Bytes) (common.Hash, error) {
+func RedeemAvailable(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, transactionPoolAPI *ethapi.PublicTransactionPoolAPI, from common.Address, pubkey []byte, sig []byte) (common.Hash, error) {
     vABI, err := abi.JSON(strings.NewReader(systemcontracts.Safe3ABI))
     if err != nil {
         return common.Hash{}, err
@@ -26,12 +26,10 @@ func RedeemAvailable(ctx context.Context, blockChainAPI *ethapi.PublicBlockChain
     }
 
     msgData := (hexutil.Bytes)(data)
-    value := big.NewInt(1000000000000000000) // 1 SAFE
     args := ethapi.TransactionArgs{
         From:     &from,
         To:       &systemcontracts.Safe3ContractAddr,
         Data:     &msgData,
-        Value:    (*hexutil.Big)(value),
         GasPrice: (*hexutil.Big)(GetCurrentGasPrice(ctx, blockChainAPI)),
     }
     gas, err := blockChainAPI.EstimateGas(ctx, args, nil)
@@ -42,7 +40,7 @@ func RedeemAvailable(ctx context.Context, blockChainAPI *ethapi.PublicBlockChain
     return transactionPoolAPI.SendTransaction(ctx, args)
 }
 
-func RedeemLocked(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, transactionPoolAPI *ethapi.PublicTransactionPoolAPI, from common.Address, pubkey hexutil.Bytes, sig hexutil.Bytes) (common.Hash, error) {
+func RedeemLocked(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, transactionPoolAPI *ethapi.PublicTransactionPoolAPI, from common.Address, pubkey []byte, sig []byte) (common.Hash, error) {
     vABI, err := abi.JSON(strings.NewReader(systemcontracts.Safe3ABI))
     if err != nil {
         return common.Hash{}, err
@@ -55,12 +53,10 @@ func RedeemLocked(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI
     }
 
     msgData := (hexutil.Bytes)(data)
-    value := big.NewInt(1000000000000000000) // 1 SAFE
     args := ethapi.TransactionArgs{
         From:     &from,
         To:       &systemcontracts.Safe3ContractAddr,
         Data:     &msgData,
-        Value:    (*hexutil.Big)(value),
         GasPrice: (*hexutil.Big)(GetCurrentGasPrice(ctx, blockChainAPI)),
     }
     gas, err := blockChainAPI.EstimateGas(ctx, args, nil)
@@ -71,7 +67,7 @@ func RedeemLocked(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI
     return transactionPoolAPI.SendTransaction(ctx, args)
 }
 
-func RedeemMasterNode(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, transactionPoolAPI *ethapi.PublicTransactionPoolAPI, from common.Address, pubkey hexutil.Bytes, sig hexutil.Bytes, enode string) (common.Hash, error) {
+func RedeemMasterNode(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, transactionPoolAPI *ethapi.PublicTransactionPoolAPI, from common.Address, pubkey []byte, sig []byte, enode string) (common.Hash, error) {
     vABI, err := abi.JSON(strings.NewReader(systemcontracts.Safe3ABI))
     if err != nil {
         return common.Hash{}, err
@@ -84,12 +80,10 @@ func RedeemMasterNode(ctx context.Context, blockChainAPI *ethapi.PublicBlockChai
     }
 
     msgData := (hexutil.Bytes)(data)
-    value := big.NewInt(1000000000000000000) // 1 SAFE
     args := ethapi.TransactionArgs{
         From:     &from,
         To:       &systemcontracts.Safe3ContractAddr,
         Data:     &msgData,
-        Value:    (*hexutil.Big)(value),
         GasPrice: (*hexutil.Big)(GetCurrentGasPrice(ctx, blockChainAPI)),
     }
     gas, err := blockChainAPI.EstimateGas(ctx, args, nil)
@@ -100,7 +94,7 @@ func RedeemMasterNode(ctx context.Context, blockChainAPI *ethapi.PublicBlockChai
     return transactionPoolAPI.SendTransaction(ctx, args)
 }
 
-func ApplyRedeemSpecial(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, transactionPoolAPI *ethapi.PublicTransactionPoolAPI, from common.Address, pubkey hexutil.Bytes, sig hexutil.Bytes) (common.Hash, error) {
+func ApplyRedeemSpecial(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, transactionPoolAPI *ethapi.PublicTransactionPoolAPI, from common.Address, pubkey []byte, sig []byte) (common.Hash, error) {
     vABI, err := abi.JSON(strings.NewReader(systemcontracts.Safe3ABI))
     if err != nil {
         return common.Hash{}, err
@@ -113,12 +107,10 @@ func ApplyRedeemSpecial(ctx context.Context, blockChainAPI *ethapi.PublicBlockCh
     }
 
     msgData := (hexutil.Bytes)(data)
-    value := big.NewInt(1000000000000000000) // 1 SAFE
     args := ethapi.TransactionArgs{
         From:     &from,
         To:       &systemcontracts.Safe3ContractAddr,
         Data:     &msgData,
-        Value:    (*hexutil.Big)(value),
         GasPrice: (*hexutil.Big)(GetCurrentGasPrice(ctx, blockChainAPI)),
     }
     gas, err := blockChainAPI.EstimateGas(ctx, args, nil)
@@ -142,12 +134,10 @@ func Vote4Special(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI
     }
 
     msgData := (hexutil.Bytes)(data)
-    value := big.NewInt(1000000000000000000) // 1 SAFE
     args := ethapi.TransactionArgs{
         From:     &from,
         To:       &systemcontracts.Safe3ContractAddr,
         Data:     &msgData,
-        Value:    (*hexutil.Big)(value),
         GasPrice: (*hexutil.Big)(GetCurrentGasPrice(ctx, blockChainAPI)),
     }
     gas, err := blockChainAPI.EstimateGas(ctx, args, nil)

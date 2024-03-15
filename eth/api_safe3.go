@@ -32,6 +32,7 @@ func Sign(safe3Addr string, privkey []byte) []byte {
 	h := sha256.Sum256([]byte(safe3Addr))
 	h2 := accounts.TextHash(h[:])
 	sig, _ := secp256k1.Sign(h2, privkey)
+	sig[crypto.RecoveryIDOffset] += 27
 	return sig
 }
 
@@ -41,25 +42,23 @@ func (api *PublicSafe3API) RedeemWithWallet(ctx context.Context, from common.Add
 		return nil, err
 	}
 
-	var txs []common.Hash
+	txs := make([]common.Hash, 0)
 	blockNrOrHash := rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(api.blockChainAPI.BlockNumber()))
 	for pubkey, privkey := range pair {
 		safe3Addr := getSafe3Addr(hexutils.HexToBytes(pubkey))
 		availableInfo, err1 := contract_api.GetAvailableInfo(ctx, api.blockChainAPI, safe3Addr, blockNrOrHash)
 		if err1 == nil && availableInfo.Amount.Int64() != 0 {
-			txid, err := contract_api.RedeemAvailable(ctx, api.blockChainAPI, api.transactionPoolAPI, from, hexutils.HexToBytes(pubkey), Sign(safe3Addr, hexutils.HexToBytes(privkey)))
-			if err != nil {
-				return txs, err
+			txid, _ := contract_api.RedeemAvailable(ctx, api.blockChainAPI, api.transactionPoolAPI, from, hexutils.HexToBytes(pubkey), Sign(safe3Addr, hexutils.HexToBytes(privkey)))
+			if txid != (common.Hash{}) {
+				txs = append(txs, txid)
 			}
-			txs = append(txs, txid)
 		}
 		lockedNum, err2 := contract_api.GetLockedNum(ctx, api.blockChainAPI, safe3Addr, blockNrOrHash)
 		if err2 == nil && lockedNum.Int64() != 0 {
-			txid, err := contract_api.RedeemLocked(ctx, api.blockChainAPI, api.transactionPoolAPI, from, hexutils.HexToBytes(pubkey), Sign(safe3Addr, hexutils.HexToBytes(privkey)))
-			if err != nil {
-				return txs, err
+			txid, _ := contract_api.RedeemLocked(ctx, api.blockChainAPI, api.transactionPoolAPI, from, hexutils.HexToBytes(pubkey), Sign(safe3Addr, hexutils.HexToBytes(privkey)))
+			if txid != (common.Hash{}) {
+				txs = append(txs, txid)
 			}
-			txs = append(txs, txid)
 		}
 	}
 	return txs, nil
@@ -69,7 +68,7 @@ func (api *PublicSafe3API) RedeemWithKey(ctx context.Context, from common.Addres
 	privkey := safe3wallet.ParseKey(key)
 	priv, _ := crypto.ToECDSA(privkey)
 
-	var txs []common.Hash
+	txs := make([]common.Hash, 0)
 	blockNrOrHash := rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(api.blockChainAPI.BlockNumber()))
 
 	// compressed pubkey
@@ -77,19 +76,17 @@ func (api *PublicSafe3API) RedeemWithKey(ctx context.Context, from common.Addres
 	safe3Addr := getSafe3Addr(pubkey)
 	availableInfo, err1 := contract_api.GetAvailableInfo(ctx, api.blockChainAPI, safe3Addr, blockNrOrHash)
 	if err1 == nil && availableInfo.Amount.Int64() != 0 {
-		txid, err := contract_api.RedeemAvailable(ctx, api.blockChainAPI, api.transactionPoolAPI, from, pubkey, Sign(safe3Addr, privkey))
-		if err != nil {
-			return txs, err
+		txid, _ := contract_api.RedeemAvailable(ctx, api.blockChainAPI, api.transactionPoolAPI, from, pubkey, Sign(safe3Addr, privkey))
+		if txid != (common.Hash{}) {
+			txs = append(txs, txid)
 		}
-		txs = append(txs, txid)
 	}
 	lockedNum, err2 := contract_api.GetLockedNum(ctx, api.blockChainAPI, safe3Addr, blockNrOrHash)
 	if err2 == nil && lockedNum.Int64() != 0 {
-		txid, err := contract_api.RedeemLocked(ctx, api.blockChainAPI, api.transactionPoolAPI, from, pubkey, Sign(safe3Addr, privkey))
-		if err != nil {
-			return txs, err
+		txid, _ := contract_api.RedeemLocked(ctx, api.blockChainAPI, api.transactionPoolAPI, from, pubkey, Sign(safe3Addr, privkey))
+		if txid != (common.Hash{}) {
+			txs = append(txs, txid)
 		}
-		txs = append(txs, txid)
 	}
 
 	// uncompressed pubkey
@@ -97,19 +94,17 @@ func (api *PublicSafe3API) RedeemWithKey(ctx context.Context, from common.Addres
 	safe3Addr = getSafe3Addr(pubkey)
 	availableInfo, err1 = contract_api.GetAvailableInfo(ctx, api.blockChainAPI, safe3Addr, blockNrOrHash)
 	if err1 == nil && availableInfo.Amount.Int64() != 0 {
-		txid, err := contract_api.RedeemAvailable(ctx, api.blockChainAPI, api.transactionPoolAPI, from, pubkey, Sign(safe3Addr, privkey))
-		if err != nil {
-			return txs, err
+		txid, _ := contract_api.RedeemAvailable(ctx, api.blockChainAPI, api.transactionPoolAPI, from, pubkey, Sign(safe3Addr, privkey))
+		if txid != (common.Hash{}) {
+			txs = append(txs, txid)
 		}
-		txs = append(txs, txid)
 	}
 	lockedNum, err2 = contract_api.GetLockedNum(ctx, api.blockChainAPI, safe3Addr, blockNrOrHash)
 	if err2 == nil && lockedNum.Int64() != 0 {
-		txid, err := contract_api.RedeemLocked(ctx, api.blockChainAPI, api.transactionPoolAPI, from, pubkey, Sign(safe3Addr, privkey))
-		if err != nil {
-			return txs, err
+		txid, _ := contract_api.RedeemLocked(ctx, api.blockChainAPI, api.transactionPoolAPI, from, pubkey, Sign(safe3Addr, privkey))
+		if txid != (common.Hash{}) {
+			txs = append(txs, txid)
 		}
-		txs = append(txs, txid)
 	}
 	return txs, nil
 }
@@ -118,7 +113,7 @@ func (api *PublicSafe3API) RedeemMasterNodeWithKey(ctx context.Context, from com
 	privkey := safe3wallet.ParseKey(key)
 	priv, _ := crypto.ToECDSA(privkey)
 
-	var txs []common.Hash
+	txs := make([]common.Hash, 0)
 	blockNrOrHash := rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(api.blockChainAPI.BlockNumber()))
 
 	// compressed pubkey
@@ -126,11 +121,10 @@ func (api *PublicSafe3API) RedeemMasterNodeWithKey(ctx context.Context, from com
 	safe3Addr := getSafe3Addr(pubkey)
 	lockedNum, err1 := contract_api.GetLockedNum(ctx, api.blockChainAPI, safe3Addr, blockNrOrHash)
 	if err1 == nil && lockedNum.Int64() != 0 {
-		txid, err := contract_api.RedeemMasterNode(ctx, api.blockChainAPI, api.transactionPoolAPI, from, pubkey, Sign(safe3Addr, privkey), enode)
-		if err != nil {
-			return txs, err
+		txid, _ := contract_api.RedeemMasterNode(ctx, api.blockChainAPI, api.transactionPoolAPI, from, pubkey, Sign(safe3Addr, privkey), enode)
+		if txid != (common.Hash{}) {
+			txs = append(txs, txid)
 		}
-		txs = append(txs, txid)
 	}
 
 	// uncompressed pubkey
@@ -138,11 +132,10 @@ func (api *PublicSafe3API) RedeemMasterNodeWithKey(ctx context.Context, from com
 	safe3Addr = getSafe3Addr(pubkey)
 	lockedNum, err1 = contract_api.GetLockedNum(ctx, api.blockChainAPI, safe3Addr, blockNrOrHash)
 	if err1 == nil && lockedNum.Int64() != 0 {
-		txid, err := contract_api.RedeemMasterNode(ctx, api.blockChainAPI, api.transactionPoolAPI, from, pubkey, Sign(safe3Addr, privkey), enode)
-		if err != nil {
-			return txs, err
+		txid, _ := contract_api.RedeemMasterNode(ctx, api.blockChainAPI, api.transactionPoolAPI, from, pubkey, Sign(safe3Addr, privkey), enode)
+		if txid != (common.Hash{}) {
+			txs = append(txs, txid)
 		}
-		txs = append(txs, txid)
 	}
 	return txs, nil
 }
@@ -151,7 +144,7 @@ func (api *PublicSafe3API) ApplyRedeemSpecialWithKey(ctx context.Context, from c
 	privkey := safe3wallet.ParseKey(key)
 	priv, _ := crypto.ToECDSA(privkey)
 
-	var txs []common.Hash
+	txs := make([]common.Hash, 0)
 	blockNrOrHash := rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(api.blockChainAPI.BlockNumber()))
 
 	// compressed pubkey
@@ -159,11 +152,10 @@ func (api *PublicSafe3API) ApplyRedeemSpecialWithKey(ctx context.Context, from c
 	safe3Addr := getSafe3Addr(pubkey)
 	specialInfo, err1 := contract_api.GetSpecialInfo(ctx, api.blockChainAPI, safe3Addr, blockNrOrHash)
 	if err1 == nil && specialInfo.Amount.Int64() != 0 {
-		txid, err := contract_api.ApplyRedeemSpecial(ctx, api.blockChainAPI, api.transactionPoolAPI, from, pubkey, Sign(safe3Addr, privkey))
-		if err != nil {
-			return txs, err
+		txid, _ := contract_api.ApplyRedeemSpecial(ctx, api.blockChainAPI, api.transactionPoolAPI, from, pubkey, Sign(safe3Addr, privkey))
+		if txid != (common.Hash{}) {
+			txs = append(txs, txid)
 		}
-		txs = append(txs, txid)
 	}
 
 	// uncompressed pubkey
@@ -171,11 +163,10 @@ func (api *PublicSafe3API) ApplyRedeemSpecialWithKey(ctx context.Context, from c
 	safe3Addr = getSafe3Addr(pubkey)
 	specialInfo, err1 = contract_api.GetSpecialInfo(ctx, api.blockChainAPI, safe3Addr, blockNrOrHash)
 	if err1 == nil && specialInfo.Amount.Int64() != 0 {
-		txid, err := contract_api.ApplyRedeemSpecial(ctx, api.blockChainAPI, api.transactionPoolAPI, from, pubkey, Sign(safe3Addr, privkey))
-		if err != nil {
-			return txs, err
+		txid, _ := contract_api.ApplyRedeemSpecial(ctx, api.blockChainAPI, api.transactionPoolAPI, from, pubkey, Sign(safe3Addr, privkey))
+		if txid != (common.Hash{}) {
+			txs = append(txs, txid)
 		}
-		txs = append(txs, txid)
 	}
 	return txs, nil
 }

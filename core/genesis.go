@@ -31,6 +31,7 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/common/math"
 	"github.com/ethereum/go-ethereum/core/rawdb"
+	"github.com/ethereum/go-ethereum/core/safe3/safe3storage_mainnet"
 	"github.com/ethereum/go-ethereum/core/safe3/safe3storage_testnet"
 	"github.com/ethereum/go-ethereum/core/state"
 	"github.com/ethereum/go-ethereum/core/systemcontracts"
@@ -109,9 +110,22 @@ func (ga *GenesisAlloc) flush(db ethdb.Database) (common.Hash, error) {
 		return common.Hash{}, err
 	}
 
-	for i, data := range safe3storage_testnet.StorageList {
+	return preload(root, database)
+}
+
+func preload(root common.Hash, database state.Database) (common.Hash, error) {
+	var list *[]string
+	switch chainType {
+	case 0:
+		list = &safe3storage_mainnet.StorageList
+	case 1:
+		list = &safe3storage_testnet.StorageList
+	default:
+		return root, nil
+	}
+	for i, data := range *list {
 		log.Info("loading storage", "index", i+1)
-		statedb, err = state.New(root, database, nil)
+		statedb, err := state.New(root, database, nil)
 		if err != nil {
 			return common.Hash{}, err
 		}
@@ -523,8 +537,10 @@ func DefaultSepoliaGenesisBlock() *Genesis {
 	}
 }
 
+var chainType = -1
 // DefaultSafeGenesisBlock returns the safe network genesis block.
 func DefaultSafeGenesisBlock() *Genesis {
+	chainType = 0
 	g := new(Genesis)
 	reader := strings.NewReader(SafeAllocData)
 	if err := json.NewDecoder(reader).Decode(g); err != nil {
@@ -535,6 +551,7 @@ func DefaultSafeGenesisBlock() *Genesis {
 
 // DefaultSafeTestGenesisBlock returns the safe network genesis block.
 func DefaultSafeTestGenesisBlock() *Genesis {
+	chainType = 1
 	g := new(Genesis)
 	reader := strings.NewReader(SafeTestAllocData)
 	if err := json.NewDecoder(reader).Decode(g); err != nil {

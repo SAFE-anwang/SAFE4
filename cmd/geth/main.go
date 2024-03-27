@@ -272,7 +272,7 @@ func prepare(ctx *cli.Context) {
 	// If we're running a known preset, log it for convenience.
 	switch {
 	case ctx.GlobalIsSet(utils.SAFEtestFlag.Name):
-		log.Info("Starting SAFE on safe testnet...")
+		log.Info("Starting Geth on SAFE testnet...")
 
 	case ctx.GlobalIsSet(utils.DeveloperFlag.Name):
 		log.Info("Starting Geth in ephemeral dev mode...")

@@ -24,7 +24,7 @@ var MainnetBootnodes = []string{
 }
 
 // the SAFE test network.
-var SafetestBootnodes = []string{
+var SafeTestBootnodes = []string{
 	// SAFE test chain Go Bootnodes
 	"enode://57e52467b3bdfbe62b1c47a16be714ca7e5ae117f62453142637019ed2b8daa707860a004d381ad3f73f815f61bdbc688f2f40143239e324a8666d075c95f3f0@114.215.31.37:30303",  // sn1
 	"enode://1ac4e9530ec9d6fb1b561e3b6af91768db767be6ccb236ee545944ae1cc578695d264d143216b2ad5447bb875c92b7d247034c74d98ce85923b985d1365ba572@106.14.66.206:30303",  // sn2

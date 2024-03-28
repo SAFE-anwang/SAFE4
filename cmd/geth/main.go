@@ -271,7 +271,7 @@ func main() {
 func prepare(ctx *cli.Context) {
 	// If we're running a known preset, log it for convenience.
 	switch {
-	case ctx.GlobalIsSet(utils.SAFEtestFlag.Name):
+	case ctx.GlobalIsSet(utils.SAFETestFlag.Name):
 		log.Info("Starting Geth on SAFE testnet...")
 	case ctx.GlobalIsSet(utils.SAFEDevFlag.Name):
 		log.Info("Starting Geth on SAFE devnet...")
@@ -300,7 +300,7 @@ func prepare(ctx *cli.Context) {
 	// If we're a full node on mainnet without --cache specified, bump default cache allowance
 	if ctx.GlobalString(utils.SyncModeFlag.Name) != "light" && !ctx.GlobalIsSet(utils.CacheFlag.Name) && !ctx.GlobalIsSet(utils.NetworkIdFlag.Name) {
 		// Make sure we're not on any supported preconfigured testnet either
-		if !ctx.GlobalIsSet(utils.SAFEtestFlag.Name) &&
+		if !ctx.GlobalIsSet(utils.SAFETestFlag.Name) &&
 			!ctx.GlobalIsSet(utils.SAFEDevFlag.Name) &&
 			!ctx.GlobalIsSet(utils.DeveloperFlag.Name) {
 			// Nope, we're really on mainnet. Bump that cache up!

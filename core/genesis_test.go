@@ -102,6 +102,16 @@ func TestSetupGenesis(t *testing.T) {
 			wantConfig: params.SafeTestChainConfig,
 		},
 		{
+			name: "custom block in DB, genesis == safedev",
+			fn: func(db ethdb.Database) (*params.ChainConfig, common.Hash, error) {
+				customg.MustCommit(db)
+				return SetupGenesisBlock(db, DefaultSafeDevGenesisBlock())
+			},
+			wantErr:    &GenesisMismatchError{Stored: customghash, New: params.SafeDevGenesisHash},
+			wantHash:   params.SafeDevGenesisHash,
+			wantConfig: params.SafeDevChainConfig,
+		},
+		{
 			name: "compatible config in DB",
 			fn: func(db ethdb.Database) (*params.ChainConfig, common.Hash, error) {
 				oldcustomg.MustCommit(db)

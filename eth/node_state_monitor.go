@@ -178,8 +178,8 @@ func (monitor *NodeStateMonitor) uploadLoop() {
 			}
 			if monitor.isSuperNode(addr) {
 				monitor.lock.Lock()
-				mnIDs, mnStates := monitor.collectMasterNodes()
-				snIDs, snStates := monitor.collectSuperNodes()
+				mnIDs, mnStates := monitor.collectMasterNodes(addr)
+				snIDs, snStates := monitor.collectSuperNodes(addr)
 				monitor.lock.Unlock()
 
 				if len(mnIDs) != 0 && len(mnIDs) == len(mnStates) {
@@ -271,7 +271,7 @@ func (monitor *NodeStateMonitor) isSuperNode(addr common.Address) bool {
 	return false
 }
 
-func (monitor *NodeStateMonitor) collectMasterNodes() ([]*big.Int, []*big.Int) {
+func (monitor *NodeStateMonitor) collectMasterNodes(from common.Address) ([]*big.Int, []*big.Int) {
 	var ids []*big.Int
 	var states []*big.Int
 
@@ -323,8 +323,20 @@ func (monitor *NodeStateMonitor) collectMasterNodes() ([]*big.Int, []*big.Int) {
 		if v, ok := monitor.mnMonitorInfos[id]; ok {
 			if v.curState != info.State.Int64() {
 				if v.curState == StateRunning || (v.curState == StateStop && v.missNum >= MaxMissNum) {
-					ids = append(ids, info.Id)
-					states = append(states, big.NewInt(v.curState))
+					flag := false
+					entries, err := contract_api.GetMasterNodeUploadStates(monitor.ctx, monitor.blockChainAPI, info.Id, rpc.BlockNumberOrHashWithNumber(rpc.PendingBlockNumber))
+					if err == nil {
+						for _, entry := range entries {
+							if entry.State.Int64() == v.curState && entry.Caller == from {
+								flag = true
+								break
+							}
+						}
+					}
+					if !flag {
+						ids = append(ids, info.Id)
+						states = append(states, big.NewInt(v.curState))
+					}
 					delete(monitor.mnMonitorInfos, id)
 				}
 			}
@@ -333,7 +345,7 @@ func (monitor *NodeStateMonitor) collectMasterNodes() ([]*big.Int, []*big.Int) {
 	return ids, states
 }
 
-func (monitor *NodeStateMonitor) collectSuperNodes() ([]*big.Int, []*big.Int) {
+func (monitor *NodeStateMonitor) collectSuperNodes(from common.Address) ([]*big.Int, []*big.Int) {
 	var ids []*big.Int
 	var states []*big.Int
 
@@ -385,8 +397,20 @@ func (monitor *NodeStateMonitor) collectSuperNodes() ([]*big.Int, []*big.Int) {
 		if v, ok := monitor.snMonitorInfos[id]; ok {
 			if v.curState != info.State.Int64() {
 				if v.curState == StateRunning || (v.curState == StateStop && v.missNum >= MaxMissNum) {
-					ids = append(ids, info.Id)
-					states = append(states, big.NewInt(v.curState))
+					flag := false
+					entries, err := contract_api.GetSuperNodeUploadEntries(monitor.ctx, monitor.blockChainAPI, info.Id, rpc.BlockNumberOrHashWithNumber(rpc.PendingBlockNumber))
+					if err == nil {
+						for _, entry := range entries {
+							if entry.State.Int64() == v.curState && entry.Caller == from {
+								flag = true
+								break
+							}
+						}
+					}
+					if !flag {
+						ids = append(ids, info.Id)
+						states = append(states, big.NewInt(v.curState))
+					}
 					delete(monitor.snMonitorInfos, id)
 				}
 			}

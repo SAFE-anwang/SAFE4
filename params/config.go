@@ -224,22 +224,6 @@ var (
 		},
 	}
 
-	SafeSposOfficialSuperNodeConfig = &SposOfficialSuperNodeConfig{
-		Signers: []common.Address{
-			common.HexToAddress("0x044f9C93b57eFAA547F8461d4FA864eb40558cD0"),
-			common.HexToAddress("0xD83076fB57D1fdae23293Cad74999A75D06B7A3A"),
-			common.HexToAddress("0x8b96C90B86CFDBdc971bb54C263a6d021e7f4894"),
-			common.HexToAddress("0x131191cfb9afb4c3f776d6cecee1921e8c3eab0f"),
-			common.HexToAddress("0xa286862918d900847a8bfb6cf0bbd2804bb89e09"),
-			common.HexToAddress("0xc0dac1e1544ee3531d8b78ea1d56613779868b1d"),
-			common.HexToAddress("0xd79ba37f30c0a22d9eb042f6b9537400a4668ff1"),
-			common.HexToAddress("0x10f7569e525db0db6e7a2648264522f9d9ecaf18"),
-			common.HexToAddress("0x9d16bb0db8625630f19bc92e74cae910aa050d91"),
-			common.HexToAddress("0x3525058adabf4bc77d10d583a522205e8c624b53"),
-		},
-		StartCommonSuperHeight: 1,
-	}
-
 	// AllEthashProtocolChanges contains every protocol change (EIPs) introduced
 	// and accepted by the Ethereum core developers into the Ethash consensus.
 	//
@@ -312,11 +296,6 @@ type CheckpointOracleConfig struct {
 	Address   common.Address   `json:"address"`
 	Signers   []common.Address `json:"signers"`
 	Threshold uint64           `json:"threshold"`
-}
-
-type SposOfficialSuperNodeConfig struct {
-	Signers   []common.Address `json:"signers"`
-	StartCommonSuperHeight uint64
 }
 
 // ChainConfig is the core config which determines the blockchain settings.

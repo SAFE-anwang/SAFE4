@@ -484,39 +484,16 @@ func (s *Spos) snapshot(chain consensus.ChainHeaderReader, number uint64, hash c
 			}
 		}
 
-		// If we're at the genesis, snapshot the initial state.
-		if number == 0 || number % s.config.Epoch == 0{
+		if number != 0 && number % s.config.Epoch == 0 {
 			checkpoint := chain.GetHeaderByNumber(number)
 			if checkpoint != nil {
 				hash := checkpoint.Hash()
 
 				var signers []common.Address
-				if number == 0 {
-					tempStartNewLoopTime := checkpoint.Time
-					tempSignermap := make(map[common.Address]struct{})
-					for _, signer := range params.SafeSposOfficialSuperNodeConfig.Signers {
-						tempSignermap[signer] = struct{}{}
-					}
-
-					resultSuperNode := make([]common.Address, 0)
-					resultSuperNode = sortSupernode(tempSignermap, tempStartNewLoopTime)
-					signers = make([]common.Address, 0)
-
-					icountsupernode := len(resultSuperNode)
-					if icountsupernode > superNodeSPosCount {
-						icountsupernode = superNodeSPosCount
-					}
-
-					for i := 0; i < icountsupernode; i++{
-						signers =  append(signers, resultSuperNode[i])
-					}
-				}else{
-					signers = make([]common.Address, (len(checkpoint.Extra)-extraVanity-extraSeal)/common.AddressLength)
-					for i := 0; i < len(signers); i++ {
-						copy(signers[i][:], checkpoint.Extra[extraVanity+i*common.AddressLength:])
-					}
+				signers = make([]common.Address, (len(checkpoint.Extra)-extraVanity-extraSeal)/common.AddressLength)
+				for i := 0; i < len(signers); i++ {
+					copy(signers[i][:], checkpoint.Extra[extraVanity+i*common.AddressLength:])
 				}
-
 				snap = newSnapshot(s.config, s.signatures, number, hash, signers)
 				if err := snap.store(s.db); err != nil {
 					return nil, err
@@ -542,20 +519,15 @@ func (s *Spos) snapshot(chain consensus.ChainHeaderReader, number uint64, hash c
 					startNewLoopTime = forwardblock.Time
 				}
 
-				if number < params.SafeSposOfficialSuperNodeConfig.StartCommonSuperHeight {
-					for _, signer := range params.SafeSposOfficialSuperNodeConfig.Signers {
-						signersmap[signer] = struct{}{}
-					}
-				}else { //TODO Call the contract to get the super node list
-					topAddrs, err := contract_api.GetTopSuperNodes(s.ctx, s.blockChainAPI, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(number)))
-					if err != nil {
-						log.Error("Failed to GetTopSN", "error", err)
-						return nil, err
-					}
+				//Call the contract to get the super node list
+				topAddrs, err := contract_api.GetTopSuperNodes(s.ctx, s.blockChainAPI, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(number)))
+				if err != nil {
+					log.Error("Failed to GetTopSN", "error", err)
+					return nil, err
+				}
 
-					for i := range topAddrs {
-						signersmap[topAddrs[i]] = struct{}{}
-					}
+				for i := range topAddrs {
+					signersmap[topAddrs[i]] = struct{}{}
 				}
 
 				resultSuperNode := make([]common.Address, 0)

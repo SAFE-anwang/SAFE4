@@ -352,7 +352,7 @@ func (st *StateTransition) TransitionDb() (*ExecutionResult, error) {
 
 	amount := new(big.Int).Mul(new(big.Int).SetUint64(st.gasUsed()), effectiveTip)
 	if effectiveTip.Uint64() != 0 {
-		amount.Mul(amount, getPercent(st.evm.Context, st.evm.StateDB, st.evm.ChainConfig(), st.evm.Config))
+		amount.Mul(amount, getPercent(st.evm.Context, st.evm.StateDB, st.evm.ChainConfig()))
 		amount.Div(amount, big.NewInt(100))
 	}
 	st.state.AddBalance(st.evm.Context.Coinbase, amount)
@@ -364,7 +364,7 @@ func (st *StateTransition) TransitionDb() (*ExecutionResult, error) {
 	}, nil
 }
 
-func getPercent(blockCtx vm.BlockContext, statedb vm.StateDB, chainConfig *params.ChainConfig, config vm.Config) *big.Int {
+func getPercent(blockCtx vm.BlockContext, statedb vm.StateDB, chainConfig *params.ChainConfig) *big.Int {
 	vABI, err := abi.JSON(strings.NewReader(systemcontracts.PropertyABI))
 	if err != nil {
 		return common.Big0
@@ -378,7 +378,7 @@ func getPercent(blockCtx vm.BlockContext, statedb vm.StateDB, chainConfig *param
 	}
 
 	msg :=  types.NewMessage(common.Address{}, &systemcontracts.PropertyContractAddr, 0, new(big.Int), 50000000, new(big.Int), new(big.Int), new(big.Int), data, nil, true)
-	vmenv := vm.NewEVM(blockCtx, vm.TxContext{}, statedb, chainConfig, config)
+	vmenv := vm.NewEVM(blockCtx, vm.TxContext{}, statedb, chainConfig, vm.Config{Debug: false, NoBaseFee: true})
 	result, _, err := vmenv.Call(vm.AccountRef(msg.From()), *msg.To(), msg.Data(), msg.Gas(), msg.Value())
 	if err != nil {
 		return common.Big0

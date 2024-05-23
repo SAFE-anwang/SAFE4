@@ -6,6 +6,8 @@ package berkeleydb
 #cgo windows LDFLAGS: -L./libdb/windows -ldb
 #cgo linux CFLAGS: -I./libdb/linux
 #cgo linux LDFLAGS: -L./libdb/linux -ldb
+#cgo darwin CFLAGS: -I./libdb/macos
+#cgo darwin LDFLAGS: -L./libdb/macos -ldb
 
 #include <db.h>
 #include <stdlib.h>

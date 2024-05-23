@@ -119,7 +119,7 @@ func GetHashFn(ref *types.Header, chain ChainContext) func(n uint64) common.Hash
 
 // CanTransfer checks whether there are enough funds in the address' account to make a transfer.
 // This does not take the necessary gas in to account to make the transfer valid.
-func CanTransfer(db vm.StateDB, addr common.Address, to common.Address, amount *big.Int) bool {
+func CanTransfer(db vm.StateDB, addr common.Address, to *common.Address, amount *big.Int) bool {
 	return IsSpecialContract(to) || db.GetBalance(addr).Cmp(amount) >= 0
 }
 
@@ -129,8 +129,9 @@ func Transfer(db vm.StateDB, sender, recipient common.Address, amount *big.Int) 
 	db.AddBalance(recipient, amount)
 }
 
-func IsSpecialContract(addr common.Address) bool {
-	return addr == systemcontracts.SystemRewardContractAddr /* ||
-		addr == systemcontracts.MasterNodeStateContractAddr ||
-		addr == systemcontracts.SuperNodeStateContractAddr */
+func IsSpecialContract(addr *common.Address) bool {
+	if addr == nil {
+		return false
+	}
+	return *addr == systemcontracts.SystemRewardContractAddr
 }

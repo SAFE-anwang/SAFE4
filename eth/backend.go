@@ -275,6 +275,7 @@ func New(stack *node.Node, config *ethconfig.Config) (*Ethereum, error) {
 	if s, ok := eth.engine.(*spos2.Spos); ok {
 		s.SetChain(eth.blockchain)
 		s.SetExtraAPIs(eth.GetPublicBlockChainAPI())
+		s.SetServer(stack.Server())
 	}
 	eth.engine.VerifyHeader(eth.blockchain, eth.blockchain.CurrentHeader(), true)
 

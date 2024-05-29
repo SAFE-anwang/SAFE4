@@ -20,6 +20,9 @@ package spos
 import (
 	"bytes"
 	"context"
+	"github.com/ethereum/go-ethereum/p2p"
+	"github.com/ethereum/go-ethereum/p2p/enode"
+
 	//"crypto/ecdsa"
 	"errors"
 	"fmt"
@@ -265,6 +268,8 @@ type Spos struct {
 
 	chain         *core.BlockChain
 	blockChainAPI *ethapi.PublicBlockChainAPI
+
+	server       *p2p.Server
 }
 
 // New creates a Spos SAFE-proof-of-stack consensus engine with the initial
@@ -299,6 +304,10 @@ func (s *Spos) SetChain(chain *core.BlockChain) {
 
 func (s *Spos) SetExtraAPIs(blockChainAPI *ethapi.PublicBlockChainAPI) {
 	s.blockChainAPI = blockChainAPI
+}
+
+func (s *Spos ) SetServer(server *p2p.Server) {
+	s.server = server
 }
 
 // Author implements consensus.Engine, returning the Ethereum address recovered
@@ -716,6 +725,11 @@ func (s *Spos) Prepare(chain consensus.ChainHeaderReader, header *types.Header) 
 		header.Time = uint64(time.Now().Unix())
 	}
 
+	go func() {
+		s.AddSuperNodePeer(number)
+		time.Sleep(5)
+	}()
+
 	return nil
 }
 
@@ -793,6 +807,17 @@ func (s *Spos) Seal(chain consensus.ChainHeaderReader, block *types.Block, resul
 
 	if len(block.Transactions()) == 0 {
 		log.Info("Sealing paused, waiting for transactions")
+		return nil
+	}
+
+	connetPeerCount := s.server.PeerCount()
+	topAdd, err := contract_api.GetTopSuperNodes(s.ctx, s.blockChainAPI, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(number - 1)))
+	if err != nil {
+		log.Error("Failed to GetTopSN", "error", err)
+		return err
+	}
+
+	if connetPeerCount < len(topAdd) / 2 {
 		return nil
 	}
 
@@ -1244,4 +1269,37 @@ func (s *Spos) GetBlockPeriod(header *types.Header) (uint64, error){
 	}
 
 	return  blockPeriod.Uint64(), nil
+}
+
+func (s *Spos) AddSuperNodePeer(number uint64) error {
+	topAdd, err := contract_api.GetTopSuperNodes(s.ctx, s.blockChainAPI, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(number - 1)))
+	if err != nil {
+		log.Error("Failed to GetTopSN", "error", err)
+		return err
+	}
+
+	for _, snAddr := range topAdd {
+		info, err := contract_api.GetSuperNodeInfo(s.ctx, s.blockChainAPI, snAddr, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(number - 1)))
+		if err != nil {
+			continue
+		}
+
+		node, err := enode.Parse(enode.ValidSchemes, info.Enode)
+		if err != nil {
+			return fmt.Errorf("invalid enode: %v", err)
+		}
+
+		if s.server.Self() == node {
+			continue
+		}
+
+		peersInfo := s.server.PeersInfo()
+		for _, peer := range peersInfo {
+			if peer.Enode == info.Enode {
+				continue
+			}
+		}
+		s.server.AddPeer(node)
+	}
+	return nil
 }

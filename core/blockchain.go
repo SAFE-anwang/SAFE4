@@ -423,6 +423,19 @@ func (bc *BlockChain) empty() bool {
 	return true
 }
 
+func (bc *BlockChain) GetLastValidHeader(start *big.Int, end *big.Int) *types.Header {
+	for i := end.Uint64(); i > start.Uint64(); i-- {
+		header := bc.GetHeaderByNumber(i)
+		if header == nil {
+			continue
+		}
+		if _, err := bc.StateAt(header.Root); err == nil {
+			return header
+		}
+	}
+	return nil
+}
+
 // loadLastState loads the last known chain state from the database. This method
 // assumes that the chain manager mutex is held.
 func (bc *BlockChain) loadLastState() error {
@@ -448,7 +461,9 @@ func (bc *BlockChain) loadLastState() error {
 	currentHeader := currentBlock.Header()
 	if head := rawdb.ReadHeadHeaderHash(bc.db); head != (common.Hash{}) {
 		if header := bc.GetHeaderByHash(head); header != nil {
-			currentHeader = header
+			if header = bc.GetLastValidHeader(currentHeader.Number, header.Number); header != nil {
+				currentHeader = header
+			}
 		}
 	}
 	bc.hc.SetCurrentHeader(currentHeader)

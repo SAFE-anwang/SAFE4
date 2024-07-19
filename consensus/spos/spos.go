@@ -811,25 +811,36 @@ func (s *Spos) Seal(chain consensus.ChainHeaderReader, block *types.Block, resul
 	}
 
 	peerInfos := s.server.PeersInfo()
-	existSN := false
-	connectPeerCount := 0
 	blockNrOrHash := rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(number - 1))
-	for _, info := range peerInfos {
-		if existSN, err = contract_api.ExistSuperNodeEnode(s.ctx, s.blockChainAPI, info.Enode, blockNrOrHash); err != nil {
-			continue
-		}
-		if existSN {
-			connectPeerCount++
-		}
-	}
 	//connetPeerCount := s.server.PeerCount()
-	topAdd, err := contract_api.GetTopSuperNodes(s.ctx, s.blockChainAPI, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(number - 1)))
+	topAdd, err := contract_api.GetTopSuperNodes(s.ctx, s.blockChainAPI, blockNrOrHash)
 	if err != nil {
 		log.Error("Failed to GetTopSN", "error", err)
 		return err
 	}
 
-	if connectPeerCount < len(topAdd) / 2 {
+	connectPeerCount := 0
+	for _, snAddr := range topAdd {
+		info, err := contract_api.GetSuperNodeInfo(s.ctx, s.blockChainAPI, snAddr, blockNrOrHash)
+		if err != nil {
+			continue
+		}
+
+		node, err := enode.Parse(enode.ValidSchemes, info.Enode)
+		if err != nil {
+			continue
+		}
+		temp := "enode://" + common.Bytes2Hex(crypto.FromECDSAPub(node.Pubkey())[1:]) + "@" + node.IP().String()
+
+		for _, peerInfo := range peerInfos {
+			if peerInfo.Enode[0:len(temp)] == temp {
+				connectPeerCount++
+			}
+		}
+	}
+
+	if connectPeerCount < (len(topAdd) - 1) / 2 {
+		log.Info(fmt.Sprintf("Sealing paused, only connect %v supernodes, need connect %v supernode at least", connectPeerCount, (len(topAdd) - 1) / 2))
 		return nil
 	}
 

@@ -810,14 +810,26 @@ func (s *Spos) Seal(chain consensus.ChainHeaderReader, block *types.Block, resul
 		return nil
 	}
 
-	connetPeerCount := s.server.PeerCount()
+	peerInfos := s.server.PeersInfo()
+	existSN := false
+	connectPeerCount := 0
+	blockNrOrHash := rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(number - 1))
+	for _, info := range peerInfos {
+		if existSN, err = contract_api.ExistSuperNodeEnode(s.ctx, s.blockChainAPI, info.Enode, blockNrOrHash); err != nil {
+			continue
+		}
+		if existSN {
+			connectPeerCount++
+		}
+	}
+	//connetPeerCount := s.server.PeerCount()
 	topAdd, err := contract_api.GetTopSuperNodes(s.ctx, s.blockChainAPI, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(number - 1)))
 	if err != nil {
 		log.Error("Failed to GetTopSN", "error", err)
 		return err
 	}
 
-	if connetPeerCount < len(topAdd) / 2 {
+	if connectPeerCount < len(topAdd) / 2 {
 		return nil
 	}
 

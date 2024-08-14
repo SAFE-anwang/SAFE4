@@ -270,6 +270,8 @@ type Spos struct {
 	blockChainAPI *ethapi.PublicBlockChainAPI
 
 	server       *p2p.Server
+	wg            sync.WaitGroup
+	quit          chan struct{}
 }
 
 // New creates a Spos SAFE-proof-of-stack consensus engine with the initial
@@ -286,7 +288,7 @@ func New(chainConfig *params.ChainConfig, db ethdb.Database) *Spos {
 	recents, _ := lru.NewARC(inmemorySnapshots)
 	signatures, _ := lru.NewARC(inmemorySignatures)
 
-	return &Spos{
+	s:= &Spos{
 		ctx:        ctx,
 		cancel:     cancel,
 		chainConfig: chainConfig,
@@ -295,7 +297,14 @@ func New(chainConfig *params.ChainConfig, db ethdb.Database) *Spos {
 		recents:    recents,
 		signatures: signatures,
 		proposals:  make(map[common.Address]bool),
+		quit:       make(chan struct{}),
 	}
+
+	// Start adding super nodes for processing.
+	s.wg.Add(1)
+	go s.LoopAddSuperNodePeer()
+
+	return s
 }
 
 func (s *Spos) SetChain(chain *core.BlockChain) {
@@ -725,11 +734,6 @@ func (s *Spos) Prepare(chain consensus.ChainHeaderReader, header *types.Header) 
 		header.Time = uint64(time.Now().Unix())
 	}
 
-	go func() {
-		s.AddSuperNodePeer(number)
-		time.Sleep(5)
-	}()
-
 	return nil
 }
 
@@ -839,7 +843,7 @@ func (s *Spos) Seal(chain consensus.ChainHeaderReader, block *types.Block, resul
 		}
 	}
 
-	if connectPeerCount < (len(topAdd) - 1) / 2 {
+	if connectPeerCount <= (len(topAdd) - 1) / 2 {
 		log.Info(fmt.Sprintf("Sealing paused, only connect %v supernodes, need connect %v supernode at least", connectPeerCount, (len(topAdd) - 1) / 2))
 		return nil
 	}
@@ -945,6 +949,8 @@ func (s *Spos) SealHash(header *types.Header) common.Hash {
 // Close implements consensus.Engine. It's a noop for spos as there are no background threads.
 func (s *Spos) Close() error {
 	s.cancel()
+	close(s.quit)
+	s.wg.Wait()
 	return nil
 }
 
@@ -1294,22 +1300,40 @@ func (s *Spos) GetBlockPeriod(header *types.Header) (uint64, error){
 	return  blockPeriod.Uint64(), nil
 }
 
-func (s *Spos) AddSuperNodePeer(number uint64) error {
-	topAdd, err := contract_api.GetTopSuperNodes(s.ctx, s.blockChainAPI, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(number - 1)))
+func (s *Spos) AddSuperNodePeer() int64 {
+	if s.server == nil || s.ctx == nil || s.chain == nil || s.blockChainAPI == nil {
+		log.Error("The data is incomplete try again later")
+		return 0
+	}
+
+	log.Info("AddSuperNodePeer start")
+
+	number := s.chain.CurrentBlock().Number().Uint64()
+
+	node := s.server.Self()
+	Enode := node.URLv4()
+	exist, err := contract_api.ExistSuperNodeEnode(s.ctx, s.blockChainAPI, Enode, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(number)))
+	if !exist {
+		log.Error("Not a super node, coroutine exit")
+		return -1
+	}
+
+	topAdd, err := contract_api.GetTopSuperNodes(s.ctx, s.blockChainAPI, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(number)))
 	if err != nil {
 		log.Error("Failed to GetTopSN", "error", err)
-		return err
+		return 0
 	}
 
 	for _, snAddr := range topAdd {
-		info, err := contract_api.GetSuperNodeInfo(s.ctx, s.blockChainAPI, snAddr, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(number - 1)))
+		info, err := contract_api.GetSuperNodeInfo(s.ctx, s.blockChainAPI, snAddr, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(number)))
 		if err != nil {
 			continue
 		}
 
 		node, err := enode.Parse(enode.ValidSchemes, info.Enode)
 		if err != nil {
-			return fmt.Errorf("invalid enode: %v", err)
+			log.Error("invalid enode")
+			continue
 		}
 
 		if s.server.Self() == node {
@@ -1324,5 +1348,23 @@ func (s *Spos) AddSuperNodePeer(number uint64) error {
 		}
 		s.server.AddPeer(node)
 	}
-	return nil
+
+	return 0
+}
+
+func (s *Spos) LoopAddSuperNodePeer() {
+	addSuperNodeTimer := time.NewTicker(5 * time.Second)
+	defer addSuperNodeTimer.Stop()
+	defer s.wg.Done()
+	for {
+		select {
+		case <-addSuperNodeTimer.C:
+			n := s.AddSuperNodePeer()
+			if n != 0 {
+				return
+			}
+		case <-s.quit:
+			return
+		}
+	}
 }

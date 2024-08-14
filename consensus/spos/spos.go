@@ -1300,13 +1300,11 @@ func (s *Spos) GetBlockPeriod(header *types.Header) (uint64, error){
 	return  blockPeriod.Uint64(), nil
 }
 
-func (s *Spos) AddSuperNodePeer() int64 {
+func (s *Spos) AddSuperNodePeer() {
 	if s.server == nil || s.ctx == nil || s.chain == nil || s.blockChainAPI == nil {
 		log.Error("The data is incomplete try again later")
-		return 0
+		return
 	}
-
-	log.Info("AddSuperNodePeer start")
 
 	number := s.chain.CurrentBlock().Number().Uint64()
 
@@ -1314,19 +1312,19 @@ func (s *Spos) AddSuperNodePeer() int64 {
 	Enode := node.URLv4()
 	exist, err := contract_api.ExistSuperNodeEnode(s.ctx, s.blockChainAPI, Enode, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(number)))
 	if !exist {
-		log.Error("Not a super node, coroutine exit")
-		return -1
+		return
 	}
 
 	topAdd, err := contract_api.GetTopSuperNodes(s.ctx, s.blockChainAPI, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(number)))
 	if err != nil {
-		log.Error("Failed to GetTopSN", "error", err)
-		return 0
+		log.Error("Failed to GetTopSuperNodes", "error", err)
+		return
 	}
 
 	for _, snAddr := range topAdd {
 		info, err := contract_api.GetSuperNodeInfo(s.ctx, s.blockChainAPI, snAddr, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(number)))
 		if err != nil {
+			log.Error("Failed to GetSuperNodeInfo", "error", err)
 			continue
 		}
 
@@ -1348,8 +1346,6 @@ func (s *Spos) AddSuperNodePeer() int64 {
 		}
 		s.server.AddPeer(node)
 	}
-
-	return 0
 }
 
 func (s *Spos) LoopAddSuperNodePeer() {
@@ -1359,10 +1355,7 @@ func (s *Spos) LoopAddSuperNodePeer() {
 	for {
 		select {
 		case <-addSuperNodeTimer.C:
-			n := s.AddSuperNodePeer()
-			if n != 0 {
-				return
-			}
+			s.AddSuperNodePeer()
 		case <-s.quit:
 			return
 		}

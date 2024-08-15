@@ -2,6 +2,7 @@ package eth
 
 import (
 	"context"
+	"fmt"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/core/systemcontracts/contract_api"
@@ -10,9 +11,11 @@ import (
 	"github.com/ethereum/go-ethereum/event"
 	"github.com/ethereum/go-ethereum/internal/ethapi"
 	"github.com/ethereum/go-ethereum/log"
+	"github.com/ethereum/go-ethereum/p2p/enode"
 	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/status-im/keycard-go/hexutils"
 	"math/big"
+	"net"
 	"strings"
 	"sync"
 	"time"
@@ -145,18 +148,30 @@ func (monitor *NodeStateMonitor) loop() {
 						log.Warn("node-state-monitor", "ping", ping, "error", "verify signature failed")
 						break
 					}
-					monitor.lock.Lock()
-					monitor.mnMonitorInfos[ping.Id.Int64()] = MonitorInfo{StateRunning, 0, curTime}
-					monitor.lock.Unlock()
+					go func() {
+						if _, err := CheckConnection(info.Enode); err != nil {
+							log.Warn("node-state-monitor", "ping", ping, "error", err)
+							return
+						}
+						monitor.lock.Lock()
+						monitor.mnMonitorInfos[ping.Id.Int64()] = MonitorInfo{StateRunning, 0, curTime}
+						monitor.lock.Unlock()
+					}()
 				} else if nodeType == int64(types.SuperNodeType) {
 					info, err := contract_api.GetSuperNodeInfoByID(monitor.ctx, monitor.blockChainAPI, ping.Id, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(monitor.e.blockchain.CurrentBlock().Number().Int64())))
 					if err != nil || hexutils.BytesToHex(pub)[1:] == GetPubKeyFromEnode(info.Enode) {
 						log.Warn("node-state-monitor", "ping", ping, "error", "verify signature failed")
 						break
 					}
-					monitor.lock.Lock()
-					monitor.snMonitorInfos[ping.Id.Int64()] = MonitorInfo{StateRunning, 0, curTime}
-					monitor.lock.Unlock()
+					go func() {
+						if _, err := CheckConnection(info.Enode); err != nil {
+							log.Warn("node-state-monitor", "ping", ping, "error", err)
+							return
+						}
+						monitor.lock.Lock()
+						monitor.snMonitorInfos[ping.Id.Int64()] = MonitorInfo{StateRunning, 0, curTime}
+						monitor.lock.Unlock()
+					}()
 				}
 			}
 		}
@@ -491,4 +506,17 @@ func GetPubKeyFromEnode(enode string) string {
 	}
 	ret = enode[pos1+len("enode://") : pos2]
 	return ret
+}
+
+func CheckConnection(url string) (bool, error) {
+	node, err := enode.Parse(enode.ValidSchemes, url)
+	if err != nil {
+		return false, fmt.Errorf("invalid enode: %v", err)
+	}
+	conn, err := net.DialTimeout("tcp", fmt.Sprintf("%s:%d", node.IP(), node.TCP()), 5 * time.Second)
+	if err != nil {
+		return false, err
+	}
+	conn.Close()
+	return true, nil
 }

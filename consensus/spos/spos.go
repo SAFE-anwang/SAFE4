@@ -1309,7 +1309,7 @@ func (s *Spos) AddSuperNodePeer() {
 	number := s.chain.CurrentBlock().Number().Uint64()
 
 	node := s.server.Self()
-	Enode := node.URLv4()
+	Enode := contract_api.CompressEnode(node.URLv4())
 	exist, err := contract_api.ExistSuperNodeEnode(s.ctx, s.blockChainAPI, Enode, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(number)))
 	if !exist {
 		return
@@ -1340,7 +1340,7 @@ func (s *Spos) AddSuperNodePeer() {
 
 		peersInfo := s.server.PeersInfo()
 		for _, peer := range peersInfo {
-			if peer.Enode == info.Enode {
+			if contract_api.CompareEnode(peer.Enode, info.Enode) {
 				continue
 			}
 		}

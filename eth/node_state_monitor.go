@@ -75,7 +75,7 @@ func newNodeStateMonitor(e *Ethereum) (*NodeStateMonitor, error) {
 }
 
 func (monitor *NodeStateMonitor) Start() {
-	monitor.enode = monitor.e.p2pServer.NodeInfo().Enode
+	monitor.enode = contract_api.CompressEnode(monitor.e.p2pServer.NodeInfo().Enode)
 
 	monitor.wg.Add(1)
 	monitor.eventSub = monitor.e.eventMux.Subscribe(core.NodePingEvent{})
@@ -226,7 +226,7 @@ func (monitor *NodeStateMonitor) broadcastLoop() {
 			curBlock := monitor.e.blockchain.CurrentBlock()
 			info1, err := contract_api.GetSuperNodeInfo(monitor.ctx, monitor.blockChainAPI, addr, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(curBlock.Number().Int64())))
 			if err == nil && info1.Id.Int64() != 0 {
-				if !monitor.compareEnode(info1.Enode) {
+				if !contract_api.CompareEnode(monitor.enode, info1.Enode) {
 					if lastAddr != addr {
 						log.Error("broadcast-supernode-state", "local", monitor.enode, "state", info1.Enode, "error", "incompatible enode")
 						lastAddr = addr
@@ -241,7 +241,7 @@ func (monitor *NodeStateMonitor) broadcastLoop() {
 			} else {
 				info2, err := contract_api.GetMasterNodeInfo(monitor.ctx, monitor.blockChainAPI, addr, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(curBlock.Number().Int64())))
 				if err == nil && info2.Id.Int64() != 0 {
-					if !monitor.compareEnode(info2.Enode) {
+					if !contract_api.CompareEnode(monitor.enode, info2.Enode) {
 						if lastAddr != addr {
 							log.Error("broadcast-masternode-state", "local", monitor.enode, "state", info2.Enode, "error", "incompatible enode")
 							lastAddr = addr
@@ -304,7 +304,7 @@ func (monitor *NodeStateMonitor) isTopSuperNode(addr common.Address) bool {
 		if err != nil || info.Id.Int64() == 0 {
 			continue
 		}
-		if info.Addr == addr && monitor.compareEnode(info.Enode) {
+		if info.Addr == addr && contract_api.CompareEnode(monitor.enode, info.Enode) {
 			return true
 		}
 	}
@@ -317,7 +317,7 @@ func (monitor *NodeStateMonitor) isSuperNode(addr common.Address) bool {
 	if err != nil || info.Id.Int64() == 0 {
 		return false
 	}
-	return monitor.compareEnode(info.Enode)
+	return contract_api.CompareEnode(monitor.enode, info.Enode)
 }
 
 func (monitor *NodeStateMonitor) isMasterNode(addr common.Address) bool {
@@ -326,7 +326,7 @@ func (monitor *NodeStateMonitor) isMasterNode(addr common.Address) bool {
 	if err != nil || info.Id.Int64() == 0 {
 		return false
 	}
-	return monitor.compareEnode(info.Enode)
+	return contract_api.CompareEnode(monitor.enode, info.Enode)
 }
 
 func (monitor *NodeStateMonitor) collectMasterNodes(from common.Address) ([]*big.Int, []*big.Int) {
@@ -480,13 +480,6 @@ func (monitor *NodeStateMonitor) collectSuperNodes(from common.Address) ([]*big.
 func (monitor *NodeStateMonitor) isSyncing() bool {
 	progress := monitor.e.APIBackend.SyncProgress()
 	return progress.CurrentBlock < progress.HighestBlock
-}
-
-func (monitor *NodeStateMonitor) compareEnode(enode string) bool {
-	if len(monitor.enode) >= len(enode) {
-		return monitor.enode[0:len(enode)] == enode
-	}
-	return enode[0:len(monitor.enode)] == monitor.enode
 }
 
 func GetPubKeyFromEnode(enode string) string {

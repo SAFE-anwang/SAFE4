@@ -2,9 +2,10 @@ package contract_api
 
 import (
 	"context"
-    "math/big"
+	"math/big"
+	"strings"
 
-    "github.com/ethereum/go-ethereum/internal/ethapi"
+	"github.com/ethereum/go-ethereum/internal/ethapi"
 	"github.com/ethereum/go-ethereum/params"
 	"github.com/ethereum/go-ethereum/rpc"
 )
@@ -15,4 +16,16 @@ func GetCurrentGasPrice(ctx context.Context, blockChainAPI *ethapi.PublicBlockCh
 		gasPrice = big.NewInt(params.GWei / 100)
 	}
 	return gasPrice
+}
+
+func CompressEnode(enode string) string {
+	arr := strings.Split(enode, "?")
+	if len(arr) == 0 {
+		return enode
+	}
+	return arr[0]
+}
+
+func CompareEnode(e1, e2 string) bool {
+	return CompressEnode(e1) == CompressEnode(e2)
 }

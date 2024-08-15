@@ -12,7 +12,6 @@ import (
 	"github.com/ethereum/go-ethereum/log"
 	"github.com/ethereum/go-ethereum/rpc"
 	"math/big"
-	"strings"
 )
 
 type PublicMasterNodeAPI struct {
@@ -28,12 +27,7 @@ func NewPublicMasterNodeAPI(e *Ethereum) *PublicMasterNodeAPI {
 
 func (api *PublicMasterNodeAPI) Start(ctx context.Context, addr common.Address) (bool, error) {
 	if len(api.enode) == 0 {
-		temp := api.e.p2pServer.NodeInfo().Enode
-		arr := strings.Split(temp, "?")
-		if len(arr) == 0 {
-			return false, errors.New("start masternode failed, invalid local enode")
-		}
-		api.enode = arr[0]
+		api.enode = contract_api.CompressEnode(api.e.p2pServer.NodeInfo().Enode)
 	}
 
 	info, err := api.GetInfo(ctx, addr, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber))

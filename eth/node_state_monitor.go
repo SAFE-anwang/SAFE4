@@ -24,8 +24,10 @@ const (
 )
 
 const StateBroadcastDuration = 60
-const StateUploadDuration    = 120
+const StateUploadDuration = 120
 const MaxMissNum = 5
+
+const CoinbaseDuration = 5
 
 type MonitorInfo struct {
 	curState int64
@@ -34,28 +36,31 @@ type MonitorInfo struct {
 }
 
 type NodeStateMonitor struct {
-	ctx         context.Context
-	cancelCtx   context.CancelFunc
+	ctx       context.Context
+	cancelCtx context.CancelFunc
 
-	e           *Ethereum
-	blockChainAPI *ethapi.PublicBlockChainAPI
+	e                  *Ethereum
+	blockChainAPI      *ethapi.PublicBlockChainAPI
 	transactionPoolAPI *ethapi.PublicTransactionPoolAPI
 
-	eventSub    *event.TypeMuxSubscription
+	eventSub *event.TypeMuxSubscription
 
-	broadcastTicker        *time.Ticker
-	broadcastTickerStopCh  chan struct{}
+	broadcastTicker       *time.Ticker
+	broadcastTickerStopCh chan struct{}
 
-	uploadTicker      *time.Ticker
+	uploadTicker       *time.Ticker
 	uploadTickerStopCh chan struct{}
 
-	wg          sync.WaitGroup
-	lock        sync.RWMutex
+	coinbaseTicker *time.Ticker
+	coinbaseStopCh chan struct{}
 
-	mnMonitorInfos    map[int64]MonitorInfo
-	snMonitorInfos    map[int64]MonitorInfo
+	wg   sync.WaitGroup
+	lock sync.RWMutex
 
-	enode       string
+	mnMonitorInfos map[int64]MonitorInfo
+	snMonitorInfos map[int64]MonitorInfo
+
+	enode string
 }
 
 func newNodeStateMonitor(e *Ethereum) (*NodeStateMonitor, error) {
@@ -70,13 +75,7 @@ func newNodeStateMonitor(e *Ethereum) (*NodeStateMonitor, error) {
 }
 
 func (monitor *NodeStateMonitor) Start() {
-	temp := monitor.e.p2pServer.NodeInfo().Enode
-	arr := strings.Split(temp, "?")
-	if len(arr) == 0 {
-		log.Error("invalid local enode")
-		return
-	}
-	monitor.enode = arr[0]
+	monitor.enode = monitor.e.p2pServer.NodeInfo().Enode
 
 	monitor.wg.Add(1)
 	monitor.eventSub = monitor.e.eventMux.Subscribe(core.NodePingEvent{})
@@ -91,6 +90,11 @@ func (monitor *NodeStateMonitor) Start() {
 	monitor.broadcastTicker = time.NewTicker(StateBroadcastDuration * time.Second)
 	monitor.broadcastTickerStopCh = make(chan struct{})
 	go monitor.broadcastLoop()
+
+	monitor.wg.Add(1)
+	monitor.coinbaseTicker = time.NewTicker(CoinbaseDuration * time.Second)
+	monitor.coinbaseStopCh = make(chan struct{})
+	go monitor.coinbaseLoop()
 }
 
 func (monitor *NodeStateMonitor) Stop() {
@@ -99,6 +103,8 @@ func (monitor *NodeStateMonitor) Stop() {
 	monitor.uploadTicker.Stop()
 	monitor.broadcastTickerStopCh <- struct{}{}
 	monitor.broadcastTicker.Stop()
+	monitor.coinbaseStopCh <- struct{}{}
+	monitor.coinbaseTicker.Stop()
 	monitor.wg.Wait()
 	monitor.cancelCtx()
 	log.Info("Node monitor stopped")
@@ -114,7 +120,7 @@ func (monitor *NodeStateMonitor) loop() {
 			}
 
 			addr, err := monitor.e.Etherbase()
-			if err == nil && monitor.isSuperNode(addr) {
+			if err == nil && monitor.isTopSuperNode(addr) {
 				ping := ev.Ping
 				log.Trace("node-state-monitor", "ping", ping)
 
@@ -159,24 +165,24 @@ func (monitor *NodeStateMonitor) loop() {
 
 func (monitor *NodeStateMonitor) uploadLoop() {
 	defer monitor.wg.Done()
-	lastAddr := common.Address{}
+	once := 1
 	for {
 		select {
-		case <- monitor.uploadTickerStopCh:
+		case <-monitor.uploadTickerStopCh:
 			return
-		case <- monitor.uploadTicker.C:
+		case <-monitor.uploadTicker.C:
+			if monitor.isSyncing() {
+				if once == 1 {
+					log.Info("syncing now, wait upload...")
+					once = 0
+				}
+				break
+			}
 			addr, err := monitor.e.Etherbase()
 			if err != nil {
 				break
 			}
-			if monitor.isSyncing() {
-				if lastAddr != addr {
-					log.Info("syncing now, wait upload...")
-					lastAddr = addr
-				}
-				break
-			}
-			if monitor.isSuperNode(addr) {
+			if monitor.isTopSuperNode(addr) {
 				monitor.lock.Lock()
 				mnIDs, mnStates := monitor.collectMasterNodes(addr)
 				snIDs, snStates := monitor.collectSuperNodes(addr)
@@ -198,29 +204,29 @@ func (monitor *NodeStateMonitor) uploadLoop() {
 func (monitor *NodeStateMonitor) broadcastLoop() {
 	defer monitor.wg.Done()
 	lastAddr := common.Address{}
+	once := 1
 	for {
 		select {
-		case <- monitor.broadcastTickerStopCh:
+		case <-monitor.broadcastTickerStopCh:
 			return
-		case <- monitor.broadcastTicker.C:
-			addr, err := monitor.e.Etherbase()
-			if err != nil {
-				break
-			}
-
+		case <-monitor.broadcastTicker.C:
 			if monitor.isSyncing() {
-				if lastAddr != addr {
+				if once == 1 {
 					log.Info("syncing now, wait broadcast...")
-					lastAddr = addr
+					once = 0
 				}
 				break
 			}
 
+			addr, err := monitor.e.Etherbase()
+			if err != nil {
+				break
+			}
 			curTime := time.Now().Unix()
 			curBlock := monitor.e.blockchain.CurrentBlock()
 			info1, err := contract_api.GetSuperNodeInfo(monitor.ctx, monitor.blockChainAPI, addr, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(curBlock.Number().Int64())))
 			if err == nil && info1.Id.Int64() != 0 {
-				if monitor.enode != info1.Enode {
+				if !monitor.compareEnode(info1.Enode) {
 					if lastAddr != addr {
 						log.Error("broadcast-supernode-state", "local", monitor.enode, "state", info1.Enode, "error", "incompatible enode")
 						lastAddr = addr
@@ -235,7 +241,7 @@ func (monitor *NodeStateMonitor) broadcastLoop() {
 			} else {
 				info2, err := contract_api.GetMasterNodeInfo(monitor.ctx, monitor.blockChainAPI, addr, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(curBlock.Number().Int64())))
 				if err == nil && info2.Id.Int64() != 0 {
-					if monitor.enode != info2.Enode {
+					if !monitor.compareEnode(info2.Enode) {
 						if lastAddr != addr {
 							log.Error("broadcast-masternode-state", "local", monitor.enode, "state", info2.Enode, "error", "incompatible enode")
 							lastAddr = addr
@@ -253,7 +259,41 @@ func (monitor *NodeStateMonitor) broadcastLoop() {
 	}
 }
 
-func (monitor *NodeStateMonitor) isSuperNode(addr common.Address) bool {
+func (monitor *NodeStateMonitor) coinbaseLoop() {
+	defer monitor.wg.Done()
+	for {
+		select {
+		case <-monitor.coinbaseStopCh:
+			return
+		case <-monitor.coinbaseTicker.C:
+			wallets := monitor.e.AccountManager().Wallets()
+			flag := false
+			for _, wallet := range wallets {
+				accounts := wallet.Accounts()
+				for _, account := range accounts {
+					if monitor.isSuperNode(account.Address) {
+						monitor.e.SetEtherbase(account.Address)
+						flag = true
+						break
+					}
+				}
+			}
+			if !flag {
+				for _, wallet := range wallets {
+					accounts := wallet.Accounts()
+					for _, account := range accounts {
+						if monitor.isMasterNode(account.Address) {
+							monitor.e.SetEtherbase(account.Address)
+							break
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+func (monitor *NodeStateMonitor) isTopSuperNode(addr common.Address) bool {
 	blockNrOrHash := rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(monitor.e.blockchain.CurrentBlock().Number().Int64()))
 	topAddrs, err := contract_api.GetTopSuperNodes(monitor.ctx, monitor.blockChainAPI, blockNrOrHash)
 	if err != nil {
@@ -264,11 +304,29 @@ func (monitor *NodeStateMonitor) isSuperNode(addr common.Address) bool {
 		if err != nil || info.Id.Int64() == 0 {
 			continue
 		}
-		if info.Addr == addr && info.Enode == monitor.enode {
+		if info.Addr == addr && monitor.compareEnode(info.Enode) {
 			return true
 		}
 	}
 	return false
+}
+
+func (monitor *NodeStateMonitor) isSuperNode(addr common.Address) bool {
+	blockNrOrHash := rpc.BlockNumberOrHashWithNumber(rpc.PendingBlockNumber)
+	info, err := contract_api.GetSuperNodeInfo(monitor.ctx, monitor.blockChainAPI, addr, blockNrOrHash)
+	if err != nil || info.Id.Int64() == 0 {
+		return false
+	}
+	return monitor.compareEnode(info.Enode)
+}
+
+func (monitor *NodeStateMonitor) isMasterNode(addr common.Address) bool {
+	blockNrOrHash := rpc.BlockNumberOrHashWithNumber(rpc.PendingBlockNumber)
+	info, err := contract_api.GetMasterNodeInfo(monitor.ctx, monitor.blockChainAPI, addr, blockNrOrHash)
+	if err != nil || info.Id.Int64() == 0 {
+		return false
+	}
+	return monitor.compareEnode(info.Enode)
 }
 
 func (monitor *NodeStateMonitor) collectMasterNodes(from common.Address) ([]*big.Int, []*big.Int) {
@@ -282,7 +340,7 @@ func (monitor *NodeStateMonitor) collectMasterNodes(from common.Address) ([]*big
 	}
 
 	batch := num.Int64() / 100
-	if num.Int64() % 100 != 0 {
+	if num.Int64()%100 != 0 {
 		batch++
 	}
 
@@ -306,7 +364,7 @@ func (monitor *NodeStateMonitor) collectMasterNodes(from common.Address) ([]*big
 	for _, info = range infos {
 		id := info.Id.Int64()
 		if v, ok := monitor.mnMonitorInfos[id]; ok {
-			if v.curState != StateRunning || curTime > v.lastTime + StateUploadDuration {
+			if v.curState != StateRunning || curTime > v.lastTime+StateUploadDuration {
 				v.curState = StateStop
 				v.missNum++
 				v.lastTime = curTime
@@ -356,7 +414,7 @@ func (monitor *NodeStateMonitor) collectSuperNodes(from common.Address) ([]*big.
 	}
 
 	batch := num.Int64() / 100
-	if num.Int64() % 100 != 0 {
+	if num.Int64()%100 != 0 {
 		batch++
 	}
 
@@ -380,7 +438,7 @@ func (monitor *NodeStateMonitor) collectSuperNodes(from common.Address) ([]*big.
 	for _, info = range infos {
 		id := info.Id.Int64()
 		if v, ok := monitor.snMonitorInfos[id]; ok {
-			if v.curState != StateRunning || curTime > v.lastTime + StateUploadDuration {
+			if v.curState != StateRunning || curTime > v.lastTime+StateUploadDuration {
 				v.curState = StateStop
 				v.missNum++
 				v.lastTime = curTime
@@ -424,6 +482,13 @@ func (monitor *NodeStateMonitor) isSyncing() bool {
 	return progress.CurrentBlock < progress.HighestBlock
 }
 
+func (monitor *NodeStateMonitor) compareEnode(enode string) bool {
+	if len(monitor.enode) >= len(enode) {
+		return monitor.enode[0:len(enode)] == enode
+	}
+	return enode[0:len(monitor.enode)] == monitor.enode
+}
+
 func GetPubKeyFromEnode(enode string) string {
 	ret := ""
 	pos1 := strings.Index(enode, "enode://")
@@ -431,6 +496,6 @@ func GetPubKeyFromEnode(enode string) string {
 	if pos1 == -1 || pos2 == -1 {
 		return ret
 	}
-	ret = enode[pos1 + len("enode://") : pos2]
+	ret = enode[pos1+len("enode://") : pos2]
 	return ret
 }

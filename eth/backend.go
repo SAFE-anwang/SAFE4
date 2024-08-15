@@ -434,20 +434,21 @@ func (s *Ethereum) Etherbase() (eb common.Address, err error) {
 	etherbase := s.etherbase
 	s.lock.RUnlock()
 
+	accounts := s.AccountManager().Accounts()
 	if etherbase != (common.Address{}) {
-		return etherbase, nil
-	}
-	if wallets := s.AccountManager().Wallets(); len(wallets) > 0 {
-		if accounts := wallets[0].Accounts(); len(accounts) > 0 {
-			etherbase := accounts[0].Address
-
-			s.lock.Lock()
-			s.etherbase = etherbase
-			s.lock.Unlock()
-
-			log.Info("Etherbase automatically configured", "address", etherbase)
-			return etherbase, nil
+		for _, account := range accounts {
+			if account == etherbase {
+				return etherbase, nil
+			}
 		}
+	}
+	if len(accounts) > 0 {
+		etherbase = accounts[0]
+		s.lock.Lock()
+		s.etherbase = etherbase
+		s.lock.Unlock()
+		log.Info("Etherbase automatically configured", "address", etherbase)
+		return etherbase, nil
 	}
 	return common.Address{}, fmt.Errorf("etherbase must be explicitly specified")
 }

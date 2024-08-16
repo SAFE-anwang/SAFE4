@@ -1239,53 +1239,54 @@ func (s *Spos) CalcRewardTxGas(header *types.Header, state *state.StateDB) uint6
 }
 
 func (s *Spos) CheckRewardTransaction(block *types.Block) error{
-	blocknumber := block.Number().Uint64()
-	for _, transaction := range block.Transactions() {
-		if transaction.To() != nil && *transaction.To() == systemcontracts.SystemRewardContractAddr {
-			vABI, err := abi.JSON(strings.NewReader(systemcontracts.SystemRewardABI))
-			if err != nil {
-				return  err
-			}
+	transactions := block.Transactions()
+	transaction := transactions[transactions.Len() - 1]
 
-			inputdata := transaction.Data()
-			method, err := vABI.MethodById(inputdata)
-			if err != nil {
-				return err
-			}
+	if transaction.To() == nil || *transaction.To() != systemcontracts.SystemRewardContractAddr {
+		return fmt.Errorf("missing system-reward-tx")
+	}
 
-			inputsMap := make(map[string]interface{})
-			if err := method.Inputs.UnpackIntoMap(inputsMap, inputdata[4:]); err != nil {
-				return err
-			}
+	vABI, err := abi.JSON(strings.NewReader(systemcontracts.SystemRewardABI))
+	if err != nil {
+		return  err
+	}
 
-			snCount := inputsMap["_snAmount"].(*big.Int)
-			mnCount := inputsMap["_mnAmount"].(*big.Int)
-			ppCount := inputsMap["_ppAmount"].(*big.Int)
-			ppAddr := inputsMap["_ppAddr"].(common.Address)
-			snAddr := inputsMap["_snAddr"].(common.Address)
-			mnAddr := inputsMap["_mnAddr"].(common.Address)
+	inputdata := transaction.Data()
+	method, err := vABI.MethodById(inputdata)
+	if err != nil {
+		return err
+	}
+	inputsMap := make(map[string]interface{})
+	if err := method.Inputs.UnpackIntoMap(inputsMap, inputdata[4:]); err != nil {
+		return err
+	}
+	snCount := inputsMap["_snAmount"].(*big.Int)
+	mnCount := inputsMap["_mnAmount"].(*big.Int)
+	ppCount := inputsMap["_ppAmount"].(*big.Int)
+	ppAddr := inputsMap["_ppAddr"].(common.Address)
+	snAddr := inputsMap["_snAddr"].(common.Address)
+	mnAddr := inputsMap["_mnAddr"].(common.Address)
 
-			signer := types.MakeSigner(s.chainConfig, block.Number())
-			from, err := signer.Sender(transaction)
-			if err != nil {
-				return err
-			}
+	signer := types.MakeSigner(s.chainConfig, block.Number())
+	from, err := signer.Sender(transaction)
+	if err != nil {
+		return err
+	}
 
-			totalReward := getBlockSubsidy(blocknumber, withoutSuperBlockPart)
-			masterNodePayment := getMasternodePayment(totalReward)
-			superNodeReward := new(big.Int).Sub(totalReward, masterNodePayment)
-			proposalReward := getBlockSubsidy(blocknumber, onlySuperBlockPart)
+	blocknumber := block.NumberU64()
+	totalReward := getBlockSubsidy(blocknumber, withoutSuperBlockPart)
+	masterNodePayment := getMasternodePayment(totalReward)
+	superNodeReward := new(big.Int).Sub(totalReward, masterNodePayment)
+	proposalReward := getBlockSubsidy(blocknumber, onlySuperBlockPart)
 
-			nextMNAddr, err := contract_api.GetNextMasterNode(s.ctx, s.blockChainAPI, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(block.Number().Int64() - 1)))
-			if err != nil {
-				return err
-			}
+	nextMNAddr, err := contract_api.GetNextMasterNode(s.ctx, s.blockChainAPI, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(blocknumber - 1)))
+	if err != nil {
+		return err
+	}
 
-			if snCount.Cmp(superNodeReward) != 0 || mnCount.Cmp(masterNodePayment) != 0 || ppCount.Cmp(proposalReward) != 0 || ppAddr != systemcontracts.ProposalContractAddr || mnAddr != nextMNAddr || from != snAddr{
-				return fmt.Errorf("invalid greward (snCount: %d superNodeReward: %d mnCount:%d masterNodePayment:%d from:%s snAddr:%s mnAddr:%s nextMNAddr:%s ppAddr:%s)", snCount, superNodeReward,
-					mnCount, masterNodePayment, from.Hex(), snAddr.Hex(), mnAddr.Hex(), nextMNAddr.Hex(), ppAddr.Hex())
-			}
-		}
+	if snCount.Cmp(superNodeReward) != 0 || mnCount.Cmp(masterNodePayment) != 0 || ppCount.Cmp(proposalReward) != 0 || ppAddr != systemcontracts.ProposalContractAddr || mnAddr != nextMNAddr || from != snAddr || block.Coinbase() != snAddr {
+		return fmt.Errorf("invalid greward (snCount: %d superNodeReward: %d mnCount:%d masterNodePayment:%d from:%s snAddr:%s miner: %s mnAddr:%s nextMNAddr:%s ppAddr:%s)", snCount, superNodeReward,
+			mnCount, masterNodePayment, from.Hex(), snAddr.Hex(), block.Coinbase(), mnAddr.Hex(), nextMNAddr.Hex(), ppAddr.Hex())
 	}
 
 	return nil

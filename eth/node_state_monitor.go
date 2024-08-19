@@ -150,7 +150,7 @@ func (monitor *NodeStateMonitor) loop() {
 					}
 					go func() {
 						if _, err := CheckConnection(info.Enode); err != nil {
-							log.Warn("node-state-monitor", "ping", ping, "error", err)
+							log.Trace("node-state-monitor", "ping", ping, "error", err)
 							return
 						}
 						monitor.lock.Lock()
@@ -165,7 +165,7 @@ func (monitor *NodeStateMonitor) loop() {
 					}
 					go func() {
 						if _, err := CheckConnection(info.Enode); err != nil {
-							log.Warn("node-state-monitor", "ping", ping, "error", err)
+							log.Trace("node-state-monitor", "ping", ping, "error", err)
 							return
 						}
 						monitor.lock.Lock()

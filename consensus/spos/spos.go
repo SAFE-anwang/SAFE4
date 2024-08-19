@@ -1313,7 +1313,39 @@ func (s *Spos) AddSuperNodePeer() {
 	Enode := contract_api.CompressEnode(node.URLv4())
 	exist, err := contract_api.ExistSuperNodeEnode(s.ctx, s.blockChainAPI, Enode, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(number)))
 	if !exist {
-		return
+		peerCount := s.server.PeerCount()
+		if peerCount != 0 {
+			return
+		}else{
+			topAdd, err := contract_api.GetTopSuperNodes(s.ctx, s.blockChainAPI, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(number)))
+			if err != nil {
+				log.Error("Failed to GetTopSuperNodes", "error", err)
+				return
+			}
+
+			if len(topAdd) == 0 {
+				log.Error("topAdd is null")
+				return
+			}
+
+			rand.Seed(time.Now().UnixNano())
+			randomIndex := rand.Intn(len(topAdd))
+			randomSuperNodeAdd := topAdd[randomIndex]
+			info, err := contract_api.GetSuperNodeInfo(s.ctx, s.blockChainAPI, randomSuperNodeAdd, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(number)))
+			if err != nil {
+				log.Error("Failed to GetSuperNodeInfo", "error", err)
+				return
+			}
+
+			node, err := enode.Parse(enode.ValidSchemes, info.Enode)
+			if err != nil {
+				log.Error("invalid enode")
+				return
+			}
+
+			s.server.AddPeer(node)
+			return
+		}
 	}
 
 	topAdd, err := contract_api.GetTopSuperNodes(s.ctx, s.blockChainAPI, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(number)))

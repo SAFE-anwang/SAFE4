@@ -148,7 +148,7 @@ func (monitor *NodeStateMonitor) loop() {
 						log.Warn("node-state-monitor", "ping", ping, "error", "verify signature failed")
 						break
 					}
-					go func() {
+					/*go func() {
 						if _, err := CheckConnection(info.Enode); err != nil {
 							log.Trace("node-state-monitor", "ping", ping, "error", err)
 							return
@@ -156,14 +156,24 @@ func (monitor *NodeStateMonitor) loop() {
 						monitor.lock.Lock()
 						monitor.mnMonitorInfos[ping.Id.Int64()] = MonitorInfo{StateRunning, 0, curTime}
 						monitor.lock.Unlock()
-					}()
+					}()*/
+
+					if _, err := CheckPublicIP(info.Enode); err != nil {
+						log.Trace("node-state-monitor", "ping", ping, "error", err)
+						return
+					}
+
+					monitor.lock.Lock()
+					monitor.mnMonitorInfos[ping.Id.Int64()] = MonitorInfo{StateRunning, 0, curTime}
+					monitor.lock.Unlock()
+
 				} else if nodeType == int64(types.SuperNodeType) {
 					info, err := contract_api.GetSuperNodeInfoByID(monitor.ctx, monitor.blockChainAPI, ping.Id, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(monitor.e.blockchain.CurrentBlock().Number().Int64())))
 					if err != nil || hexutils.BytesToHex(pub)[1:] == GetPubKeyFromEnode(info.Enode) {
 						log.Warn("node-state-monitor", "ping", ping, "error", "verify signature failed")
 						break
 					}
-					go func() {
+					/*go func() {
 						if _, err := CheckConnection(info.Enode); err != nil {
 							log.Trace("node-state-monitor", "ping", ping, "error", err)
 							return
@@ -172,6 +182,16 @@ func (monitor *NodeStateMonitor) loop() {
 						monitor.snMonitorInfos[ping.Id.Int64()] = MonitorInfo{StateRunning, 0, curTime}
 						monitor.lock.Unlock()
 					}()
+					 */
+
+					if _, err := CheckPublicIP(info.Enode); err != nil {
+						log.Trace("node-state-monitor", "ping", ping, "error", err)
+						return
+					}
+
+					monitor.lock.Lock()
+					monitor.snMonitorInfos[ping.Id.Int64()] = MonitorInfo{StateRunning, 0, curTime}
+					monitor.lock.Unlock()
 				}
 			}
 		}
@@ -508,6 +528,7 @@ func GetPubKeyFromEnode(enode string) string {
 	return ret
 }
 
+/*
 func CheckConnection(url string) (bool, error) {
 	node, err := enode.Parse(enode.ValidSchemes, url)
 	if err != nil {
@@ -518,5 +539,41 @@ func CheckConnection(url string) (bool, error) {
 		return false, err
 	}
 	conn.Close()
+	return true, nil
+}*/
+
+func isPrivateIP(ip net.IP) bool {
+	privateIPRange := []string{
+		"10.0.0.0/8",
+		"172.16.0.0/12",
+		"192.168.0.0/16",
+	}
+
+	for _, cidr := range privateIPRange {
+		_, ipRange, _ := net.ParseCIDR(cidr)
+		if ipRange.Contains(ip) {
+			return true
+		}
+	}
+
+	return false
+}
+
+func CheckPublicIP(url string) (bool, error) {
+	node, err := enode.Parse(enode.ValidSchemes, url)
+	if err != nil {
+		return false, fmt.Errorf("invalid enode: %v", err)
+	}
+
+	ip := node.IP()
+	if ip == nil {
+		return false, fmt.Errorf("invalid ip")
+	}
+
+	privateIPFlag := isPrivateIP(ip)
+	if privateIPFlag {
+		return false, fmt.Errorf("The node's IP is a private IP")
+	}
+
 	return true, nil
 }

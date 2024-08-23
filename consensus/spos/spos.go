@@ -438,7 +438,7 @@ func (s *Spos) verifyCascadingFields(chain consensus.ChainHeaderReader, header *
 		return consensus.ErrUnknownAncestor
 	}
 
-	blockPeriod, err := s.GetBlockPeriod(header)
+	blockPeriod, err := s.GetBlockPeriod(number - 1)
 	if err != nil {
 		return err
 	}
@@ -724,7 +724,7 @@ func (s *Spos) Prepare(chain consensus.ChainHeaderReader, header *types.Header) 
 		return consensus.ErrUnknownAncestor
 	}
 
-	blockPeriod, err := s.GetBlockPeriod(header)
+	blockPeriod, err := s.GetBlockPeriod(number - 1)
 	if err!= nil {
 		return err
 	}
@@ -799,7 +799,7 @@ func (s *Spos) Seal(chain consensus.ChainHeaderReader, block *types.Block, resul
 		return errUnknownBlock
 	}
 
-	blockPeriod,err := s.GetBlockPeriod(header)
+	blockPeriod,err := s.GetBlockPeriod(number - 1)
 	if err != nil {
 		return err
 	}
@@ -1292,8 +1292,8 @@ func (s *Spos) CheckRewardTransaction(block *types.Block) error{
 	return nil
 }
 
-func (s *Spos) GetBlockPeriod(header *types.Header) (uint64, error){
-	blockPeriod, err := contract_api.GetPropertyValue(s.ctx, s.blockChainAPI, "block_space", rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(header.Number.Int64() - 1)))
+func (s *Spos) GetBlockPeriod(number uint64) (uint64, error){
+	blockPeriod, err := contract_api.GetPropertyValue(s.ctx, s.blockChainAPI, "block_space", rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(number)))
 	if err != nil {
 		return 0, err
 	}

@@ -453,18 +453,21 @@ func (w *worker) newWorkLoop(recommit time.Duration) {
 		w.pendingMu.Unlock()
 	}
 
+	lastCommitTime := uint64(time.Now().Unix())
 	for {
 		select {
 		case <-w.startCh:
 			clearPending(w.chain.CurrentBlock().NumberU64())
 			timestamp = time.Now().Unix()
 			commit(false, commitInterruptNewHead)
+			lastCommitTime = uint64(time.Now().Unix())
 
 		case head := <-w.chainHeadCh:
 			clearPending(head.Block.NumberU64())
 			timestamp = time.Now().Unix()
 
 			commit(false, commitInterruptNewHead)
+			lastCommitTime = uint64(time.Now().Unix())
 
 		case <-timer.C:
 			// If sealing is running resubmit a new work cycle periodically to pull in
@@ -474,10 +477,25 @@ func (w *worker) newWorkLoop(recommit time.Duration) {
 				w.chainConfig.Clique.Period > 0) || (w.chainConfig.Spos != nil)) {
 				// Short circuit if no new transaction arrives.
 				if atomic.LoadInt32(&w.newTxs) == 0 {
+					if w.chainConfig.Spos != nil {
+						parent := w.chain.CurrentBlock()
+						period, err := w.engine.(*spos.Spos).GetBlockPeriod(parent.NumberU64())
+						if err != nil {
+							timer.Reset(recommit)
+							continue
+						}
+						curTime := uint64(time.Now().Unix())
+						if curTime >= parent.Time() + 4 * period && curTime >= lastCommitTime + period {
+							commit(true, commitInterruptResubmit)
+							lastCommitTime = curTime
+							continue
+						}
+					}
 					timer.Reset(recommit)
 					continue
 				}
 				commit(true, commitInterruptResubmit)
+				lastCommitTime = uint64(time.Now().Unix())
 			}
 
 		case interval := <-w.resubmitIntervalCh:

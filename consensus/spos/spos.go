@@ -88,45 +88,23 @@ var (
 	diffNoTurn = big.NewInt(1) // Block difficulty for out-of-turn signatures
 )
 
-//var SposTxLock    sync.RWMutex
-//var MinerRewardTx *types.Transaction
-var ReceiptsLock  sync.RWMutex
-var Receipts []*types.Receipt
+var rewardLock  sync.RWMutex
+var retReceipts []*types.Receipt
+var retTxs      []*types.Transaction
 
-func SetReceipts(receipts []*types.Receipt){
-	ReceiptsLock.Lock()
-	defer ReceiptsLock.Unlock()
-	Receipts = make([]*types.Receipt, len(receipts))
-	copy(Receipts, receipts)
+func SetReceiptTxs(receipts []*types.Receipt, txs []*types.Transaction) {
+	rewardLock.Lock()
+	defer rewardLock.Unlock()
+	retReceipts = make([]*types.Receipt, len(receipts))
+	copy(retReceipts, receipts)
+	retTxs = make([]*types.Transaction, len(txs))
+	copy(retTxs, txs)
 }
 
-func GetReceipts() []*types.Receipt{
-	var receipts []*types.Receipt
-
-	ReceiptsLock.Lock()
-	receipts = make([]*types.Receipt, len(Receipts))
-	copy(receipts, Receipts)
-	ReceiptsLock.Unlock()
-	return receipts
-}
-
-var TxsLock  sync.RWMutex
-var Txs []*types.Transaction
-func SetTxs(txs []*types.Transaction){
-	TxsLock.Lock()
-	defer TxsLock.Unlock()
-	Txs = make([]*types.Transaction, len(txs))
-	copy(Txs, txs)
-}
-
-func GetTxs() []*types.Transaction{
-	var txs []*types.Transaction
-
-	TxsLock.Lock()
-	txs = make([]*types.Transaction, len(Receipts))
-	copy(txs, Txs)
-	TxsLock.Unlock()
-	return txs
+func GetReceiptTxs() ([]*types.Receipt, []*types.Transaction) {
+	rewardLock.Lock()
+	defer rewardLock.Unlock()
+	return retReceipts, retTxs
 }
 
 var CompleteBlockLock sync.RWMutex
@@ -139,11 +117,9 @@ func SetCompleteBlockFlag(flag bool) {
 }
 
 func GetCompleteBlockFlag() bool {
-	var flag bool
 	CompleteBlockLock.Lock()
 	defer CompleteBlockLock.Unlock()
-	flag = CompleteBlockFlag
-	return flag
+	return CompleteBlockFlag
 }
 
 // Various error messages to mark blocks invalid. These should be private to
@@ -1172,9 +1148,7 @@ func (s *Spos) Reward(snAddr common.Address, snCount *big.Int, mnAddr common.Add
 
 	*txs = append(*txs, tx)
 	*receipts = append(*receipts, receipt)
-
-	SetReceipts(*receipts)
-	SetTxs(*txs)
+	SetReceiptTxs(*receipts, *txs)
 	return tx, err
 }
 

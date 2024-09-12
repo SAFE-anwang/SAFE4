@@ -1232,8 +1232,7 @@ func (w *worker) commit(env *environment, interval func(), update bool, start ti
 
 		if _, ok := w.engine.(*spos.Spos); ok {
 			if update {
-				env.receipts = spos.GetReceipts()
-				env.txs = spos.GetTxs()
+				env.receipts, env.txs = spos.GetReceiptTxs()
 				env.tcount = len(env.txs)
 			}
 		}

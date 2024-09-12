@@ -739,17 +739,12 @@ func (s *Spos) Prepare(chain consensus.ChainHeaderReader, header *types.Header) 
 
 // Finalize implements consensus.Engine, ensuring no uncles are set
 func (s *Spos) Finalize(chain consensus.ChainHeaderReader, header *types.Header, state *state.StateDB, txs []*types.Transaction, uncles []*types.Header) {
-	accumulateRewards(state, header)
-
 	header.Root = state.IntermediateRoot(chain.Config().IsEIP158(header.Number))
 	header.UncleHash = types.CalcUncleHash(nil)
 }
 
 // FinalizeAndAssemble implements consensus.Engine, ensuring no uncles are set, and returns the final block.
 func (s *Spos) FinalizeAndAssemble(chain consensus.ChainHeaderReader, header *types.Header, state *state.StateDB, txs []*types.Transaction, uncles []*types.Header, receipts []*types.Receipt) (*types.Block, error) {
-	// Finalize block
-	s.Finalize(chain, header, state, txs, uncles)
-
 	completeBlockFlag := GetCompleteBlockFlag()
 
 	//clearExpiredBlockRewardData(number)
@@ -758,6 +753,7 @@ func (s *Spos) FinalizeAndAssemble(chain consensus.ChainHeaderReader, header *ty
 	//distributeRewardFlag := getDistributeRewardFlag(number)
 
 	if completeBlockFlag {
+		accumulateRewards(state, header)
 		_, err := s.distributeReward(header, state, &txs, &receipts)
 		if err != nil {
 			return nil, err

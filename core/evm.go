@@ -133,5 +133,7 @@ func IsSpecialContract(addr *common.Address) bool {
 	if addr == nil {
 		return false
 	}
-	return *addr == systemcontracts.SystemRewardContractAddr
+	return *addr == systemcontracts.SystemRewardContractAddr ||
+		*addr == systemcontracts.MasterNodeStateContractAddr ||
+		*addr == systemcontracts.SuperNodeStateContractAddr
 }

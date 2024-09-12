@@ -873,8 +873,8 @@ func (w *worker) commitTransaction(env *environment, tx *types.Transaction) ([]*
 
 func (w *worker) commitTransactions(env *environment, txs *types.TransactionsByPriceAndNonce, interrupt *int32) error {
 	gasLimit := env.header.GasLimit
-	if e, ok := w.engine.(*spos.Spos); ok {
-		gasLimit -= e.CalcRewardTxGas(env.header, env.state)
+	if _, ok := w.engine.(*spos.Spos); ok {
+		gasLimit -= params.MaxSystemRewardTxGas
 	}
 	if env.gasPool == nil {
 		env.gasPool = new(core.GasPool).AddGas(gasLimit)

@@ -730,8 +730,7 @@ func (s *Spos) FinalizeAndAssemble(chain consensus.ChainHeaderReader, header *ty
 
 	if completeBlockFlag {
 		accumulateRewards(state, header)
-		_, err := s.distributeReward(header, state, &txs, &receipts)
-		if err != nil {
+		if err := s.distributeReward(header, state, &txs, &receipts); err != nil {
 			return nil, err
 		}
 	}
@@ -1090,29 +1089,29 @@ func getMasternodePayment(blockReward *big.Int) *big.Int {
 	return new(big.Int).SetUint64(masternodePayment)
 }
 
-func (s *Spos) distributeReward(header *types.Header, state *state.StateDB, txs *[]*types.Transaction, receipts *[]*types.Receipt) (*types.Transaction, error) {
+func (s *Spos) distributeReward(header *types.Header, state *state.StateDB, txs *[]*types.Transaction, receipts *[]*types.Receipt) error {
 	number := header.Number.Uint64()
 	totalReward := getBlockSubsidy(number, withoutSuperBlockPart)
 	masterNodePayment := getMasternodePayment(totalReward)
 	superNodeReward := new(big.Int).Sub(totalReward, masterNodePayment)
 	mnAddr, err := contract_api.GetNextMasterNode(s.ctx, s.blockChainAPI, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(header.Number.Int64() - 1)))
 	if err != nil {
-		return nil, err
+		return err
 	}
 	ppAddr := systemcontracts.ProposalContractAddr
 	ppAmount := getBlockSubsidy(number, onlySuperBlockPart)
 	return s.Reward(header.Coinbase, superNodeReward, mnAddr, masterNodePayment, ppAddr, ppAmount, header, state, txs, receipts)
 }
 
-func (s *Spos) Reward(snAddr common.Address, snCount *big.Int, mnAddr common.Address, mnCount *big.Int, ppAddr common.Address, ppCount *big.Int, header *types.Header, state *state.StateDB, txs *[]*types.Transaction, receipts *[]*types.Receipt) (*types.Transaction, error){
+func (s *Spos) Reward(snAddr common.Address, snCount *big.Int, mnAddr common.Address, mnCount *big.Int, ppAddr common.Address, ppCount *big.Int, header *types.Header, state *state.StateDB, txs *[]*types.Transaction, receipts *[]*types.Receipt) error {
 	vABI, err := abi.JSON(strings.NewReader(systemcontracts.SystemRewardABI))
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	data, err := vABI.Pack("reward", snAddr, snCount, mnAddr, mnCount, ppAddr, ppCount)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	value := new(big.Int)
@@ -1134,7 +1133,7 @@ func (s *Spos) Reward(snAddr common.Address, snCount *big.Int, mnAddr common.Add
 	rawTx := args.ToTransaction()
 	tx, err := s.signTxFn(accounts.Account{Address: snAddr}, rawTx, s.chainConfig.ChainID)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	state.Prepare(tx.Hash(), len(*txs))
@@ -1143,13 +1142,13 @@ func (s *Spos) Reward(snAddr common.Address, snCount *big.Int, mnAddr common.Add
 	receipt, err := core.ApplyTransaction(s.chainConfig, s.chain, &header.Coinbase, gasPool, state, header, tx, &header.GasUsed, *s.chain.GetVMConfig())
 	if err != nil {
 		state.RevertToSnapshot(snap)
-		return nil, err
+		return err
 	}
 
 	*txs = append(*txs, tx)
 	*receipts = append(*receipts, receipt)
 	SetReceiptTxs(*receipts, *txs)
-	return tx, err
+	return err
 }
 
 func (s *Spos) CheckRewardTransaction(block *types.Block) error{

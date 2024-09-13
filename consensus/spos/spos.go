@@ -721,14 +721,7 @@ func (s *Spos) Finalize(chain consensus.ChainHeaderReader, header *types.Header,
 
 // FinalizeAndAssemble implements consensus.Engine, ensuring no uncles are set, and returns the final block.
 func (s *Spos) FinalizeAndAssemble(chain consensus.ChainHeaderReader, header *types.Header, state *state.StateDB, txs []*types.Transaction, uncles []*types.Header, receipts []*types.Receipt) (*types.Block, error) {
-	completeBlockFlag := GetCompleteBlockFlag()
-
-	//clearExpiredBlockRewardData(number)
-
-	//Whether block rewards have been allocated
-	//distributeRewardFlag := getDistributeRewardFlag(number)
-
-	if completeBlockFlag {
+	if GetCompleteBlockFlag() {
 		accumulateRewards(state, header)
 		if err := s.distributeReward(header, state, &txs, &receipts); err != nil {
 			return nil, err

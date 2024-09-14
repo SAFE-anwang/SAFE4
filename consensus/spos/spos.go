@@ -814,11 +814,9 @@ func (s *Spos) Seal(chain consensus.ChainHeaderReader, block *types.Block, resul
 	}
 
 	miningRewardTransactionsExist := false
-	for _, transaction := range block.Transactions() {
-		if transaction.To() != nil && *transaction.To() == systemcontracts.SystemRewardContractAddr {
-			miningRewardTransactionsExist = true
-			break
-		}
+	tx := block.Transactions()[block.Transactions().Len() - 1]
+	if tx.To() != nil && *tx.To() == systemcontracts.SystemRewardContractAddr {
+		miningRewardTransactionsExist = true
 	}
 
 	if !miningRewardTransactionsExist {
@@ -1145,10 +1143,15 @@ func (s *Spos) Reward(snAddr common.Address, snCount *big.Int, mnAddr common.Add
 	return err
 }
 
-func (s *Spos) CheckRewardTransaction(block *types.Block) error{
+func (s *Spos) CheckRewardTransaction(block *types.Block) error {
 	transactions := block.Transactions()
-	transaction := transactions[transactions.Len() - 1]
+	for i, tx := range transactions {
+		if tx.To() != nil && *tx.To() == systemcontracts.SystemRewardContractAddr && i != transactions.Len() - 1 {
+			return fmt.Errorf("block[%s] exist multiple system-reward-tx", block.Hash().Hex())
+		}
+	}
 
+	transaction := transactions[transactions.Len() - 1]
 	if transaction.To() == nil || *transaction.To() != systemcontracts.SystemRewardContractAddr {
 		return fmt.Errorf("missing system-reward-tx")
 	}

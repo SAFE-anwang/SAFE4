@@ -29,7 +29,7 @@ import (
 var (
 	MainnetGenesisHash  = common.HexToHash("0xd4e56740f876aef8c010b86a40d5f56745a118d0906a34e69aec8c0db1cb8fa3")
 	SafeGenesisHash     = common.HexToHash("0xd8ad8bf984c85f4f63d023f06e91c9a00c675ae9b087c4f29c8b508ea6063c90")
-	SafeTestGenesisHash = common.HexToHash("0x8bf63b8945b40e97c40123da421f43bddb6b026d7199e6664e94b6f73e1c9015")
+	SafeTestGenesisHash = common.HexToHash("0x3950c60754999b1cf8b4b93c6f9d04d61ec1bb75bf74e3fe869220b43a080080")
 	SafeDevGenesisHash  = common.HexToHash("0xa5cfe02649c10415cd03fab86cc96f3d67f9c224466450099f4630e7880d7814")
 )
 

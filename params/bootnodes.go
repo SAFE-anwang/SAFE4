@@ -38,10 +38,6 @@ var SafeTestBootnodes = []string{
 	"enode://d39fc9ed12000b2ea3b5463936958702f20a939405aae28e39463c8b66d78bb07baf7fe59370f6037849f2bd363b1bee3301d6b0bf8349abfbcafb5fccdceab2@172.105.24.28:30303",  // sn10
 }
 
-// the SAFE developer network.
-var SafeDevBootnodes = []string{
-}
-
 // RinkebyBootnodes are the enode URLs of the P2P bootstrap nodes running on the
 // Rinkeby test network.
 var RinkebyBootnodes = []string{

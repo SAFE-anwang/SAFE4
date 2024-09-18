@@ -152,10 +152,6 @@ var (
 		Name:  "safetest",
 		Usage: "SAFE testnet: pre-configured safe-proof-of-stake SAFE test network",
 	}
-	SAFEDevFlag = cli.BoolFlag{
-		Name: "safedev",
-		Usage: "SAFE devnet: pre-configured safe-proof-of-stake SAFE developer network",
-	}
 	DeveloperFlag = cli.BoolFlag{
 		Name:  "dev",
 		Usage: "Ephemeral proof-of-authority network with a pre-funded developer account, mining enabled",
@@ -829,7 +825,6 @@ var (
 	// TestnetFlags is the flag group of all built-in supported testnets.
 	TestnetFlags = []cli.Flag{
 		SAFETestFlag,
-		SAFEDevFlag,
 	}
 	// NetworkFlags is the flag group of all built-in supported networks.
 	NetworkFlags = append([]cli.Flag{
@@ -861,10 +856,6 @@ func MakeDataDir(ctx *cli.Context) string {
 		if ctx.GlobalBool(SAFETestFlag.Name) {
 			return filepath.Join(path, "safetest")
 		}
-		if ctx.GlobalBool(SAFEDevFlag.Name) {
-			return filepath.Join(path, "safedev")
-		}
-
 		return path
 	}
 	Fatalf("Cannot determine default data directory, please set manually (--datadir)")
@@ -913,8 +904,6 @@ func setBootstrapNodes(ctx *cli.Context, cfg *p2p.Config) {
 		urls = SplitAndTrim(ctx.GlobalString(BootnodesFlag.Name))
 	case ctx.GlobalBool(SAFETestFlag.Name):
 		urls = params.SafeTestBootnodes
-	case ctx.GlobalBool(SAFEDevFlag.Name):
-		urls = params.SafeDevBootnodes
 	case cfg.BootstrapNodes != nil:
 		return // already set, don't apply defaults.
 	}
@@ -1349,8 +1338,6 @@ func setDataDir(ctx *cli.Context, cfg *node.Config) {
 		cfg.DataDir = "" // unless explicitly requested, use memory databases
 	case ctx.GlobalBool(SAFETestFlag.Name) && cfg.DataDir == node.DefaultDataDir():
 		cfg.DataDir = filepath.Join(node.DefaultDataDir(), "safetest")
-	case ctx.GlobalBool(SAFEDevFlag.Name) && cfg.DataDir == node.DefaultDataDir():
-		cfg.DataDir = filepath.Join(node.DefaultDataDir(), "safedev")
 	}
 }
 
@@ -1541,7 +1528,7 @@ func CheckExclusive(ctx *cli.Context, args ...interface{}) {
 // SetEthConfig applies eth-related command line flags to the config.
 func SetEthConfig(ctx *cli.Context, stack *node.Node, cfg *ethconfig.Config) {
 	// Avoid conflicting network flags
-	CheckExclusive(ctx, SAFEMainnetFlag, DeveloperFlag, SAFETestFlag, SAFEDevFlag)
+	CheckExclusive(ctx, SAFEMainnetFlag, DeveloperFlag, SAFETestFlag)
 	CheckExclusive(ctx, LightServeFlag, SyncModeFlag, "light")
 	CheckExclusive(ctx, DeveloperFlag, ExternalSignerFlag) // Can't use both ephemeral unlocked and external signer
 	if ctx.GlobalString(GCModeFlag.Name) == "archive" && ctx.GlobalUint64(TxLookupLimitFlag.Name) != 0 {
@@ -1688,12 +1675,6 @@ func SetEthConfig(ctx *cli.Context, stack *node.Node, cfg *ethconfig.Config) {
 		}
 		cfg.Genesis = core.DefaultSafeTestGenesisBlock()
 		SetDNSDiscoveryDefaults(cfg, params.SafeTestGenesisHash)
-	case ctx.GlobalBool(SAFEDevFlag.Name):
-		if !ctx.GlobalIsSet(NetworkIdFlag.Name) {
-			cfg.NetworkId = 6666667
-		}
-		cfg.Genesis = core.DefaultSafeDevGenesisBlock()
-		SetDNSDiscoveryDefaults(cfg, params.SafeDevGenesisHash)
 	case ctx.GlobalBool(DeveloperFlag.Name):
 		if !ctx.GlobalIsSet(NetworkIdFlag.Name) {
 			cfg.NetworkId = 1337
@@ -1928,8 +1909,6 @@ func MakeGenesis(ctx *cli.Context) *core.Genesis {
 		genesis = core.DefaultSafeGenesisBlock()
 	case ctx.GlobalBool(SAFETestFlag.Name):
 		genesis = core.DefaultSafeTestGenesisBlock()
-	case ctx.GlobalBool(SAFEDevFlag.Name):
-		genesis = core.DefaultSafeDevGenesisBlock()
 	case ctx.GlobalBool(DeveloperFlag.Name):
 		Fatalf("Developer chains are ephemeral")
 	}

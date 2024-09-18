@@ -191,8 +191,6 @@ func CommitGenesisState(db ethdb.Database, hash common.Hash) error {
 			genesis = DefaultSafeGenesisBlock()
 		case params.SafeTestGenesisHash:
 			genesis = DefaultSafeTestGenesisBlock()
-		case params.SafeDevGenesisHash:
-			genesis = DefaultSafeDevGenesisBlock()
 		}
 		if genesis != nil {
 			alloc = genesis.Alloc
@@ -349,7 +347,7 @@ func SetupGenesisBlockWithOverride(db ethdb.Database, genesis *Genesis, override
 	// on top of an existing private network genesis block). In that case, only
 	// apply the overrides.
 	if genesis == nil && stored != params.MainnetGenesisHash &&
-		stored != params.SafeTestGenesisHash && stored != params.SafeGenesisHash && stored != params.SafeDevGenesisHash {
+		stored != params.SafeTestGenesisHash && stored != params.SafeGenesisHash {
 		newcfg = storedcfg
 		if overrideGrayGlacier != nil {
 			newcfg.GrayGlacierBlock = overrideGrayGlacier
@@ -382,8 +380,6 @@ func (g *Genesis) configOrDefault(ghash common.Hash) *params.ChainConfig {
 		return params.SafeChainConfig
 	case ghash == params.SafeTestGenesisHash:
 		return params.SafeTestChainConfig
-	case ghash == params.SafeDevGenesisHash:
-		return params.SafeDevChainConfig
 	default:
 		return params.AllEthashProtocolChanges
 	}
@@ -558,17 +554,6 @@ func DefaultSafeTestGenesisBlock() *Genesis {
 	chainType = 1
 	g := new(Genesis)
 	reader := strings.NewReader(SafeTestAllocData)
-	if err := json.NewDecoder(reader).Decode(g); err != nil {
-		panic(err)
-	}
-	return g
-}
-
-// DefaultSafeDevGenesisBlock return the safe developer network genesis block.
-func DefaultSafeDevGenesisBlock() *Genesis {
-	chainType = 2
-	g := new(Genesis)
-	reader := strings.NewReader(SafeDevAllocData)
 	if err := json.NewDecoder(reader).Decode(g); err != nil {
 		panic(err)
 	}

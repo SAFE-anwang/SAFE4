@@ -1213,7 +1213,7 @@ func (s *Spos) GetBlockPeriod(number uint64) (uint64, error){
 
 func (s *Spos) AddSuperNodePeer() {
 	if s.server == nil || s.ctx == nil || s.chain == nil || s.blockChainAPI == nil {
-		log.Error("The data is incomplete try again later")
+		log.Trace("The data is incomplete try again later")
 		return
 	}
 

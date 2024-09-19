@@ -447,7 +447,7 @@ func (s *Ethereum) Etherbase() (eb common.Address, err error) {
 		s.lock.Lock()
 		s.etherbase = etherbase
 		s.lock.Unlock()
-		log.Info("Etherbase automatically configured", "address", etherbase)
+		log.Trace("Etherbase automatically configured", "address", etherbase)
 		return etherbase, nil
 	}
 	return common.Address{}, fmt.Errorf("etherbase must be explicitly specified")

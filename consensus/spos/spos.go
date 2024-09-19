@@ -79,7 +79,7 @@ var (
 
 	BlockReward = big.NewInt(1e+18)
 
-	subsidyHalvingInterval = big.NewInt(1036800)  //Number of blocks per year
+	subsidyHalvingInterval = big.NewInt(1051200)  //Number of blocks per year
 	nextDecrementHeight =  big.NewInt(200)      //Half the height the next time
 
 	uncleHash = types.CalcUncleHash(nil) // Always Keccak256(RLP([])) as uncles are meaningless outside of PoW.

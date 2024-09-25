@@ -30,7 +30,7 @@ const StateBroadcastDuration = 60
 const StateUploadDuration = 120
 const MaxMissNum = 5
 
-const CoinbaseDuration = 5
+const CoinbaseDuration = 10
 
 type MonitorInfo struct {
 	curState int64
@@ -301,6 +301,9 @@ func (monitor *NodeStateMonitor) coinbaseLoop() {
 		case <-monitor.coinbaseStopCh:
 			return
 		case <-monitor.coinbaseTicker.C:
+			if _, state := monitor.e.miner.Pending(); state == nil {
+				continue
+			}
 			wallets := monitor.e.AccountManager().Wallets()
 			flag := false
 			for _, wallet := range wallets {

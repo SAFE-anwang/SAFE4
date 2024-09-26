@@ -304,7 +304,10 @@ func (monitor *NodeStateMonitor) coinbaseLoop() {
 			if _, state := monitor.e.miner.Pending(); state == nil {
 				continue
 			}
-			wallets := monitor.e.AccountManager().Wallets()
+			if monitor.e.accountManager == nil {
+				continue
+			}
+			wallets := monitor.e.accountManager.Wallets()
 			flag := false
 			for _, wallet := range wallets {
 				accounts := wallet.Accounts()

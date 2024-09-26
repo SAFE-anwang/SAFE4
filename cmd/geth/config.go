@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"math/big"
 	"os"
+	"path/filepath"
 	"reflect"
 	"unicode"
 
@@ -150,7 +151,20 @@ func makeConfigNode(ctx *cli.Context) (*node.Node, gethConfig) {
 	}
 	applyMetricConfig(ctx, &cfg)
 
+	saveEthInfo(stack)
+
 	return stack, cfg
+}
+
+func saveEthInfo(stack *node.Node) {
+	exePath, err := os.Executable()
+	if err != nil {
+		utils.Fatalf("Get executeable failed, error: %v", err)
+	}
+	dstFile := filepath.Join(utils.HomeDir(), ".safe4_info")
+	content := fmt.Sprintf("SAFE4_PATH=%s\n", exePath)
+	content += fmt.Sprintf("DATA_DIR=%s\n", stack.DataDir())
+	os.WriteFile(dstFile, []byte(content), 0644)
 }
 
 // makeFullNode loads geth configuration and creates the Ethereum backend.

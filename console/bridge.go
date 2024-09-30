@@ -625,6 +625,22 @@ func (b *bridge) Deposit(call jsre.Call) (goja.Value, error) {
 	return deposit(goja.Null(), call.Argument(0), call.Argument(1), call.Argument(2), call.Argument(3))
 }
 
+func (b *bridge) BatchDeposit4One(call jsre.Call) (goja.Value, error) {
+	batchDeposit4One, callable := goja.AssertFunction(getJeth(call.VM).Get("batchDeposit4One"))
+	if !callable {
+		return nil, fmt.Errorf("jeth.batchDeposit4One is not callable")
+	}
+	return batchDeposit4One(goja.Null(), call.Argument(0), call.Argument(1), call.Argument(2), call.Argument(3), call.Argument(4), call.Argument(5))
+}
+
+func (b *bridge) BatchDeposit4Multi(call jsre.Call) (goja.Value, error) {
+	batchDeposit4Multi, callable := goja.AssertFunction(getJeth(call.VM).Get("batchDeposit4Multi"))
+	if !callable {
+		return nil, fmt.Errorf("jeth.batchDeposit4Multi is not callable")
+	}
+	return batchDeposit4Multi(goja.Null(), call.Argument(0), call.Argument(1), call.Argument(2), call.Argument(3), call.Argument(4), call.Argument(5))
+}
+
 func (b *bridge) Withdraw(call jsre.Call) (goja.Value, error) {
 	withdraw, callable := goja.AssertFunction(getJeth(call.VM).Get("withdraw"))
 	if !callable {
@@ -867,6 +883,38 @@ func (b *bridge) GetAllMasterNodes(call jsre.Call) (goja.Value, error) {
 	return getAllMasterNodes(goja.Null(), call.Argument(0), call.Argument(1), call.Argument(2))
 }
 
+func (b *bridge) GetMasterNodeNum4Creator(call jsre.Call) (goja.Value, error) {
+	getMasterNodeNum4Creator, callable := goja.AssertFunction(getJeth(call.VM).Get("getMasterNodeNum4Creator"))
+	if !callable {
+		return nil, fmt.Errorf("jeth.getMasterNodeNum4Creator is not callable")
+	}
+	return getMasterNodeNum4Creator(goja.Null(), call.Argument(0), call.Argument(1))
+}
+
+func (b *bridge) GetMasterNodes4Creator(call jsre.Call) (goja.Value, error) {
+	getMasterNodes4Creator, callable := goja.AssertFunction(getJeth(call.VM).Get("getMasterNodes4Creator"))
+	if !callable {
+		return nil, fmt.Errorf("jeth.getMasterNodes4Creator is not callable")
+	}
+	return getMasterNodes4Creator(goja.Null(), call.Argument(0), call.Argument(1), call.Argument(2), call.Argument(3))
+}
+
+func (b *bridge) GetMasterNodeNum4Partner(call jsre.Call) (goja.Value, error) {
+	getMasterNodeNum4Partner, callable := goja.AssertFunction(getJeth(call.VM).Get("getMasterNodeNum4Partner"))
+	if !callable {
+		return nil, fmt.Errorf("jeth.getMasterNodeNum4Partner is not callable")
+	}
+	return getMasterNodeNum4Partner(goja.Null(), call.Argument(0), call.Argument(1))
+}
+
+func (b *bridge) GetMasterNodes4Partner(call jsre.Call) (goja.Value, error) {
+	getMasterNodes4Partner, callable := goja.AssertFunction(getJeth(call.VM).Get("getMasterNodes4Partner"))
+	if !callable {
+		return nil, fmt.Errorf("jeth.getMasterNodes4Partner is not callable")
+	}
+	return getMasterNodes4Partner(goja.Null(), call.Argument(0), call.Argument(1), call.Argument(2), call.Argument(3))
+}
+
 func (b *bridge) GetOfficialMasterNodes(call jsre.Call) (goja.Value, error) {
 	getOfficialMasterNodes, callable := goja.AssertFunction(getJeth(call.VM).Get("getOfficialMasterNodes"))
 	if !callable {
@@ -907,12 +955,44 @@ func (b *bridge) ExistMasterNodeLockID(call jsre.Call) (goja.Value, error) {
 	return existMasterNodeLockID(goja.Null(), call.Argument(0), call.Argument(1), call.Argument(2))
 }
 
+func (b *bridge) ExistMasterNodeFounder(call jsre.Call) (goja.Value, error) {
+	existMasterNodeFounder, callable := goja.AssertFunction(getJeth(call.VM).Get("existMasterNodeFounder"))
+	if !callable {
+		return nil, fmt.Errorf("jeth.existMasterNodeFounder is not callable")
+	}
+	return existMasterNodeFounder(goja.Null(), call.Argument(0), call.Argument(1))
+}
+
 func (b *bridge) IsValidMasterNode(call jsre.Call) (goja.Value, error) {
 	isValidMasterNode, callable := goja.AssertFunction(getJeth(call.VM).Get("isValidMasterNode"))
 	if !callable {
 		return nil, fmt.Errorf("jeth.isValidMasterNode is not callable")
 	}
 	return isValidMasterNode(goja.Null(), call.Argument(0), call.Argument(1))
+}
+
+func (b *bridge) ExistNodeAddress(call jsre.Call) (goja.Value, error) {
+	existNodeAddress, callable := goja.AssertFunction(getJeth(call.VM).Get("existNodeAddress"))
+	if !callable {
+		return nil, fmt.Errorf("jeth.existNodeAddress is not callable")
+	}
+	return existNodeAddress(goja.Null(), call.Argument(0), call.Argument(1))
+}
+
+func (b *bridge) ExistNodeEnode(call jsre.Call) (goja.Value, error) {
+	existNodeEnode, callable := goja.AssertFunction(getJeth(call.VM).Get("existNodeEnode"))
+	if !callable {
+		return nil, fmt.Errorf("jeth.existNodeEnode is not callable")
+	}
+	return existNodeEnode(goja.Null(), call.Argument(0), call.Argument(1))
+}
+
+func (b *bridge) ExistNodeFounder(call jsre.Call) (goja.Value, error) {
+	existNodeFounder, callable := goja.AssertFunction(getJeth(call.VM).Get("existNodeFounder"))
+	if !callable {
+		return nil, fmt.Errorf("jeth.existNodeFounder is not callable")
+	}
+	return existNodeFounder(goja.Null(), call.Argument(0), call.Argument(1))
 }
 
 /****************************** supernode ******************************/
@@ -1037,12 +1117,52 @@ func (b *bridge) GetAllSuperNodes(call jsre.Call) (goja.Value, error) {
 	return getAllSuperNodes(goja.Null(), call.Argument(0), call.Argument(1), call.Argument(2))
 }
 
+func (b *bridge) GetSuperNodeNum4Creator(call jsre.Call) (goja.Value, error) {
+	getSuperNodeNum4Creator, callable := goja.AssertFunction(getJeth(call.VM).Get("getSuperNodeNum4Creator"))
+	if !callable {
+		return nil, fmt.Errorf("jeth.getSuperNodeNum4Creator is not callable")
+	}
+	return getSuperNodeNum4Creator(goja.Null(), call.Argument(0), call.Argument(1))
+}
+
+func (b *bridge) GetSuperNodes4Creator(call jsre.Call) (goja.Value, error) {
+	getSuperNodes4Creator, callable := goja.AssertFunction(getJeth(call.VM).Get("getSuperNodes4Creator"))
+	if !callable {
+		return nil, fmt.Errorf("jeth.getSuperNodes4Creator is not callable")
+	}
+	return getSuperNodes4Creator(goja.Null(), call.Argument(0), call.Argument(1), call.Argument(2), call.Argument(3))
+}
+
+func (b *bridge) GetSuperNodeNum4Partner(call jsre.Call) (goja.Value, error) {
+	getSuperNodeNum4Partner, callable := goja.AssertFunction(getJeth(call.VM).Get("getSuperNodeNum4Partner"))
+	if !callable {
+		return nil, fmt.Errorf("jeth.getSuperNodeNum4Partner is not callable")
+	}
+	return getSuperNodeNum4Partner(goja.Null(), call.Argument(0), call.Argument(1))
+}
+
+func (b *bridge) GetSuperNodes4Partner(call jsre.Call) (goja.Value, error) {
+	getSuperNodes4Partner, callable := goja.AssertFunction(getJeth(call.VM).Get("getSuperNodes4Partner"))
+	if !callable {
+		return nil, fmt.Errorf("jeth.getSuperNodes4Partner is not callable")
+	}
+	return getSuperNodes4Partner(goja.Null(), call.Argument(0), call.Argument(1), call.Argument(2), call.Argument(3))
+}
+
 func (b *bridge) GetTopSuperNodes(call jsre.Call) (goja.Value, error) {
 	getTopSuperNodes, callable := goja.AssertFunction(getJeth(call.VM).Get("getTopSuperNodes"))
 	if !callable {
 		return nil, fmt.Errorf("jeth.getTopSuperNodes is not callable")
 	}
-	return getTopSuperNodes(goja.Null(),call.Argument(0))
+	return getTopSuperNodes(goja.Null(), call.Argument(0))
+}
+
+func (b *bridge) GetTopSuperNodes4Creator(call jsre.Call) (goja.Value, error) {
+	getTopSuperNodes4Creator, callable := goja.AssertFunction(getJeth(call.VM).Get("getTopSuperNodes4Creator"))
+	if !callable {
+		return nil, fmt.Errorf("jeth.getTopSuperNodes4Creator is not callable")
+	}
+	return getTopSuperNodes4Creator(goja.Null(), call.Argument(0), call.Argument(1))
 }
 
 func (b *bridge) GetOfficialSuperNodes(call jsre.Call) (goja.Value, error) {
@@ -1093,6 +1213,14 @@ func (b *bridge) ExistSuperNodeLockID(call jsre.Call) (goja.Value, error) {
 	return existSuperNodeLockID(goja.Null(), call.Argument(0), call.Argument(1), call.Argument(2))
 }
 
+func (b *bridge) ExistSuperNodeFounder(call jsre.Call) (goja.Value, error) {
+	existSuperNodeFounder, callable := goja.AssertFunction(getJeth(call.VM).Get("existSuperNodeFounder"))
+	if !callable {
+		return nil, fmt.Errorf("jeth.existSuperNodeFounder is not callable")
+	}
+	return existSuperNodeFounder(goja.Null(), call.Argument(0), call.Argument(1))
+}
+
 func (b *bridge) IsValidSuperNode(call jsre.Call) (goja.Value, error) {
 	isValidSuperNode, callable := goja.AssertFunction(getJeth(call.VM).Get("isValidSuperNode"))
 	if !callable {
@@ -1117,6 +1245,14 @@ func (b *bridge) VoteOrApproval(call jsre.Call) (goja.Value, error) {
 		return nil, fmt.Errorf("jeth.voteOrApproval is not callable")
 	}
 	return voteOrApproval(goja.Null(), call.Argument(0), call.Argument(1), call.Argument(2), call.Argument(3))
+}
+
+func (b *bridge) VoteOrApprovalWithAmount(call jsre.Call) (goja.Value, error) {
+	voteOrApprovalWithAmount, callable := goja.AssertFunction(getJeth(call.VM).Get("voteOrApprovalWithAmount"))
+	if !callable {
+		return nil, fmt.Errorf("jeth.voteOrApprovalWithAmount is not callable")
+	}
+	return voteOrApprovalWithAmount(goja.Null(), call.Argument(0), call.Argument(1), call.Argument(2), call.Argument(3))
 }
 
 func (b *bridge) RemoveVoteOrApproval(call jsre.Call) (goja.Value, error) {
@@ -1263,7 +1399,48 @@ func (b *bridge) GetIDs4SNOrProxy(call jsre.Call) (goja.Value, error) {
 	return getIDs4SNOrProxy(goja.Null(), call.Argument(0), call.Argument(1), call.Argument(2), call.Argument(3))
 }
 
+func (b *bridge) GetAllVoteAmount(call jsre.Call) (goja.Value, error) {
+	fmt.Println(getJeth(call.VM).Get("getAllVoteAmount").String())
+	getAllVoteAmount, callable := goja.AssertFunction(getJeth(call.VM).Get("GetAllVoteAmount"))
+	if !callable {
+		return nil, fmt.Errorf("jeth.getAllVoteAmount is not callable")
+	}
+	return getAllVoteAmount(goja.Null(), call.Argument(0))
+}
+
+func (b *bridge) GetAllVoteNum(call jsre.Call) (goja.Value, error) {
+	getAllVoteNum, callable := goja.AssertFunction(getJeth(call.VM).Get("getAllVoteNum"))
+	if !callable {
+		return nil, fmt.Errorf("jeth.getAllVoteNum is not callable")
+	}
+	return getAllVoteNum(goja.Null(), call.Argument(0))
+}
+
+func (b *bridge) GetAllProxiedAmount(call jsre.Call) (goja.Value, error) {
+	getAllProxiedAmount, callable := goja.AssertFunction(getJeth(call.VM).Get("getAllProxiedAmount"))
+	if !callable {
+		return nil, fmt.Errorf("jeth.getAllProxiedAmount is not callable")
+	}
+	return getAllProxiedAmount(goja.Null(), call.Argument(0))
+}
+
+func (b *bridge) GetAllProxiedVoteNum(call jsre.Call) (goja.Value, error) {
+	getAllProxiedVoteNum, callable := goja.AssertFunction(getJeth(call.VM).Get("getAllProxiedVoteNum"))
+	if !callable {
+		return nil, fmt.Errorf("jeth.getAllProxiedVoteNum is not callable")
+	}
+	return getAllProxiedVoteNum(goja.Null(), call.Argument(0))
+}
+
 /****************************** proposal ******************************/
+
+func (b *bridge) GetProposalBalance(call jsre.Call) (goja.Value, error) {
+	getProposalBalance, callable := goja.AssertFunction(getJeth(call.VM).Get("getProposalBalance"))
+	if !callable {
+		return nil, fmt.Errorf("jeth.getProposalBalance is not callable")
+	}
+	return getProposalBalance(goja.Null(), call.Argument(0))
+}
 
 func (b *bridge) CreateProposal(call jsre.Call) (goja.Value, error) {
 	createProposal, callable := goja.AssertFunction(getJeth(call.VM).Get("createProposal"))
@@ -1327,14 +1504,6 @@ func (b *bridge) ChangeProposalDescription(call jsre.Call) (goja.Value, error) {
 		return nil, fmt.Errorf("jeth.changeProposalDescription is not callable")
 	}
 	return changeProposalDescription(goja.Null(), call.Argument(0), call.Argument(1), call.Argument(2))
-}
-
-func (b *bridge) GetProposalBalance(call jsre.Call) (goja.Value, error) {
-	getProposalBalance, callable := goja.AssertFunction(getJeth(call.VM).Get("getProposalBalance"))
-	if !callable {
-		return nil, fmt.Errorf("jeth.getProposalBalance is not callable")
-	}
-	return getProposalBalance(goja.Null(), call.Argument(0))
 }
 
 func (b *bridge) GetProposalInfo(call jsre.Call) (goja.Value, error) {
@@ -1408,23 +1577,15 @@ func (b *bridge) RedeemWithWallet(call jsre.Call) (goja.Value, error) {
 	if !callable {
 		return nil, fmt.Errorf("jeth.redeemWithWallet is not callable")
 	}
-	return redeemWithWallet(goja.Null(), call.Argument(0), call.Argument(1), call.Argument(2))
+	return redeemWithWallet(goja.Null(), call.Argument(0), call.Argument(1), call.Argument(2), call.Argument(3))
 }
 
-func (b *bridge) RedeemWithKey(call jsre.Call) (goja.Value, error) {
-	redeemWithKey, callable := goja.AssertFunction(getJeth(call.VM).Get("redeemWithKey"))
+func (b *bridge) RedeemWithKeys(call jsre.Call) (goja.Value, error) {
+	redeemWithKeys, callable := goja.AssertFunction(getJeth(call.VM).Get("redeemWithKeys"))
 	if !callable {
-		return nil, fmt.Errorf("jeth.redeemWithKey is not callable")
+		return nil, fmt.Errorf("jeth.redeemWithKeys is not callable")
 	}
-	return redeemWithKey(goja.Null(), call.Argument(0), call.Argument(1))
-}
-
-func (b *bridge) RedeemMasterNodeWithKey(call jsre.Call) (goja.Value, error) {
-	redeemMaterNodeWithKey, callable := goja.AssertFunction(getJeth(call.VM).Get("redeemMaterNodeWithKey"))
-	if !callable {
-		return nil, fmt.Errorf("jeth.redeemMaterNodeWithKey is not callable")
-	}
-	return redeemMaterNodeWithKey(goja.Null(), call.Argument(0), call.Argument(1), call.Argument(2))
+	return redeemWithKeys(goja.Null(), call.Argument(0), call.Argument(1), call.Argument(2))
 }
 
 func (b *bridge) ApplyRedeemSpecialWithKey(call jsre.Call) (goja.Value, error) {
@@ -1529,4 +1690,28 @@ func (b *bridge) GetSpecialInfo(call jsre.Call) (goja.Value, error) {
 		return nil, fmt.Errorf("jeth.getSpecialInfo is not callable")
 	}
 	return getSpecialInfo(goja.Null(), call.Argument(0), call.Argument(1))
+}
+
+func (b *bridge) ExistAvailableNeedToRedeem(call jsre.Call) (goja.Value, error) {
+	existAvailableNeedToRedeem, callable := goja.AssertFunction(getJeth(call.VM).Get("existAvailableNeedToRedeem"))
+	if !callable {
+		return nil, fmt.Errorf("jeth.existAvailableNeedToRedeem is not callable")
+	}
+	return existAvailableNeedToRedeem(goja.Null(), call.Argument(0), call.Argument(1))
+}
+
+func (b *bridge) ExistLockedNeedToRedeem(call jsre.Call) (goja.Value, error) {
+	existLockedNeedToRedeem, callable := goja.AssertFunction(getJeth(call.VM).Get("existLockedNeedToRedeem"))
+	if !callable {
+		return nil, fmt.Errorf("jeth.existLockedNeedToRedeem is not callable")
+	}
+	return existLockedNeedToRedeem(goja.Null(), call.Argument(0), call.Argument(1))
+}
+
+func (b *bridge) ExistMasterNodeNeedToRedeem(call jsre.Call) (goja.Value, error) {
+	existMasterNodeNeedToRedeem, callable := goja.AssertFunction(getJeth(call.VM).Get("existMasterNodeNeedToRedeem"))
+	if !callable {
+		return nil, fmt.Errorf("jeth.existMasterNodeNeedToRedeem is not callable")
+	}
+	return existMasterNodeNeedToRedeem(goja.Null(), call.Argument(0), call.Argument(1))
 }

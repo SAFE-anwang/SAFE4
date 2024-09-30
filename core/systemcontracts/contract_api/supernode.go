@@ -64,7 +64,7 @@ func GetSuperNodeNum(ctx context.Context, blockChainAPI *ethapi.PublicBlockChain
 
 func GetAllSuperNodes(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, start *big.Int, count *big.Int, blockNrOrHash rpc.BlockNumberOrHash) ([]common.Address, error) {
 	ret := new([]common.Address)
-	if err := QueryContract(ctx, blockChainAPI, blockNrOrHash, systemcontracts.SuperNodeStorageContractAddr, "getAll", nil, &ret); err != nil {
+	if err := QueryContract(ctx, blockChainAPI, blockNrOrHash, systemcontracts.SuperNodeStorageContractAddr, "getAll", getValues(start, count), &ret); err != nil {
 		return nil, err
 	}
 	return *ret, nil

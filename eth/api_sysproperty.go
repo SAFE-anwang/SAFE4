@@ -11,8 +11,8 @@ import (
 )
 
 type PublicSysPropertyAPI struct {
-	e *Ethereum
-	blockChainAPI *ethapi.PublicBlockChainAPI
+	e                  *Ethereum
+	blockChainAPI      *ethapi.PublicBlockChainAPI
 	transactionPoolAPI *ethapi.PublicTransactionPoolAPI
 }
 

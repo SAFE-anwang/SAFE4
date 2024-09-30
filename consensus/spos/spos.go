@@ -1249,7 +1249,7 @@ func (s *Spos) AddSuperNodePeer() {
 
 			node, err := enode.Parse(enode.ValidSchemes, info.Enode)
 			if err != nil {
-				log.Error("invalid enode")
+				log.Trace("invalid enode", "snAddr", info.Addr, "enode", info.Enode)
 				return
 			}
 
@@ -1273,7 +1273,7 @@ func (s *Spos) AddSuperNodePeer() {
 
 		node, err := enode.Parse(enode.ValidSchemes, info.Enode)
 		if err != nil {
-			log.Error("invalid enode")
+			log.Trace("invalid enode", "snAddr", info.Addr, "enode", info.Enode)
 			continue
 		}
 

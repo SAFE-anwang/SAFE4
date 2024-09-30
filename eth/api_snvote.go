@@ -3,6 +3,7 @@ package eth
 import (
 	"context"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/core/systemcontracts/contract_api"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/internal/ethapi"
@@ -11,8 +12,8 @@ import (
 )
 
 type PublicSNVoteAPI struct {
-	e *Ethereum
-	blockChainAPI *ethapi.PublicBlockChainAPI
+	e                  *Ethereum
+	blockChainAPI      *ethapi.PublicBlockChainAPI
 	transactionPoolAPI *ethapi.PublicTransactionPoolAPI
 }
 
@@ -22,6 +23,10 @@ func NewPublicSNVoteAPI(e *Ethereum) *PublicSNVoteAPI {
 
 func (api *PublicSNVoteAPI) VoteOrApproval(ctx context.Context, from common.Address, isVote bool, dstAddr common.Address, recordIDs []*big.Int) (common.Hash, error) {
 	return contract_api.VoteOrApproval(ctx, api.blockChainAPI, api.transactionPoolAPI, from, isVote, dstAddr, recordIDs)
+}
+
+func (api *PublicSNVoteAPI) VoteOrApprovalWithAmount(ctx context.Context, from common.Address, value *hexutil.Big, isVote bool, dstAddr common.Address) (common.Hash, error) {
+	return contract_api.VoteOrApprovalWithAmount(ctx, api.blockChainAPI, api.transactionPoolAPI, from, value, isVote, dstAddr)
 }
 
 func (api *PublicSNVoteAPI) RemoveVoteOrApproval(ctx context.Context, from common.Address, recordIDs []*big.Int) (common.Hash, error) {
@@ -94,4 +99,20 @@ func (api *PublicSNVoteAPI) GetIDNum(ctx context.Context, dstAddr common.Address
 
 func (api *PublicSNVoteAPI) GetIDs(ctx context.Context, dstAddr common.Address, start *big.Int, count *big.Int, blockNrOrHash rpc.BlockNumberOrHash) ([]*big.Int, error) {
 	return contract_api.GetIDs4SNOrProxy(ctx, api.blockChainAPI, dstAddr, start, count, blockNrOrHash)
+}
+
+func (api *PublicSNVoteAPI) GetAllAmount(ctx context.Context, blockNrOrHash rpc.BlockNumberOrHash) (*big.Int, error) {
+	return contract_api.GetAllVoteAmount(ctx, api.blockChainAPI, blockNrOrHash)
+}
+
+func (api *PublicSNVoteAPI) GetAllVoteNum(ctx context.Context, blockNrOrHash rpc.BlockNumberOrHash) (*big.Int, error) {
+	return contract_api.GetAllVoteNum(ctx, api.blockChainAPI, blockNrOrHash)
+}
+
+func (api *PublicSNVoteAPI) GetAllProxiedAmount(ctx context.Context, blockNrOrHash rpc.BlockNumberOrHash) (*big.Int, error) {
+	return contract_api.GetAllProxiedAmount(ctx, api.blockChainAPI, blockNrOrHash)
+}
+
+func (api *PublicSNVoteAPI) GetAllProxiedVoteNum(ctx context.Context, blockNrOrHash rpc.BlockNumberOrHash) (*big.Int, error) {
+	return contract_api.GetAllProxiedVoteNum(ctx, api.blockChainAPI, blockNrOrHash)
 }

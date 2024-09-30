@@ -228,7 +228,7 @@ func New(stack *node.Node, config *ethconfig.Config) (*Ethereum, error) {
 
 	// get gasPrice
 	ctx, _ := context.WithCancel(context.Background())
-	eth.gasPrice = contract_api.GetCurrentGasPrice(ctx, ethapi.NewPublicBlockChainAPI(eth.APIBackend))
+	eth.gasPrice = contract_api.GetLatestGasPrice(ctx, ethapi.NewPublicBlockChainAPI(eth.APIBackend))
 
 	if config.TxPool.Journal != "" {
 		config.TxPool.Journal = stack.ResolvePath(config.TxPool.Journal)

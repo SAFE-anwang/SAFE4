@@ -57,12 +57,12 @@ func (api *PublicSuperNodeAPI) Restart(ctx context.Context, addr common.Address)
 	return true, nil
 }
 
-func (api *PublicSuperNodeAPI) Register(ctx context.Context, from common.Address, amount *hexutil.Big, isUnion bool, addr common.Address, lockDay *big.Int, name string, enode string, description string, creatorIncentive *big.Int, partnerIncentive *big.Int, voterIncentive *big.Int) (common.Hash, error) {
-	return contract_api.RegisterSuperNode(ctx, api.blockChainAPI, api.transactionPoolAPI, from, amount, isUnion, addr, lockDay, name, enode, description, creatorIncentive, partnerIncentive, voterIncentive)
+func (api *PublicSuperNodeAPI) Register(ctx context.Context, from common.Address, value *hexutil.Big, isUnion bool, addr common.Address, lockDay *big.Int, name string, enode string, description string, creatorIncentive *big.Int, partnerIncentive *big.Int, voterIncentive *big.Int) (common.Hash, error) {
+	return contract_api.RegisterSuperNode(ctx, api.blockChainAPI, api.transactionPoolAPI, from, value, isUnion, addr, lockDay, name, enode, description, creatorIncentive, partnerIncentive, voterIncentive)
 }
 
-func (api *PublicSuperNodeAPI) AppendRegister(ctx context.Context, from common.Address, amount *hexutil.Big, addr common.Address, lockDay *big.Int) (common.Hash, error) {
-	return contract_api.AppendRegisterSuperNode(ctx, api.blockChainAPI, api.transactionPoolAPI, from, amount, addr, lockDay)
+func (api *PublicSuperNodeAPI) AppendRegister(ctx context.Context, from common.Address, value *hexutil.Big, addr common.Address, lockDay *big.Int) (common.Hash, error) {
+	return contract_api.AppendRegisterSuperNode(ctx, api.blockChainAPI, api.transactionPoolAPI, from, value, addr, lockDay)
 }
 
 func (api *PublicSuperNodeAPI) TurnRegister(ctx context.Context, from common.Address, addr common.Address, lockID *big.Int) (common.Hash, error) {
@@ -97,20 +97,40 @@ func (api *PublicSuperNodeAPI) GetInfoByID(ctx context.Context, id *big.Int, blo
 	return contract_api.GetSuperNodeInfoByID(ctx, api.blockChainAPI, id, blockNrOrHash)
 }
 
+func (api *PublicSuperNodeAPI) GetNum(ctx context.Context, blockNrOrHash rpc.BlockNumberOrHash) (*big.Int, error) {
+	return contract_api.GetSuperNodeNum(ctx, api.blockChainAPI, blockNrOrHash)
+}
+
 func (api *PublicSuperNodeAPI) GetAll(ctx context.Context, start *big.Int, count *big.Int, blockNrOrHash rpc.BlockNumberOrHash) ([]common.Address, error) {
 	return contract_api.GetAllSuperNodes(ctx, api.blockChainAPI, start, count, blockNrOrHash)
+}
+
+func (api *PublicSuperNodeAPI) GetAddrNum4Creator(ctx context.Context, creator common.Address, blockNrOrHash rpc.BlockNumberOrHash) (*big.Int, error) {
+	return contract_api.GetSuperNodeNum4Creator(ctx, api.blockChainAPI, creator, blockNrOrHash)
+}
+
+func (api *PublicSuperNodeAPI) GetAddrs4Creator(ctx context.Context, creator common.Address, start *big.Int, count *big.Int, blockNrOrHash rpc.BlockNumberOrHash) ([]common.Address, error) {
+	return contract_api.GetSuperNodes4Creator(ctx, api.blockChainAPI, creator, start, count, blockNrOrHash)
+}
+
+func (api *PublicSuperNodeAPI) GetAddrNum4Partner(ctx context.Context, partner common.Address, blockNrOrHash rpc.BlockNumberOrHash) (*big.Int, error) {
+	return contract_api.GetSuperNodeNum4Partner(ctx, api.blockChainAPI, partner, blockNrOrHash)
+}
+
+func (api *PublicSuperNodeAPI) GetAddrs4Partner(ctx context.Context, partner common.Address, start *big.Int, count *big.Int, blockNrOrHash rpc.BlockNumberOrHash) ([]common.Address, error) {
+	return contract_api.GetSuperNodes4Partner(ctx, api.blockChainAPI, partner, start, count, blockNrOrHash)
 }
 
 func (api *PublicSuperNodeAPI) GetTops(ctx context.Context, blockNrOrHash rpc.BlockNumberOrHash) ([]common.Address, error) {
 	return contract_api.GetTopSuperNodes(ctx, api.blockChainAPI, blockNrOrHash)
 }
 
-func (api *PublicSuperNodeAPI) GetOfficials(ctx context.Context, blockNrOrHash rpc.BlockNumberOrHash) ([]common.Address, error) {
-	return contract_api.GetOfficialSuperNodes(ctx, api.blockChainAPI, blockNrOrHash)
+func (api *PublicSuperNodeAPI) GetTops4Creator(ctx context.Context, creator common.Address, blockNrOrHash rpc.BlockNumberOrHash) ([]common.Address, error) {
+	return contract_api.GetTopSuperNodes4Creator(ctx, api.blockChainAPI, creator, blockNrOrHash)
 }
 
-func (api *PublicSuperNodeAPI) GetNum(ctx context.Context, blockNrOrHash rpc.BlockNumberOrHash) (*big.Int, error) {
-	return contract_api.GetSuperNodeNum(ctx, api.blockChainAPI, blockNrOrHash)
+func (api *PublicSuperNodeAPI) GetOfficials(ctx context.Context, blockNrOrHash rpc.BlockNumberOrHash) ([]common.Address, error) {
+	return contract_api.GetOfficialSuperNodes(ctx, api.blockChainAPI, blockNrOrHash)
 }
 
 func (api *PublicSuperNodeAPI) Exist(ctx context.Context, addr common.Address, blockNrOrHash rpc.BlockNumberOrHash) (bool, error) {
@@ -133,10 +153,26 @@ func (api *PublicSuperNodeAPI) ExistLockID(ctx context.Context, addr common.Addr
 	return contract_api.ExistSuperNodeLockID(ctx, api.blockChainAPI, addr, lockID, blockNrOrHash)
 }
 
+func (api *PublicSuperNodeAPI) ExistFounder(ctx context.Context, founder common.Address, blockNrOrHash rpc.BlockNumberOrHash) (bool, error) {
+	return contract_api.ExistSuperNodeFounder(ctx, api.blockChainAPI, founder, blockNrOrHash)
+}
+
 func (api *PublicSuperNodeAPI) IsValid(ctx context.Context, addr common.Address, blockNrOrHash rpc.BlockNumberOrHash) (bool, error) {
 	return contract_api.IsValidSuperNode(ctx, api.blockChainAPI, addr, blockNrOrHash)
 }
 
 func (api *PublicSuperNodeAPI) IsFormal(ctx context.Context, addr common.Address, blockNrOrHash rpc.BlockNumberOrHash) (bool, error) {
 	return contract_api.IsFormalSuperNode(ctx, api.blockChainAPI, addr, blockNrOrHash)
+}
+
+func (api *PublicSuperNodeAPI) ExistNodeAddress(ctx context.Context, addr common.Address, blockNrOrHash rpc.BlockNumberOrHash) (bool, error) {
+	return contract_api.ExistNodeAddress(ctx, api.blockChainAPI, addr, blockNrOrHash)
+}
+
+func (api *PublicSuperNodeAPI) ExistNodeEnode(ctx context.Context, enode string, blockNrOrHash rpc.BlockNumberOrHash) (bool, error) {
+	return contract_api.ExistNodeEnode(ctx, api.blockChainAPI, enode, blockNrOrHash)
+}
+
+func (api *PublicSuperNodeAPI) ExistNodeFounder(ctx context.Context, founder common.Address, blockNrOrHash rpc.BlockNumberOrHash) (bool, error) {
+	return contract_api.ExistNodeFounder(ctx, api.blockChainAPI, founder, blockNrOrHash)
 }

@@ -2,334 +2,109 @@ package contract_api
 
 import (
 	"context"
-	"github.com/ethereum/go-ethereum/accounts/abi"
+	"math/big"
+
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/core/systemcontracts"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/internal/ethapi"
 	"github.com/ethereum/go-ethereum/rpc"
-	"math/big"
-	"strings"
 )
 
-func DepositAccount(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, transactionPoolAPI *ethapi.PublicTransactionPoolAPI, from common.Address, amount *hexutil.Big, to common.Address, lockDay *big.Int) (common.Hash, error) {
-	vABI, err := abi.JSON(strings.NewReader(systemcontracts.AccountManagerABI))
-	if err != nil {
-		return common.Hash{}, err
-	}
+func DepositAccount(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, transactionPoolAPI *ethapi.PublicTransactionPoolAPI, from common.Address, value *hexutil.Big, to common.Address, lockDay *big.Int) (common.Hash, error) {
+	return CallContract(ctx, blockChainAPI, transactionPoolAPI, from, value, systemcontracts.AccountManagerContractAddr, "deposit", getValues(to, lockDay))
+}
 
-	method := "deposit"
-	data, err := vABI.Pack(method, to, lockDay)
-	if err != nil {
-		return common.Hash{}, err
-	}
+func BatchDeposit4One(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, transactionPoolAPI *ethapi.PublicTransactionPoolAPI, from common.Address, value *hexutil.Big, to common.Address, times *big.Int, spaceDay *big.Int, startDay *big.Int) (common.Hash, error) {
+	return CallContract(ctx, blockChainAPI, transactionPoolAPI, from, value, systemcontracts.AccountManagerContractAddr, "batchDeposit4One", getValues(to, times, spaceDay, startDay))
+}
 
-	msgData := (hexutil.Bytes)(data)
-	args := ethapi.TransactionArgs{
-		From:     &from,
-		To:       &systemcontracts.AccountManagerContractAddr,
-		Data:     &msgData,
-		Value:    amount,
-		GasPrice: (*hexutil.Big)(GetCurrentGasPrice(ctx, blockChainAPI)),
-	}
-	gas, err := blockChainAPI.EstimateGas(ctx, args, nil)
-	if err != nil {
-		return common.Hash{}, err
-	}
-	args.Gas = &gas
-	return transactionPoolAPI.SendTransaction(ctx, args)
+func BatchDeposit4Multi(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, transactionPoolAPI *ethapi.PublicTransactionPoolAPI, from common.Address, value *hexutil.Big, addrs []common.Address, times *big.Int, spaceDay *big.Int, startDay *big.Int) (common.Hash, error) {
+	return CallContract(ctx, blockChainAPI, transactionPoolAPI, from, value, systemcontracts.AccountManagerContractAddr, "batchDeposit4Multi", getValues(addrs, times, spaceDay, startDay))
 }
 
 func WithdrawAccount(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, transactionPoolAPI *ethapi.PublicTransactionPoolAPI, from common.Address) (common.Hash, error) {
-	vABI, err := abi.JSON(strings.NewReader(systemcontracts.AccountManagerABI))
-	if err != nil {
-		return common.Hash{}, err
-	}
-
-	method := "withdraw"
-	data, err := vABI.Pack(method)
-	if err != nil {
-		return common.Hash{}, err
-	}
-
-	msgData := (hexutil.Bytes)(data)
-	args := ethapi.TransactionArgs{
-		From:     &from,
-		To:       &systemcontracts.AccountManagerContractAddr,
-		Data:     &msgData,
-		GasPrice: (*hexutil.Big)(GetCurrentGasPrice(ctx, blockChainAPI)),
-	}
-	gas, err := blockChainAPI.EstimateGas(ctx, args, nil)
-	if err != nil {
-		return common.Hash{}, err
-	}
-	args.Gas = &gas
-	return transactionPoolAPI.SendTransaction(ctx, args)
+	return CallContract(ctx, blockChainAPI, transactionPoolAPI, from, nil, systemcontracts.AccountManagerContractAddr, "withdraw", nil)
 }
 
 func WithdrawAccountByID(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, transactionPoolAPI *ethapi.PublicTransactionPoolAPI, from common.Address, ids []*big.Int) (common.Hash, error) {
-	vABI, err := abi.JSON(strings.NewReader(systemcontracts.AccountManagerABI))
-	if err != nil {
-		return common.Hash{}, err
-	}
-
-	method := "withdrawByID"
-	data, err := vABI.Pack(method, ids)
-	if err != nil {
-		return common.Hash{}, err
-	}
-
-	msgData := (hexutil.Bytes)(data)
-	args := ethapi.TransactionArgs{
-		From:     &from,
-		To:       &systemcontracts.AccountManagerContractAddr,
-		Data:     &msgData,
-		GasPrice: (*hexutil.Big)(GetCurrentGasPrice(ctx, blockChainAPI)),
-	}
-	gas, err := blockChainAPI.EstimateGas(ctx, args, nil)
-	if err != nil {
-		return common.Hash{}, err
-	}
-	args.Gas = &gas
-	return transactionPoolAPI.SendTransaction(ctx, args)
+	return CallContract(ctx, blockChainAPI, transactionPoolAPI, from, nil, systemcontracts.AccountManagerContractAddr, "withdrawByID", getValues(ids))
 }
 
 func TransferAccount(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, transactionPoolAPI *ethapi.PublicTransactionPoolAPI, from common.Address, to common.Address, amount *hexutil.Big, lockDay *big.Int) (common.Hash, error) {
-	vABI, err := abi.JSON(strings.NewReader(systemcontracts.AccountManagerABI))
-	if err != nil {
-		return common.Hash{}, err
-	}
-
-	method := "transfer"
-	data, err := vABI.Pack(method, to, amount.ToInt(), lockDay)
-	if err != nil {
-		return common.Hash{}, err
-	}
-
-	msgData := (hexutil.Bytes)(data)
-	args := ethapi.TransactionArgs{
-		From:     &from,
-		To:       &systemcontracts.AccountManagerContractAddr,
-		Data:     &msgData,
-		GasPrice: (*hexutil.Big)(GetCurrentGasPrice(ctx, blockChainAPI)),
-	}
-	gas, err := blockChainAPI.EstimateGas(ctx, args, nil)
-	if err != nil {
-		return common.Hash{}, err
-	}
-	args.Gas = &gas
-	return transactionPoolAPI.SendTransaction(ctx, args)
+	return CallContract(ctx, blockChainAPI, transactionPoolAPI, from, nil, systemcontracts.AccountManagerContractAddr, "transfer", getValues(to, amount, lockDay))
 }
 
 func AddAccountLockDay(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, transactionPoolAPI *ethapi.PublicTransactionPoolAPI, from common.Address, id *big.Int, day *big.Int) (common.Hash, error) {
-	vABI, err := abi.JSON(strings.NewReader(systemcontracts.AccountManagerABI))
-	if err != nil {
-		return common.Hash{}, err
-	}
-
-	method := "addLockDay"
-	data, err := vABI.Pack(method, id, day)
-	if err != nil {
-		return common.Hash{}, err
-	}
-
-	msgData := (hexutil.Bytes)(data)
-	args := ethapi.TransactionArgs{
-		From:     &from,
-		To:       &systemcontracts.AccountManagerContractAddr,
-		Data:     &msgData,
-		GasPrice: (*hexutil.Big)(GetCurrentGasPrice(ctx, blockChainAPI)),
-	}
-	gas, err := blockChainAPI.EstimateGas(ctx, args, nil)
-	if err != nil {
-		return common.Hash{}, err
-	}
-	args.Gas = &gas
-	return transactionPoolAPI.SendTransaction(ctx, args)
+	return CallContract(ctx, blockChainAPI, transactionPoolAPI, from, nil, systemcontracts.AccountManagerContractAddr, "addLockDay", getValues(id, day))
 }
 
-func GetAccountTotalAmount(ctx context.Context, api *ethapi.PublicBlockChainAPI, addr common.Address, blockNrOrHash rpc.BlockNumberOrHash) (*types.AccountAmountInfo, error) {
-	return getAccountAmountInfo(ctx, api, "getTotalAmount", addr, blockNrOrHash)
+func GetAccountTotalAmount(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, addr common.Address, blockNrOrHash rpc.BlockNumberOrHash) (*types.AccountAmountInfo, error) {
+	return getAccountAmountInfo(ctx, blockChainAPI, "getTotalAmount", addr, blockNrOrHash)
 }
 
-func GetAccountAvailableAmount(ctx context.Context, api *ethapi.PublicBlockChainAPI, addr common.Address, blockNrOrHash rpc.BlockNumberOrHash) (*types.AccountAmountInfo, error) {
-	return getAccountAmountInfo(ctx, api, "getAvailableAmount", addr, blockNrOrHash)
+func GetAccountAvailableAmount(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, addr common.Address, blockNrOrHash rpc.BlockNumberOrHash) (*types.AccountAmountInfo, error) {
+	return getAccountAmountInfo(ctx, blockChainAPI, "getAvailableAmount", addr, blockNrOrHash)
 }
 
-func GetAccountLockedAmount(ctx context.Context, api *ethapi.PublicBlockChainAPI, addr common.Address, blockNrOrHash rpc.BlockNumberOrHash) (*types.AccountAmountInfo, error) {
-	return getAccountAmountInfo(ctx, api, "getLockedAmount", addr, blockNrOrHash)
+func GetAccountLockedAmount(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, addr common.Address, blockNrOrHash rpc.BlockNumberOrHash) (*types.AccountAmountInfo, error) {
+	return getAccountAmountInfo(ctx, blockChainAPI, "getLockedAmount", addr, blockNrOrHash)
 }
 
-func GetAccountUsedAmount(ctx context.Context, api *ethapi.PublicBlockChainAPI, addr common.Address, blockNrOrHash rpc.BlockNumberOrHash) (*types.AccountAmountInfo, error) {
-	return getAccountAmountInfo(ctx, api, "getUsedAmount", addr, blockNrOrHash)
+func GetAccountUsedAmount(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, addr common.Address, blockNrOrHash rpc.BlockNumberOrHash) (*types.AccountAmountInfo, error) {
+	return getAccountAmountInfo(ctx, blockChainAPI, "getUsedAmount", addr, blockNrOrHash)
 }
 
-func getAccountAmountInfo(ctx context.Context, api *ethapi.PublicBlockChainAPI, method string, addr common.Address, blockNrOrHash rpc.BlockNumberOrHash) (*types.AccountAmountInfo, error) {
-	vABI, err := abi.JSON(strings.NewReader(systemcontracts.AccountManagerABI))
+func getAccountAmountInfo(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, method string, addr common.Address, blockNrOrHash rpc.BlockNumberOrHash) (*types.AccountAmountInfo, error) {
+	outs, err := QueryContract4MultiReturn(ctx, blockChainAPI, blockNrOrHash, systemcontracts.AccountManagerContractAddr, method, getValues(addr))
 	if err != nil {
 		return nil, err
 	}
-
-	data, err := vABI.Pack(method, addr)
-	if err != nil {
-		return nil, err
-	}
-
-	msgData := (hexutil.Bytes)(data)
-	args := ethapi.TransactionArgs{
-		To: &systemcontracts.AccountManagerContractAddr,
-		Data: &msgData,
-	}
-
-	result, err := api.Call(ctx, args, blockNrOrHash, nil)
-
-	if err != nil {
-		return nil, err
-	}
-
-	unpacked, err := vABI.Unpack(method, result)
-	if err != nil {
-		return nil, err
-	}
-
-	info := new(types.AccountAmountInfo)
-	info.Amount = unpacked[0].(*big.Int)
-	info.Num = unpacked[1].(*big.Int)
-	return info, nil
+	ret := new(types.AccountAmountInfo)
+	ret.Amount = outs[0].(*big.Int)
+	ret.Num = outs[1].(*big.Int)
+	return ret, nil
 }
 
-func GetAccountTotalIDs(ctx context.Context, api *ethapi.PublicBlockChainAPI, addr common.Address, start *big.Int, count *big.Int, blockNrOrHash rpc.BlockNumberOrHash) ([]*big.Int, error) {
-	return getAccountIDs(ctx, api, "getTotalIDs", addr, start, count, blockNrOrHash)
+func GetAccountTotalIDs(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, addr common.Address, start *big.Int, count *big.Int, blockNrOrHash rpc.BlockNumberOrHash) ([]*big.Int, error) {
+	return getAccountIDs(ctx, blockChainAPI, "getTotalIDs", addr, start, count, blockNrOrHash)
 }
 
-func GetAccountAvailableIDs(ctx context.Context, api *ethapi.PublicBlockChainAPI, addr common.Address, start *big.Int, count *big.Int, blockNrOrHash rpc.BlockNumberOrHash) ([]*big.Int, error) {
-	return getAccountIDs(ctx, api, "getAvailableIDs", addr, start, count, blockNrOrHash)
+func GetAccountAvailableIDs(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, addr common.Address, start *big.Int, count *big.Int, blockNrOrHash rpc.BlockNumberOrHash) ([]*big.Int, error) {
+	return getAccountIDs(ctx, blockChainAPI, "getAvailableIDs", addr, start, count, blockNrOrHash)
 }
 
-func GetAccountLockedIDs(ctx context.Context, api *ethapi.PublicBlockChainAPI, addr common.Address, start *big.Int, count *big.Int, blockNrOrHash rpc.BlockNumberOrHash) ([]*big.Int, error) {
-	return getAccountIDs(ctx, api, "getLockedIDs", addr, start, count, blockNrOrHash)
+func GetAccountLockedIDs(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, addr common.Address, start *big.Int, count *big.Int, blockNrOrHash rpc.BlockNumberOrHash) ([]*big.Int, error) {
+	return getAccountIDs(ctx, blockChainAPI, "getLockedIDs", addr, start, count, blockNrOrHash)
 }
 
-func GetAccountUsedIDs(ctx context.Context, api *ethapi.PublicBlockChainAPI, addr common.Address, start *big.Int, count *big.Int, blockNrOrHash rpc.BlockNumberOrHash) ([]*big.Int, error) {
-	return getAccountIDs(ctx, api, "getUsedIDs", addr, start, count, blockNrOrHash)
+func GetAccountUsedIDs(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, addr common.Address, start *big.Int, count *big.Int, blockNrOrHash rpc.BlockNumberOrHash) ([]*big.Int, error) {
+	return getAccountIDs(ctx, blockChainAPI, "getUsedIDs", addr, start, count, blockNrOrHash)
 }
 
-func getAccountIDs(ctx context.Context, api *ethapi.PublicBlockChainAPI, method string, addr common.Address, start *big.Int, count *big.Int, blockNrOrHash rpc.BlockNumberOrHash) ([]*big.Int, error) {
-	vABI, err := abi.JSON(strings.NewReader(systemcontracts.AccountManagerABI))
-	if err != nil {
+func getAccountIDs(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, method string, addr common.Address, start *big.Int, count *big.Int, blockNrOrHash rpc.BlockNumberOrHash) ([]*big.Int, error) {
+	ret := new([]*big.Int)
+	if err := QueryContract(ctx, blockChainAPI, blockNrOrHash, systemcontracts.AccountManagerContractAddr, method, getValues(addr, start, count), &ret); err != nil {
 		return nil, err
 	}
-
-	data, err := vABI.Pack(method, addr, start, count)
-	if err != nil {
-		return nil, err
-	}
-
-	msgData := (hexutil.Bytes)(data)
-	args := ethapi.TransactionArgs{
-		To: &systemcontracts.AccountManagerContractAddr,
-		Data: &msgData,
-	}
-	result, err := api.Call(ctx, args, blockNrOrHash, nil)
-
-	if err != nil {
-		return nil, err
-	}
-
-	records := new([]*big.Int)
-	if err := vABI.UnpackIntoInterface(records, method, result); err != nil {
-		return nil, err
-	}
-	return *records, nil
+	return *ret, nil
 }
 
-func GetAccountRecord0(ctx context.Context, api *ethapi.PublicBlockChainAPI, addr common.Address, blockNrOrHash rpc.BlockNumberOrHash) (*types.AccountRecord, error) {
-	vABI, err := abi.JSON(strings.NewReader(systemcontracts.AccountManagerABI))
-	if err != nil {
-		return nil, err
-	}
-
-	method := "getRecord0"
-	data, err := vABI.Pack(method, addr)
-	if err != nil {
-		return nil, err
-	}
-
-	msgData := (hexutil.Bytes)(data)
-	args := ethapi.TransactionArgs{
-		To: &systemcontracts.AccountManagerContractAddr,
-		Data: &msgData,
-	}
-	result, err := api.Call(ctx, args, blockNrOrHash, nil)
-
-	if err != nil {
-		return nil, err
-	}
-
-	record := new(types.AccountRecord)
-	if err := vABI.UnpackIntoInterface(&record, method, result); err != nil {
-		return nil, err
-	}
-	return record, nil
+func GetAccountRecord0(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, addr common.Address, blockNrOrHash rpc.BlockNumberOrHash) (*types.AccountRecord, error) {
+	ret := new(types.AccountRecord)
+	err := QueryContract(ctx, blockChainAPI, blockNrOrHash, systemcontracts.AccountManagerContractAddr, "getRecord0", getValues(addr), &ret)
+	return ret, err
 }
 
-func GetAccountRecordByID(ctx context.Context, api *ethapi.PublicBlockChainAPI, id *big.Int, blockNrOrHash rpc.BlockNumberOrHash) (*types.AccountRecord, error) {
-	vABI, err := abi.JSON(strings.NewReader(systemcontracts.AccountManagerABI))
-	if err != nil {
-		return nil, err
-	}
-
-	method := "getRecordByID"
-	data, err := vABI.Pack(method, id)
-	if err != nil {
-		return nil, err
-	}
-
-	msgData := (hexutil.Bytes)(data)
-	args := ethapi.TransactionArgs{
-		To: &systemcontracts.AccountManagerContractAddr,
-		Data: &msgData,
-	}
-	result, err := api.Call(ctx, args, blockNrOrHash, nil)
-
-	if err != nil {
-		return nil, err
-	}
-
-	record := new(types.AccountRecord)
-	if err := vABI.UnpackIntoInterface(&record, method, result); err != nil {
-		return nil, err
-	}
-	return record, nil
+func GetAccountRecordByID(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, id *big.Int, blockNrOrHash rpc.BlockNumberOrHash) (*types.AccountRecord, error) {
+	ret := new(types.AccountRecord)
+	err := QueryContract(ctx, blockChainAPI, blockNrOrHash, systemcontracts.AccountManagerContractAddr, "getRecordByID", getValues(id), &ret)
+	return ret, err
 }
 
-func GetAccountRecordUseInfo(ctx context.Context, api *ethapi.PublicBlockChainAPI, id *big.Int, blockNrOrHash rpc.BlockNumberOrHash) (*types.AccountRecordUseInfo, error) {
-	vABI, err := abi.JSON(strings.NewReader(systemcontracts.AccountManagerABI))
-	if err != nil {
-		return nil, err
-	}
-
-	method := "getRecordUseInfo"
-	data, err := vABI.Pack(method, id)
-	if err != nil {
-		return nil, err
-	}
-
-	msgData := (hexutil.Bytes)(data)
-	args := ethapi.TransactionArgs{
-		To: &systemcontracts.AccountManagerContractAddr,
-		Data: &msgData,
-	}
-	result, err := api.Call(ctx, args, blockNrOrHash, nil)
-
-	if err != nil {
-		return nil, err
-	}
-
-	info := new(types.AccountRecordUseInfo)
-	if err := vABI.UnpackIntoInterface(&info, method, result); err != nil {
-		return nil, err
-	}
-	return info, nil
+func GetAccountRecordUseInfo(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, id *big.Int, blockNrOrHash rpc.BlockNumberOrHash) (*types.AccountRecordUseInfo, error) {
+	ret := new(types.AccountRecordUseInfo)
+	err := QueryContract(ctx, blockChainAPI, blockNrOrHash, systemcontracts.AccountManagerContractAddr, "getRecordUseInfo", getValues(id), &ret)
+	return ret, err
 }

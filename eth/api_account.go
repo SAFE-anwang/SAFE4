@@ -21,8 +21,16 @@ func NewPublicAccountAPI(e *Ethereum) *PublicAccountAPI {
 	return &PublicAccountAPI{e, e.GetPublicBlockChainAPI(), e.GetPublicTransactionPoolAPI()}
 }
 
-func (api *PublicAccountAPI) Deposit(ctx context.Context, from common.Address, amount *hexutil.Big, to common.Address, lockDay *big.Int) (common.Hash, error) {
-	return contract_api.DepositAccount(ctx, api.blockChainAPI, api.transactionPoolAPI, from, amount, to, lockDay)
+func (api *PublicAccountAPI) Deposit(ctx context.Context, from common.Address, value *hexutil.Big, to common.Address, lockDay *big.Int) (common.Hash, error) {
+	return contract_api.DepositAccount(ctx, api.blockChainAPI, api.transactionPoolAPI, from, value, to, lockDay)
+}
+
+func (api *PublicAccountAPI) BatchDeposit4One(ctx context.Context, from common.Address, value *hexutil.Big, to common.Address, times *big.Int, spaceDay *big.Int, startDay *big.Int) (common.Hash, error) {
+	return contract_api.BatchDeposit4One(ctx, api.blockChainAPI, api.transactionPoolAPI, from, value, to, times, spaceDay, startDay)
+}
+
+func (api *PublicAccountAPI) BatchDeposit4Multi(ctx context.Context, from common.Address, value *hexutil.Big, addrs []common.Address, times *big.Int, spaceDay *big.Int, startDay *big.Int) (common.Hash, error) {
+	return contract_api.BatchDeposit4Multi(ctx, api.blockChainAPI, api.transactionPoolAPI, from, value, addrs, times, spaceDay, startDay)
 }
 
 func (api *PublicAccountAPI) Withdraw(ctx context.Context, from common.Address) (common.Hash, error) {

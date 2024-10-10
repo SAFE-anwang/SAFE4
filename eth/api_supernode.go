@@ -9,7 +9,6 @@ import (
 	"github.com/ethereum/go-ethereum/core/systemcontracts/contract_api"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/internal/ethapi"
-	"github.com/ethereum/go-ethereum/log"
 	"github.com/ethereum/go-ethereum/rpc"
 	"math/big"
 )
@@ -30,11 +29,16 @@ func (api *PublicSuperNodeAPI) Start(ctx context.Context, addr common.Address) (
 		api.enode = contract_api.CompressEnode(api.e.p2pServer.NodeInfo().Enode)
 	}
 
+	progress := api.e.APIBackend.SyncProgress()
+	if progress.CurrentBlock < progress.HighestBlock {
+		return false, errors.New("syncing now")
+	}
+
 	info, err := api.GetInfo(ctx, addr, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber))
 	if err != nil {
 		return false, err
 	}
-	if api.enode != info.Enode {
+	if !contract_api.CompareEnode(api.enode, info.Enode) {
 		return false, errors.New("start failed, incompatible supernode enode, local: [" + api.enode + "], state: [" + info.Enode + "]")
 	}
 
@@ -44,16 +48,6 @@ func (api *PublicSuperNodeAPI) Start(ctx context.Context, addr common.Address) (
 		return false, err
 	}
 	api.e.eventMux.Post(core.NodePingEvent{Ping: ping})
-	return true, nil
-}
-
-func (api *PublicSuperNodeAPI) Stop(ctx context.Context, addr common.Address) (bool, error) {
-	log.Info("Stop supernode", "address", addr)
-	return true, nil
-}
-
-func (api *PublicSuperNodeAPI) Restart(ctx context.Context, addr common.Address) (bool, error) {
-	log.Info("Restart supernode", "address", addr)
 	return true, nil
 }
 

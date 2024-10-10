@@ -14001,20 +14001,6 @@ module.exports = XMLHttpRequest;
       inputFormatter: [formatters.inputAddressFormatter]
     });
 
-    var stop = new Method({
-      name: 'stop',
-      call: 'masternode_stop',
-      params: 1,
-      inputFormatter: [formatters.inputAddressFormatter]
-    });
-
-    var restart = new Method({
-      name: 'restart',
-      call: 'masternode_restart',
-      params: 1,
-      inputFormatter: [formatters.inputAddressFormatter]
-    });
-
     var register = new Method({
       name: 'register',
       call: 'masternode_register',
@@ -14199,8 +14185,6 @@ module.exports = XMLHttpRequest;
 
     return [
       start,
-      stop,
-      restart,
       register,
       appendRegister,
       turnRegister,
@@ -14261,20 +14245,6 @@ module.exports = XMLHttpRequest;
     var start = new Method({
       name: 'start',
       call: 'supernode_start',
-      params: 1,
-      inputFormatter: [formatters.inputAddressFormatter]
-    });
-
-    var stop = new Method({
-      name: 'stop',
-      call: 'supernode_stop',
-      params: 1,
-      inputFormatter: [formatters.inputAddressFormatter]
-    });
-
-    var restart = new Method({
-      name: 'restart',
-      call: 'supernode_restart',
       params: 1,
       inputFormatter: [formatters.inputAddressFormatter]
     });
@@ -14491,8 +14461,6 @@ module.exports = XMLHttpRequest;
 
     return [
       start,
-      stop,
-      restart,
       register,
       appendRegister,
       turnRegister,

@@ -687,8 +687,7 @@ func (h *handler) BroadcastNodePing(ping *types.NodePing) {
 func (h *handler) nodePingBroadcastLoop() {
 	defer h.wg.Done()
 	for obj := range h.nodePingSub.Chan() {
-		switch ev := obj.Data.(type) {
-		case core.NodePingEvent:
+		if ev, ok := obj.Data.(core.NodePingEvent); ok {
 			h.BroadcastNodePing(ev.Ping)
 		}
 	}

@@ -486,7 +486,7 @@ func (w *worker) newWorkLoop(recommit time.Duration) {
 						}
 						curTime := uint64(time.Now().Unix())
 						if curTime >= parent.Time() + 4 * period && curTime >= lastCommitTime + period {
-							commit(true, commitInterruptResubmit)
+							commit(false, commitInterruptNewHead)
 							lastCommitTime = curTime
 							continue
 						}

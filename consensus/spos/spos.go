@@ -470,13 +470,13 @@ func (s *Spos) snapshot(chain consensus.ChainHeaderReader, number uint64, hash c
 		}
 
 		// If an on-disk checkpoint snapshot can be found, use that
-		if number % checkpointInterval == 0 {
+		//if number % checkpointInterval == 0 {
 			if s, err := loadSnapshot(s.config, s.signatures, s.db, hash); err == nil {
 				log.Trace("Loaded snapshot from disk", "number", number, "hash", hash)
 				snap = s
 				break
 			}
-		}
+		//}
 
 		if number != 0 && number % s.config.Epoch == 0 {
 			checkpoint := chain.GetHeaderByNumber(number)

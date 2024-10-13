@@ -544,14 +544,19 @@ func (h *handler) Start(maxPeers int) {
 }
 
 func (h *handler) Stop() {
+	log.Info("exist eth-handler...")
 	h.txsSub.Unsubscribe()        // quits txBroadcastLoop
+	log.Info("unsubscribe txSub finish")
 	h.minedBlockSub.Unsubscribe() // quits blockBroadcastLoop
+	log.Info("unsubscribe minedBlockSub finish")
 	h.nodePingSub.Unsubscribe() // quits nodePingBroadcastLoop
+	log.Info("unsubscribe nodePingSub finish")
 
 	// Quit chainSync and txsync64.
 	// After this is done, no new peers will be accepted.
 	close(h.quitSync)
 	h.wg.Wait()
+	log.Info("quite chainSync and txsync64 finish")
 
 	// Disconnect existing sessions.
 	// This also closes the gate for any new registrations on the peer set.
@@ -559,6 +564,7 @@ func (h *handler) Stop() {
 	// will exit when they try to register.
 	h.peers.close()
 	h.peerWG.Wait()
+	log.Info("disconnect existing sessions finish")
 
 	log.Info("Ethereum protocol stopped")
 }

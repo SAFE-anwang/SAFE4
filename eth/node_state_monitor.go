@@ -124,7 +124,7 @@ func (monitor *NodeStateMonitor) loop() {
 			addr, err := monitor.e.Etherbase()
 			if err == nil && monitor.isTopSuperNode(addr) {
 				ping := ev.Ping
-				log.Trace("node-state-monitor", "ping", ping)
+				log.Info("node-ping-msg", "node-type", ping.NodeType, "id", ping.Id, "height", ping.CurHeight)
 
 				// recover the public key from the signature
 				r, s := ping.R.Bytes(), ping.S.Bytes()
@@ -262,12 +262,13 @@ func (monitor *NodeStateMonitor) broadcastLoop() {
 			if err == nil && info1.Id.Int64() != 0 {
 				if !contract_api.CompareEnode(monitor.enode, info1.Enode) {
 					if lastAddr != addr {
-						log.Error("broadcast-supernode-state", "local", monitor.enode, "state", info1.Enode, "error", "incompatible enode")
+						log.Error("broadcast supernode ping msg failed", "local", monitor.enode, "state", info1.Enode, "error", "incompatible enode")
 						lastAddr = addr
 					}
 					break
 				}
 				ping, _ := types.NewNodePing(info1.Id, types.SuperNodeType, curBlock.Hash(), curBlock.Number(), monitor.e.p2pServer.Config.PrivateKey)
+				log.Info("broadcast supernode ping msg", "id", ping.Id, "height", ping.CurHeight)
 				monitor.e.eventMux.Post(core.NodePingEvent{Ping: ping})
 				monitor.lock.Lock()
 				monitor.snMonitorInfos[ping.Id.Int64()] = MonitorInfo{StateRunning, 0, curTime}
@@ -277,12 +278,13 @@ func (monitor *NodeStateMonitor) broadcastLoop() {
 				if err == nil && info2.Id.Int64() != 0 {
 					if !contract_api.CompareEnode(monitor.enode, info2.Enode) {
 						if lastAddr != addr {
-							log.Error("broadcast-masternode-state", "local", monitor.enode, "state", info2.Enode, "error", "incompatible enode")
+							log.Error("broadcast masternode state failed", "local", monitor.enode, "state", info2.Enode, "error", "incompatible enode")
 							lastAddr = addr
 						}
 						break
 					}
 					ping, _ := types.NewNodePing(info2.Id, types.MasterNodeType, curBlock.Hash(), curBlock.Number(), monitor.e.p2pServer.Config.PrivateKey)
+					log.Info("broadcast masternode ping msg", "id", ping.Id, "height", ping.CurHeight)
 					monitor.e.eventMux.Post(core.NodePingEvent{Ping: ping})
 					monitor.lock.Lock()
 					monitor.mnMonitorInfos[ping.Id.Int64()] = MonitorInfo{StateRunning, 0, curTime}

@@ -116,8 +116,7 @@ func (monitor *NodeStateMonitor) Stop() {
 func (monitor *NodeStateMonitor) loop() {
 	defer monitor.wg.Done()
 	for obj := range monitor.eventSub.Chan() {
-		switch ev := obj.Data.(type) {
-		case core.NodePingEvent:
+		if ev, ok := obj.Data.(core.NodePingEvent); ok {
 			if monitor.isSyncing() {
 				break
 			}

@@ -100,7 +100,7 @@ func (monitor *NodeStateMonitor) HandlePing(ping *types.NodePing) error {
 
 	addr, err := monitor.e.Etherbase()
 	if err == nil && monitor.isTopSuperNode(addr) {
-		log.Info("Handle received nodePing", "node-type", ping.NodeType, "node-id", ping.Id, "node-height", ping.CurHeight)
+		log.Debug("Handle received nodePing", "node-type", ping.NodeType, "node-id", ping.Id, "node-height", ping.CurHeight)
 
 		// recover the public key from the signature
 		r, s := ping.R.Bytes(), ping.S.Bytes()
@@ -237,7 +237,7 @@ func (monitor *NodeStateMonitor) broadcastLoop() {
 				monitor.lock.Lock()
 				monitor.snMonitorInfos[ping.Id.Int64()] = MonitorInfo{StateRunning, 0, curTime}
 				monitor.lock.Unlock()
-				log.Info("Broadcast supernode ping", "id", ping.Id, "height", ping.CurHeight)
+				log.Debug("Broadcast supernode ping", "id", ping.Id, "height", ping.CurHeight)
 				continue
 			}
 			info2, err := contract_api.GetMasterNodeInfo(monitor.ctx, monitor.blockChainAPI, addr, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber))
@@ -263,7 +263,7 @@ func (monitor *NodeStateMonitor) broadcastLoop() {
 				monitor.lock.Lock()
 				monitor.mnMonitorInfos[ping.Id.Int64()] = MonitorInfo{StateRunning, 0, curTime}
 				monitor.lock.Unlock()
-				log.Info("Broadcast masternode ping", "id", ping.Id, "height", ping.CurHeight)
+				log.Debug("Broadcast masternode ping", "id", ping.Id, "height", ping.CurHeight)
 			}
 		}
 	}
@@ -397,7 +397,7 @@ func (monitor *NodeStateMonitor) collectMasterNodes(from common.Address) ([]*big
 
 	for _, info = range infos {
 		id := info.Id.Int64()
-		log.Trace("collect-masternode-state", "id", id, "global-state", info.State, "local-state", monitor.mnMonitorInfos[id].curState, "missNum", monitor.mnMonitorInfos[id].missNum)
+		log.Debug("collect-masternode-state", "id", id, "global-state", info.State, "local-state", monitor.mnMonitorInfos[id].curState, "missNum", monitor.mnMonitorInfos[id].missNum)
 		if v, ok := monitor.mnMonitorInfos[id]; ok {
 			if v.curState != info.State.Int64() {
 				if v.curState == StateRunning || (v.curState == StateStop && v.missNum >= MaxMissNum) {
@@ -470,7 +470,7 @@ func (monitor *NodeStateMonitor) collectSuperNodes(from common.Address) ([]*big.
 
 	for _, info = range infos {
 		id := info.Id.Int64()
-		log.Trace("collect-supernode-state", "id", id, "global-state", info.State, "local-state", monitor.snMonitorInfos[id].curState, "missNum", monitor.snMonitorInfos[id].missNum)
+		log.Debug("collect-supernode-state", "id", id, "global-state", info.State, "local-state", monitor.snMonitorInfos[id].curState, "missNum", monitor.snMonitorInfos[id].missNum)
 		if v, ok := monitor.snMonitorInfos[id]; ok {
 			if v.curState != info.State.Int64() {
 				if v.curState == StateRunning || (v.curState == StateStop && v.missNum >= MaxMissNum) {

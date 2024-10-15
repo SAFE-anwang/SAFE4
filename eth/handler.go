@@ -116,6 +116,7 @@ type handler struct {
 	txsCh         chan core.NewTxsEvent
 	txsSub        event.Subscription
 	minedBlockSub *event.TypeMuxSubscription
+	nodePingSub   *event.TypeMuxSubscription
 
 	requiredBlocks map[uint64]common.Hash
 
@@ -538,6 +539,11 @@ func (h *handler) Start(maxPeers int) {
 	// start sync handlers
 	h.wg.Add(1)
 	go h.chainSync.loop()
+
+	// broadcast node pings
+	h.wg.Add(1)
+	h.nodePingSub = h.eventMux.Subscribe(core.NodePingEvent{})
+	go h.nodePingBroadcastLoop()
 }
 
 func (h *handler) Stop() {
@@ -546,6 +552,8 @@ func (h *handler) Stop() {
 	log.Info("Unsubscribe txSub finish")
 	h.minedBlockSub.Unsubscribe() // quits blockBroadcastLoop
 	log.Info("Unsubscribe minedBlockSub finish")
+	h.nodePingSub.Unsubscribe()
+	log.Info("Unsubscribe nodePingSub finish")
 
 	// Quit chainSync and txsync64.
 	// After this is done, no new peers will be accepted.
@@ -683,4 +691,14 @@ func (h *handler) BroadcastNodePing(ping *types.NodePing) {
 		peer.SendNodePing(ping)
 	}
 	log.Trace("Announced node-ping", "hash", hash, "recipients", len(peers))
+}
+
+func (h *handler) nodePingBroadcastLoop() {
+	defer h.wg.Done()
+
+	for obj := range h.nodePingSub.Chan() {
+		if ev, ok := obj.Data.(core.NodePingEvent); ok {
+			h.BroadcastNodePing(ev.Ping)
+		}
+	}
 }

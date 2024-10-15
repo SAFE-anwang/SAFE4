@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/core/systemcontracts/contract_api"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -94,6 +95,8 @@ func (monitor *NodeStateMonitor) Stop() {
 }
 
 func (monitor *NodeStateMonitor) HandlePing(ping *types.NodePing) error {
+	monitor.e.eventMux.Post(core.NodePingEvent{Ping: ping})
+
 	if monitor.isSyncing() {
 		return nil
 	}

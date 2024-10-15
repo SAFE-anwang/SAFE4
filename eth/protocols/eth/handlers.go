@@ -564,9 +564,6 @@ func handleNodePing(backend Backend, msg Decoder, peer *Peer) error {
 	}
 
 	h := packet.Ping.Hash()
-	if peer.KnownNodePing(h) {
-		return nil
-	}
 	log.Trace("handleNodePing", "peer", peer.id, "hash", h.Hex())
 	peer.markNodePing(h)
 	return backend.Handle(peer, &packet)

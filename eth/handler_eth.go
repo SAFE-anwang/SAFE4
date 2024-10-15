@@ -77,7 +77,7 @@ func (h *ethHandler) Handle(peer *eth.Peer, packet eth.Packet) error {
 		return h.txFetcher.Enqueue(peer.ID(), *packet, true)
 
 	case *eth.NodePingPacket:
-		return h.eventMux.Post(core.NodePingEvent{Ping: packet.Ping})
+		return h.monitor.HandlePing(packet.Ping)
 
 	default:
 		return fmt.Errorf("unexpected eth packet type: %T", packet)

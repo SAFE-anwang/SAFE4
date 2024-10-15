@@ -110,7 +110,7 @@ type Ethereum struct {
 
 	//etherbaseprivatekey *ecdsa.PrivateKey
 
-	nodeStateMonitor *NodeStateMonitor
+	monitor *NodeStateMonitor
 }
 
 // New creates a new Ethereum object (including the
@@ -241,6 +241,7 @@ func New(stack *node.Node, config *ethconfig.Config) (*Ethereum, error) {
 	if checkpoint == nil {
 		checkpoint = params.TrustedCheckpoints[genesisHash]
 	}
+	eth.monitor = newNodeStateMonitor()
 	if eth.handler, err = newHandler(&handlerConfig{
 		Database:       chainDb,
 		Chain:          eth.blockchain,
@@ -252,6 +253,7 @@ func New(stack *node.Node, config *ethconfig.Config) (*Ethereum, error) {
 		EventMux:       eth.eventMux,
 		Checkpoint:     checkpoint,
 		RequiredBlocks: config.RequiredBlocks,
+		Monitor:        eth.monitor,
 	}); err != nil {
 		return nil, err
 	}
@@ -287,11 +289,6 @@ func New(stack *node.Node, config *ethconfig.Config) (*Ethereum, error) {
 	}
 	eth.snapDialCandidates, err = dnsclient.NewIterator(eth.config.SnapDiscoveryURLs...)
 	if err != nil {
-		return nil, err
-	}
-
-
-	if eth.nodeStateMonitor, err = newNodeStateMonitor(eth); err != nil {
 		return nil, err
 	}
 
@@ -682,7 +679,7 @@ func (s *Ethereum) Start() error {
 	}
 	// Start the networking layer and the light server if requested
 	s.handler.Start(maxPeers)
-	s.nodeStateMonitor.Start()
+	s.monitor.Start(s)
 	return nil
 }
 
@@ -692,8 +689,8 @@ func (s *Ethereum) Stop() error {
 	// Stop all the peer-related stuff first.
 	s.ethDialCandidates.Close()
 	s.snapDialCandidates.Close()
+	s.monitor.Stop()
 	s.handler.Stop()
-	s.nodeStateMonitor.Stop()
 
 	// Then stop everything else.
 	s.bloomIndexer.Close()

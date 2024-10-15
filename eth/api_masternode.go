@@ -5,7 +5,6 @@ import (
 	"errors"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
-	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/core/systemcontracts/contract_api"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/internal/ethapi"
@@ -47,7 +46,7 @@ func (api *PublicMasterNodeAPI) Start(ctx context.Context, addr common.Address) 
 	if err != nil {
 		return false, err
 	}
-	api.e.eventMux.Post(core.NodePingEvent{Ping: ping})
+	api.e.handler.BroadcastNodePing(ping)
 	return true, nil
 }
 

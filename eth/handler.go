@@ -87,6 +87,7 @@ type handlerConfig struct {
 	EventMux       *event.TypeMux            // Legacy event mux, deprecate for `feed`
 	Checkpoint     *params.TrustedCheckpoint // Hard coded checkpoint for sync challenges
 	RequiredBlocks map[uint64]common.Hash    // Hard coded map of required block hashes for sync challenges
+	Monitor        *NodeStateMonitor
 }
 
 type handler struct {
@@ -103,6 +104,7 @@ type handler struct {
 	txpool   txPool
 	chain    *core.BlockChain
 	maxPeers int
+	monitor  *NodeStateMonitor
 
 	downloader   *downloader.Downloader
 	blockFetcher *fetcher.BlockFetcher
@@ -114,7 +116,6 @@ type handler struct {
 	txsCh         chan core.NewTxsEvent
 	txsSub        event.Subscription
 	minedBlockSub *event.TypeMuxSubscription
-	nodePingSub *event.TypeMuxSubscription
 
 	requiredBlocks map[uint64]common.Hash
 
@@ -143,6 +144,7 @@ func newHandler(config *handlerConfig) (*handler, error) {
 		merger:         config.Merger,
 		requiredBlocks: config.RequiredBlocks,
 		quitSync:       make(chan struct{}),
+		monitor:        config.Monitor,
 	}
 	if config.Sync == downloader.FullSync {
 		// The database seems empty as the current block is the genesis. Yet the snap
@@ -536,27 +538,20 @@ func (h *handler) Start(maxPeers int) {
 	// start sync handlers
 	h.wg.Add(1)
 	go h.chainSync.loop()
-
-	// broadcast mnp
-	h.wg.Add(1)
-	h.nodePingSub = h.eventMux.Subscribe(core.NodePingEvent{})
-	go h.nodePingBroadcastLoop()
 }
 
 func (h *handler) Stop() {
-	log.Info("exist eth-handler...")
+	log.Info("Exist eth-handler...")
 	h.txsSub.Unsubscribe()        // quits txBroadcastLoop
-	log.Info("unsubscribe txSub finish")
+	log.Info("Unsubscribe txSub finish")
 	h.minedBlockSub.Unsubscribe() // quits blockBroadcastLoop
-	log.Info("unsubscribe minedBlockSub finish")
-	h.nodePingSub.Unsubscribe() // quits nodePingBroadcastLoop
-	log.Info("unsubscribe nodePingSub finish")
+	log.Info("Unsubscribe minedBlockSub finish")
 
 	// Quit chainSync and txsync64.
 	// After this is done, no new peers will be accepted.
 	close(h.quitSync)
 	h.wg.Wait()
-	log.Info("quite chainSync and txsync64 finish")
+	log.Info("Quit chainSync and txsync64 finish")
 
 	// Disconnect existing sessions.
 	// This also closes the gate for any new registrations on the peer set.
@@ -564,7 +559,7 @@ func (h *handler) Stop() {
 	// will exit when they try to register.
 	h.peers.close()
 	h.peerWG.Wait()
-	log.Info("disconnect existing sessions finish")
+	log.Info("Disconnect existing sessions finish")
 
 	log.Info("Ethereum protocol stopped")
 }
@@ -688,13 +683,4 @@ func (h *handler) BroadcastNodePing(ping *types.NodePing) {
 		peer.SendNodePing(ping)
 	}
 	log.Trace("Announced node-ping", "hash", hash, "recipients", len(peers))
-}
-
-func (h *handler) nodePingBroadcastLoop() {
-	defer h.wg.Done()
-	for obj := range h.nodePingSub.Chan() {
-		if ev, ok := obj.Data.(core.NodePingEvent); ok {
-			h.BroadcastNodePing(ev.Ping)
-		}
-	}
 }

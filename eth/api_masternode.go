@@ -16,18 +16,13 @@ type PublicMasterNodeAPI struct {
 	e                  *Ethereum
 	blockChainAPI      *ethapi.PublicBlockChainAPI
 	transactionPoolAPI *ethapi.PublicTransactionPoolAPI
-	enode              string
 }
 
 func NewPublicMasterNodeAPI(e *Ethereum) *PublicMasterNodeAPI {
-	return &PublicMasterNodeAPI{e, e.GetPublicBlockChainAPI(), e.GetPublicTransactionPoolAPI(), ""}
+	return &PublicMasterNodeAPI{e, e.GetPublicBlockChainAPI(), e.GetPublicTransactionPoolAPI()}
 }
 
 func (api *PublicMasterNodeAPI) Start(ctx context.Context, addr common.Address) (bool, error) {
-	if len(api.enode) == 0 {
-		api.enode = contract_api.CompressEnode(api.e.p2pServer.NodeInfo().Enode)
-	}
-
 	progress := api.e.APIBackend.SyncProgress()
 	if progress.CurrentBlock < progress.HighestBlock {
 		return false, errors.New("syncing now")
@@ -37,8 +32,9 @@ func (api *PublicMasterNodeAPI) Start(ctx context.Context, addr common.Address) 
 	if err != nil {
 		return false, err
 	}
-	if !contract_api.CompareEnode(api.enode, info.Enode) {
-		return false, errors.New("start failed, incompatible masternode enode, local: [" + api.enode + "], state: [" + info.Enode + "]")
+	enode := api.e.p2pServer.NodeInfo().Enode
+	if !contract_api.CompareEnode(enode, info.Enode) {
+		return false, errors.New("start failed, incompatible masternode enode, local: [" + enode + "], state: [" + info.Enode + "]")
 	}
 
 	curBlock := api.e.blockchain.CurrentBlock()

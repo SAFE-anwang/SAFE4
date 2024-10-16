@@ -1671,6 +1671,11 @@ func (bc *BlockChain) insertChain(chain types.Blocks, verifySeals, setHead bool)
 			atomic.StoreUint32(&followupInterrupt, 1)
 			return it.index, err
 		}
+
+		if it.remaining() > 0 {
+			bc.engine.VerifyNextHeader()
+		}
+
 		proctime := time.Since(start)
 
 		// Update the metrics touched during block validation

@@ -374,3 +374,5 @@ func IsTTDReached(chain consensus.ChainHeaderReader, parentHash common.Hash, num
 func (beacon *Beacon) CheckRewardTransaction(block *types.Block) error{
 	return nil
 }
+
+func (beacon *Beacon) VerifyNextHeader() { }

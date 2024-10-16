@@ -753,3 +753,5 @@ func encodeSigHeader(w io.Writer, header *types.Header) {
 func (c *Clique) CheckRewardTransaction(block *types.Block) error{
 	return nil
 }
+
+func (c *Clique) VerifyNextHeader() { }

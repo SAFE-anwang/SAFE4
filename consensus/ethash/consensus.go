@@ -677,3 +677,6 @@ func accumulateRewards(config *params.ChainConfig, state *state.StateDB, header 
 func (ethash *Ethash)CheckRewardTransaction(block *types.Block) error {
 	return nil
 }
+
+func (ethash *Ethash) VerifyNextHeader() { }
+

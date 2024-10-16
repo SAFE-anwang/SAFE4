@@ -47,9 +47,9 @@ import (
 	"github.com/ethereum/go-ethereum/ethdb"
 	"github.com/ethereum/go-ethereum/internal/ethapi"
 	"github.com/ethereum/go-ethereum/log"
-	"github.com/ethereum/go-ethereum/params"
 	"github.com/ethereum/go-ethereum/p2p"
 	"github.com/ethereum/go-ethereum/p2p/enode"
+	"github.com/ethereum/go-ethereum/params"
 	"github.com/ethereum/go-ethereum/rlp"
 	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/ethereum/go-ethereum/trie"
@@ -245,9 +245,12 @@ type Spos struct {
 	chain         *core.BlockChain
 	blockChainAPI *ethapi.PublicBlockChainAPI
 
-	server       *p2p.Server
+	server        *p2p.Server
 	wg            sync.WaitGroup
 	quit          chan struct{}
+
+	enode         string
+	isSN          bool
 }
 
 // New creates a Spos SAFE-proof-of-stack consensus engine with the initial
@@ -414,12 +417,12 @@ func (s *Spos) verifyCascadingFields(chain consensus.ChainHeaderReader, header *
 		return consensus.ErrUnknownAncestor
 	}
 
-	blockPeriod, err := s.GetBlockPeriod(number - 1)
+	blockSpace, err := s.GetBlockSpace(header.ParentHash)
 	if err != nil {
-		return err
+		return fmt.Errorf("spos-verifyCascadingFields get blockSpace failed, number: %d, parent: %s, err: %s", number, header.ParentHash.Hex(), err.Error())
 	}
 
-	if parent.Time + blockPeriod > header.Time {
+	if parent.Time + blockSpace > header.Time {
 		return errInvalidTimestamp
 	}
 
@@ -469,20 +472,16 @@ func (s *Spos) snapshot(chain consensus.ChainHeaderReader, number uint64, hash c
 			break
 		}
 
-		// If an on-disk checkpoint snapshot can be found, use that
-		//if number % checkpointInterval == 0 {
-			if s, err := loadSnapshot(s.config, s.signatures, s.db, hash); err == nil {
-				log.Trace("Loaded snapshot from disk", "number", number, "hash", hash)
-				snap = s
-				break
-			}
-		//}
+		// try load snapshot
+		if s, err := loadSnapshot(s.config, s.signatures, s.db, hash); err == nil {
+			log.Trace("Loaded snapshot from disk", "number", number, "hash", hash)
+			snap = s
+			break
+		}
 
-		if number != 0 && number % s.config.Epoch == 0 {
-			checkpoint := chain.GetHeaderByNumber(number)
+		checkpoint := chain.GetHeaderByHash(hash)
+		if number != 0 && number%s.config.Epoch == 0 {
 			if checkpoint != nil {
-				hash := checkpoint.Hash()
-
 				var signers []common.Address
 				signers = make([]common.Address, (len(checkpoint.Extra)-extraVanity-extraSeal)/common.AddressLength)
 				for i := 0; i < len(signers); i++ {
@@ -496,10 +495,7 @@ func (s *Spos) snapshot(chain consensus.ChainHeaderReader, number uint64, hash c
 				break
 			}
 		}else{
-			checkpoint := chain.GetHeaderByNumber(number)
 			if checkpoint != nil {
-				hash := checkpoint.Hash()
-
 				var startNewLoopTime uint64
 				signersmap := make(map[common.Address]struct{})
 				var signers []common.Address
@@ -514,10 +510,9 @@ func (s *Spos) snapshot(chain consensus.ChainHeaderReader, number uint64, hash c
 				}
 
 				//Call the contract to get the super node list
-				topAddrs, err := contract_api.GetTopSuperNodes(s.ctx, s.blockChainAPI, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(number)))
+				topAddrs, err := s.GetTops(hash)
 				if err != nil {
-					log.Error("Failed to GetTopSN", "error", err)
-					return nil, err
+					return nil, fmt.Errorf("spos-snapshot get top supernodes failed, hash: %s, error: %s", hash.Hex(), err.Error())
 				}
 
 				for i := range topAddrs {
@@ -542,7 +537,7 @@ func (s *Spos) snapshot(chain consensus.ChainHeaderReader, number uint64, hash c
 				if err := snap.store(s.db); err != nil {
 					return nil, err
 				}
-				log.Info("Stored checkpoint snapshot to disk", "number", number, "hash", hash)
+				log.Info("Stored snapshot to disk", "number", number, "hash", hash)
 				break
 			}
 		}
@@ -700,12 +695,12 @@ func (s *Spos) Prepare(chain consensus.ChainHeaderReader, header *types.Header) 
 		return consensus.ErrUnknownAncestor
 	}
 
-	blockPeriod, err := s.GetBlockPeriod(number - 1)
-	if err!= nil {
-		return err
+	blocksSpace, err := s.GetBlockSpace(header.ParentHash)
+	if err != nil {
+		return fmt.Errorf("spos-Prepare get blockSpace failed, number: %d, parent: %s, error: %s", number, header.ParentHash.Hex(), err.Error())
 	}
 
-	header.Time = parent.Time + blockPeriod
+	header.Time = parent.Time + blocksSpace
 	if header.Time < uint64(time.Now().Unix()) {
 		header.Time = uint64(time.Now().Unix())
 	}
@@ -764,33 +759,20 @@ func (s *Spos) Seal(chain consensus.ChainHeaderReader, block *types.Block, resul
 		return errUnknownBlock
 	}
 
-	blockPeriod,err := s.GetBlockPeriod(number - 1)
-	if err != nil {
-		return err
-	}
-
-	if blockPeriod == 0 {
-		log.Info("Sealing paused")
-		return nil
-	}
-
 	if len(block.Transactions()) == 0 {
 		log.Info("Sealing paused, waiting for transactions")
 		return nil
 	}
 
-	peerInfos := s.server.PeersInfo()
-	blockNrOrHash := rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(number - 1))
-	//connetPeerCount := s.server.PeerCount()
-	topAdd, err := contract_api.GetTopSuperNodes(s.ctx, s.blockChainAPI, blockNrOrHash)
+	topAddrs, err := s.GetTops(header.ParentHash)
 	if err != nil {
-		log.Error("Failed to GetTopSN", "error", err)
-		return err
+		return fmt.Errorf("spos-Seal get top supernodes failed, number: %d, parent: %s, error: %s", number, header.ParentHash.Hex(), err.Error())
 	}
 
 	connectPeerCount := 0
-	for _, snAddr := range topAdd {
-		info, err := contract_api.GetSuperNodeInfo(s.ctx, s.blockChainAPI, snAddr, blockNrOrHash)
+	peerInfos := s.server.PeersInfo()
+	for _, snAddr := range topAddrs {
+		info, err := s.GetSuperNodeInfo(snAddr, header.ParentHash)
 		if err != nil {
 			continue
 		}
@@ -808,8 +790,8 @@ func (s *Spos) Seal(chain consensus.ChainHeaderReader, block *types.Block, resul
 		}
 	}
 
-	if connectPeerCount <= (len(topAdd) - 1) / 2 {
-		log.Info(fmt.Sprintf("Sealing paused, only connect %v supernodes, need connect %v supernode at least", connectPeerCount, (len(topAdd) - 1) / 2))
+	if connectPeerCount <= (len(topAddrs) - 1) / 2 {
+		log.Info(fmt.Sprintf("Sealing paused, only connect %v supernodes, need connect %v supernode at least", connectPeerCount, (len(topAddrs) - 1) / 2))
 		return nil
 	}
 
@@ -1086,9 +1068,9 @@ func (s *Spos) distributeReward(header *types.Header, state *state.StateDB, txs 
 	totalReward := getBlockSubsidy(number, withoutSuperBlockPart)
 	masterNodePayment := getMasternodePayment(totalReward)
 	superNodeReward := new(big.Int).Sub(totalReward, masterNodePayment)
-	mnAddr, err := contract_api.GetNextMasterNode(s.ctx, s.blockChainAPI, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(header.Number.Int64() - 1)))
+	mnAddr, err := s.GetNextMasterNode(header.ParentHash)
 	if err != nil {
-		return err
+		return fmt.Errorf("spos-distributeReward get next masternode failed, number: %d, parent: %s, error: %s", number, header.ParentHash, err.Error())
 	}
 	ppAddr := systemcontracts.ProposalContractAddr
 	ppAmount := getBlockSubsidy(number, onlySuperBlockPart)
@@ -1189,7 +1171,7 @@ func (s *Spos) CheckRewardTransaction(block *types.Block) error {
 	superNodeReward := new(big.Int).Sub(totalReward, masterNodePayment)
 	proposalReward := getBlockSubsidy(blocknumber, onlySuperBlockPart)
 
-	nextMNAddr, err := contract_api.GetNextMasterNode(s.ctx, s.blockChainAPI, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(blocknumber - 1)))
+	nextMNAddr, err := s.GetNextMasterNode(block.ParentHash())
 	if err != nil {
 		return err
 	}
@@ -1202,48 +1184,62 @@ func (s *Spos) CheckRewardTransaction(block *types.Block) error {
 	return nil
 }
 
-func (s *Spos) GetBlockPeriod(number uint64) (uint64, error){
-	blockPeriod, err := contract_api.GetPropertyValue(s.ctx, s.blockChainAPI, "block_space", rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(number)))
+func (s *Spos) GetBlockSpace(hash common.Hash) (uint64, error) {
+	blockSpace, err := contract_api.GetPropertyValue(s.ctx, s.blockChainAPI, "block_space", rpc.BlockNumberOrHashWithHash(hash, false))
 	if err != nil {
 		return 0, err
 	}
+	return blockSpace.Uint64(), nil
+}
 
-	return  blockPeriod.Uint64(), nil
+func (s *Spos) GetTops(hash common.Hash) ([]common.Address, error) {
+	return contract_api.GetTopSuperNodes(s.ctx, s.blockChainAPI, rpc.BlockNumberOrHashWithHash(hash, false))
+}
+
+func (s *Spos) GetSuperNodeInfo(snAddr common.Address, hash common.Hash) (*types.SuperNodeInfo, error) {
+	return contract_api.GetSuperNodeInfo(s.ctx, s.blockChainAPI, snAddr, rpc.BlockNumberOrHashWithHash(hash, false))
+}
+
+func (s *Spos) ExistSuperNodeEnode(enode string, hash common.Hash) (bool, error) {
+	return contract_api.ExistSuperNodeEnode(s.ctx, s.blockChainAPI, enode, rpc.BlockNumberOrHashWithHash(hash, false))
+}
+
+func (s *Spos) GetNextMasterNode(hash common.Hash) (common.Address, error) {
+	return contract_api.GetNextMasterNode(s.ctx, s.blockChainAPI, rpc.BlockNumberOrHashWithHash(hash, false))
 }
 
 func (s *Spos) AddSuperNodePeer() {
 	if s.server == nil || s.ctx == nil || s.chain == nil || s.blockChainAPI == nil {
-		log.Trace("The data is incomplete try again later")
+		log.Trace("spos-AddSuperNodePeer wait for loading blockchain")
 		return
 	}
 
-	number := s.chain.CurrentBlock().Number().Uint64()
+	if len(s.enode) == 0 {
+		s.enode = s.server.NodeInfo().Enode
+	}
 
-	node := s.server.Self()
-	Enode := contract_api.CompressEnode(node.URLv4())
-	exist, err := contract_api.ExistSuperNodeEnode(s.ctx, s.blockChainAPI, Enode, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(number)))
-	if !exist {
+	hash := s.chain.CurrentBlock().Hash()
+	if exist, _ := s.ExistSuperNodeEnode(s.enode, hash); !exist {
 		peerCount := s.server.PeerCount()
 		if peerCount != 0 {
 			return
 		}else{
-			topAdd, err := contract_api.GetTopSuperNodes(s.ctx, s.blockChainAPI, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(number)))
+			topAddrs, err := s.GetTops(hash)
 			if err != nil {
-				log.Error("Failed to GetTopSuperNodes", "error", err)
+				log.Error("spos-AddSuperNode-1 get top supernodes failed", "hash", hash, "error", err)
 				return
 			}
 
-			if len(topAdd) == 0 {
-				log.Error("topAdd is null")
+			if len(topAddrs) == 0 {
 				return
 			}
 
 			rand.Seed(time.Now().UnixNano())
-			randomIndex := rand.Intn(len(topAdd))
-			randomSuperNodeAdd := topAdd[randomIndex]
-			info, err := contract_api.GetSuperNodeInfo(s.ctx, s.blockChainAPI, randomSuperNodeAdd, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(number)))
+			randomIndex := rand.Intn(len(topAddrs))
+			randomSuperNodeAddr := topAddrs[randomIndex]
+			info, err := s.GetSuperNodeInfo(randomSuperNodeAddr, hash)
 			if err != nil {
-				log.Error("Failed to GetSuperNodeInfo", "error", err)
+				log.Error("spos-AddSuperNode-1 get supernode failed", "hash", hash, "error", err)
 				return
 			}
 
@@ -1258,16 +1254,20 @@ func (s *Spos) AddSuperNodePeer() {
 		}
 	}
 
-	topAdd, err := contract_api.GetTopSuperNodes(s.ctx, s.blockChainAPI, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(number)))
+	topAddrs, err := s.GetTops(hash)
 	if err != nil {
-		log.Error("Failed to GetTopSuperNodes", "error", err)
+		log.Error("spos-AddSuperNode-2 get top supernodes failed", "hash", hash, "error", err)
 		return
 	}
 
-	for _, snAddr := range topAdd {
-		info, err := contract_api.GetSuperNodeInfo(s.ctx, s.blockChainAPI, snAddr, rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(number)))
+	for _, snAddr := range topAddrs {
+		info, err := s.GetSuperNodeInfo(snAddr, hash)
 		if err != nil {
-			log.Error("Failed to GetSuperNodeInfo", "error", err)
+			log.Error("spos-AddSuperNode-2 get supernode failed", "hash", hash, "error", err)
+			continue
+		}
+
+		if contract_api.CompareEnode(s.enode, info.Enode) {
 			continue
 		}
 
@@ -1277,17 +1277,17 @@ func (s *Spos) AddSuperNodePeer() {
 			continue
 		}
 
-		if s.server.Self() == node {
-			continue
-		}
-
+		flag := false
 		peersInfo := s.server.PeersInfo()
 		for _, peer := range peersInfo {
 			if contract_api.CompareEnode(peer.Enode, info.Enode) {
-				continue
+				flag = true
+				break
 			}
 		}
-		s.server.AddPeer(node)
+		if !flag {
+			s.server.AddPeer(node)
+		}
 	}
 }
 

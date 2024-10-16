@@ -479,13 +479,13 @@ func (w *worker) newWorkLoop(recommit time.Duration) {
 				if atomic.LoadInt32(&w.newTxs) == 0 {
 					if w.chainConfig.Spos != nil {
 						parent := w.chain.CurrentBlock()
-						period, err := w.engine.(*spos.Spos).GetBlockPeriod(parent.NumberU64())
+						blockSpace, err := w.engine.(*spos.Spos).GetBlockSpace(parent.Hash())
 						if err != nil {
 							timer.Reset(recommit)
 							continue
 						}
 						curTime := uint64(time.Now().Unix())
-						if curTime >= parent.Time() + 4 * period && curTime >= lastCommitTime + period {
+						if curTime >= parent.Time() + 4 * blockSpace && curTime >= lastCommitTime + blockSpace {
 							commit(false, commitInterruptNewHead)
 							lastCommitTime = curTime
 							continue

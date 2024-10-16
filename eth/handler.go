@@ -158,8 +158,9 @@ func newHandler(config *handlerConfig) (*handler, error) {
 		// In these cases however it's safe to reenable snap sync.
 		fullBlock, fastBlock := h.chain.CurrentBlock(), h.chain.CurrentFastBlock()
 		if fullBlock.NumberU64() == 0 && fastBlock.NumberU64() > 0 {
-			h.snapSync = uint32(1)
-			log.Warn("Switch sync mode from full sync to snap sync")
+			// snap is disabled for spos
+			//h.snapSync = uint32(1)
+			//log.Warn("Switch sync mode from full sync to snap sync")
 		}
 	} else {
 		if h.chain.CurrentBlock().NumberU64() > 0 {

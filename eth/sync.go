@@ -212,13 +212,14 @@ func (cs *chainSyncer) modeAndLocalHead() (downloader.SyncMode, *big.Int) {
 	}
 	// We are probably in full sync, but we might have rewound to before the
 	// snap sync pivot, check if we should reenable
-	if pivot := rawdb.ReadLastPivotNumber(cs.handler.database); pivot != nil {
-		if head := cs.handler.chain.CurrentBlock(); head.NumberU64() < *pivot {
-			block := cs.handler.chain.CurrentFastBlock()
-			td := cs.handler.chain.GetTd(block.Hash(), block.NumberU64())
-			return downloader.SnapSync, td
-		}
-	}
+	// snap is disabled for spos
+	//if pivot := rawdb.ReadLastPivotNumber(cs.handler.database); pivot != nil {
+	//	if head := cs.handler.chain.CurrentBlock(); head.NumberU64() < *pivot {
+	//		block := cs.handler.chain.CurrentFastBlock()
+	//		td := cs.handler.chain.GetTd(block.Hash(), block.NumberU64())
+	//		return downloader.SnapSync, td
+	//	}
+	//}
 	// Nope, we're really full syncing
 	head := cs.handler.chain.CurrentBlock()
 	td := cs.handler.chain.GetTd(head.Hash(), head.NumberU64())

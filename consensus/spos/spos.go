@@ -546,7 +546,7 @@ func (s *Spos) snapshot(chain consensus.ChainHeaderReader, number uint64, hash c
 				if err := snap.store(s.db); err != nil {
 					return nil, err
 				}
-				log.Info("Stored snapshot to disk", "number", number, "hash", hash)
+				log.Debug("Stored snapshot to disk", "number", number, "hash", hash)
 				break
 			}
 		}

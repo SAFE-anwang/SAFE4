@@ -405,7 +405,7 @@ func (monitor *NodeStateMonitor) collectMasterNodes(from common.Address) ([]*big
 			if v.curState != info.State.Int64() {
 				if v.curState == StateRunning || (v.curState == StateStop && v.missNum >= MaxMissNum) {
 					flag := false
-					entries, err := contract_api.GetMasterNodeUploadStates(monitor.ctx, monitor.blockChainAPI, info.Id, rpc.BlockNumberOrHashWithNumber(rpc.PendingBlockNumber))
+					entries, err := contract_api.GetMasterNodeUploadEntries(monitor.ctx, monitor.blockChainAPI, info.Id, rpc.BlockNumberOrHashWithNumber(rpc.PendingBlockNumber))
 					if err == nil {
 						for _, entry := range entries {
 							if entry.State.Int64() == v.curState && entry.Caller == from {
@@ -420,6 +420,22 @@ func (monitor *NodeStateMonitor) collectMasterNodes(from common.Address) ([]*big
 					}
 					delete(monitor.mnMonitorInfos, id)
 				}
+			} else {
+				flag := false
+				entries, err := contract_api.GetMasterNodeUploadEntries(monitor.ctx, monitor.blockChainAPI, info.Id, rpc.BlockNumberOrHashWithNumber(rpc.PendingBlockNumber))
+				if err == nil {
+					for _, entry := range entries {
+						if entry.State.Int64() != v.curState && entry.Caller == from {
+							flag = true
+							break
+						}
+					}
+				}
+				if flag {
+					ids = append(ids, info.Id)
+					states = append(states, big.NewInt(v.curState))
+				}
+				delete(monitor.mnMonitorInfos, id)
 			}
 		}
 	}
@@ -493,6 +509,22 @@ func (monitor *NodeStateMonitor) collectSuperNodes(from common.Address) ([]*big.
 					}
 					delete(monitor.snMonitorInfos, id)
 				}
+			} else {
+				flag := false
+				entries, err := contract_api.GetSuperNodeUploadEntries(monitor.ctx, monitor.blockChainAPI, info.Id, rpc.BlockNumberOrHashWithNumber(rpc.PendingBlockNumber))
+				if err == nil {
+					for _, entry := range entries {
+						if entry.State.Int64() != v.curState && entry.Caller == from {
+							flag = true
+							break
+						}
+					}
+				}
+				if flag {
+					ids = append(ids, info.Id)
+					states = append(states, big.NewInt(v.curState))
+				}
+				delete(monitor.mnMonitorInfos, id)
 			}
 		}
 	}

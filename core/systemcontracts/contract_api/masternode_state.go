@@ -15,7 +15,7 @@ func UploadMasterNodeStates(ctx context.Context, blockChainAPI *ethapi.PublicBlo
 	return CallContract(ctx, blockChainAPI, transactionPoolAPI, from, nil, systemcontracts.MasterNodeStateContractAddr, "upload", getValues(ids, states))
 }
 
-func GetMasterNodeUploadStates(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, id *big.Int, blockNrOrHash rpc.BlockNumberOrHash) ([]types.StateEntry, error) {
+func GetMasterNodeUploadEntries(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, id *big.Int, blockNrOrHash rpc.BlockNumberOrHash) ([]types.StateEntry, error) {
 	ret := new([]types.StateEntry)
 	if err := QueryContract(ctx, blockChainAPI, blockNrOrHash, systemcontracts.MasterNodeStateContractAddr, "get", getValues(id), &ret); err != nil {
 		return nil, err

@@ -426,6 +426,32 @@ func (s *Spos) verifyCascadingFields(chain consensus.ChainHeaderReader, header *
 		return consensus.ErrUnknownAncestor
 	}
 
+	tempBlock := s.chain.GetBlockByHash(parent.Hash())
+	var missBlocks []*types.Block
+	for true {
+		if _, err := s.chain.StateAt(tempBlock.Root()); err == nil {
+			for i:= len(missBlocks)-1; i >= 0; i-- {
+				tempParent := s.chain.GetBlockByHash(missBlocks[i].ParentHash())
+				statedb, err := state.New(tempParent.Root(), s.chain.StateCache(), s.chain.Snapshots())
+				if err != nil {
+					return err
+				}
+				statedb.StartPrefetcher("chain")
+				receipts, _, usedGas, err := s.chain.Processor().Process(missBlocks[i], statedb, *s.chain.GetVMConfig())
+				if err = s.chain.Validator().ValidateState(missBlocks[i], statedb, receipts, usedGas); err != nil {
+					return err
+				}
+				if _, err = statedb.Commit(s.chain.Config().IsEIP158(missBlocks[i].Number())); err != nil {
+					return err
+				}
+			}
+			break
+		} else {
+			missBlocks = append(missBlocks, tempBlock)
+			tempBlock = s.chain.GetBlockByHash(tempBlock.ParentHash())
+		}
+	}
+
 	blockSpace, err := s.GetBlockSpace(header.ParentHash)
 	if err != nil {
 		return fmt.Errorf("spos-verifyCascadingFields get blockSpace failed, number: %d, parent: %s, err: %s", number, header.ParentHash.Hex(), err.Error())

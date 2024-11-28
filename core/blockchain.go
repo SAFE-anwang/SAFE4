@@ -1672,10 +1672,6 @@ func (bc *BlockChain) insertChain(chain types.Blocks, verifySeals, setHead bool)
 			return it.index, err
 		}
 
-		if it.remaining() > 0 {
-			bc.engine.VerifyNextHeader()
-		}
-
 		proctime := time.Since(start)
 
 		// Update the metrics touched during block validation
@@ -1710,6 +1706,10 @@ func (bc *BlockChain) insertChain(chain types.Blocks, verifySeals, setHead bool)
 
 		dirty, _ := bc.stateCache.TrieDB().Size()
 		stats.report(chain, it.index, dirty, setHead)
+
+		if it.remaining() > 0 {
+			bc.engine.VerifyNextHeader()
+		}
 
 		if !setHead {
 			return it.index, nil // Direct block insertion of a single block

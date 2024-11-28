@@ -427,6 +427,9 @@ func (s *Spos) verifyCascadingFields(chain consensus.ChainHeaderReader, header *
 	}
 
 	tempBlock := s.chain.GetBlockByHash(parent.Hash())
+	if tempBlock == nil {
+		return fmt.Errorf("spos-verifyCascadingFields miss parent, parent.number: %d, parent.hash: %s", parent.Number, header.ParentHash.Hex())
+	}
 	var missBlocks []*types.Block
 	for true {
 		if _, err := s.chain.StateAt(tempBlock.Root()); err == nil {

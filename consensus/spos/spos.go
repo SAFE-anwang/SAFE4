@@ -441,7 +441,10 @@ func (s *Spos) verifyCascadingFields(chain consensus.ChainHeaderReader, header *
 				}
 				statedb.StartPrefetcher("chain")
 				receipts, _, usedGas, err := s.chain.Processor().Process(missBlocks[i], statedb, *s.chain.GetVMConfig())
-				if err = s.chain.Validator().ValidateState(missBlocks[i], statedb, receipts, usedGas); err != nil {
+				if err != nil {
+					return err
+				}
+				if err = s.chain.Validator().ValidateState(missBlocks[i], statedb, receipts, usedGas); err != nil  {
 					return err
 				}
 				if _, err = statedb.Commit(s.chain.Config().IsEIP158(missBlocks[i].Number())); err != nil {

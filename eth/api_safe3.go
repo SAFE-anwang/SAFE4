@@ -7,14 +7,12 @@ import (
 	"github.com/ethereum/go-ethereum/accounts"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
-	"github.com/ethereum/go-ethereum/core/safe3/safe3wallet"
 	"github.com/ethereum/go-ethereum/core/systemcontracts/contract_api"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/crypto/secp256k1"
 	"github.com/ethereum/go-ethereum/internal/ethapi"
 	"github.com/ethereum/go-ethereum/rpc"
-	"github.com/status-im/keycard-go/hexutils"
 	"golang.org/x/crypto/ripemd160"
 	"math/big"
 )
@@ -37,59 +35,10 @@ func Sign(safe3Addr string, privkey []byte) []byte {
 	return sig
 }
 
-func (api *PublicSafe3API) RedeemWithWallet(ctx context.Context, from common.Address, walletPath string, password string, targetAddr common.Address) ([]common.Hash, error) {
-	pair, err := safe3wallet.GetKeyFromWallet(walletPath, password)
-	if err != nil {
-		return nil, err
-	}
-
-	availablePubkeys := make([]hexutil.Bytes, 0)
-	availableSigs := make([]hexutil.Bytes, 0)
-	lockedPubkeys := make([]hexutil.Bytes, 0)
-	lockedSigs := make([]hexutil.Bytes, 0)
-	mnPubkeys := make([]hexutil.Bytes, 0)
-	mnSigs := make([]hexutil.Bytes, 0)
-	blockNrOrHash := rpc.BlockNumberOrHashWithNumber(rpc.PendingBlockNumber)
-	for pubkey, privkey := range pair {
-		safe3Addr := getSafe3Addr(hexutils.HexToBytes(pubkey))
-		flag, err := api.ExistAvailableNeedToRedeem(ctx, safe3Addr, blockNrOrHash)
-		if err == nil && flag {
-			availablePubkeys = append(availablePubkeys, hexutils.HexToBytes(pubkey))
-			availableSigs = append(availableSigs, Sign(safe3Addr, hexutils.HexToBytes(privkey)))
-		}
-		flag, err = api.ExistLockedNeedToRedeem(ctx, safe3Addr, blockNrOrHash)
-		if err == nil && flag {
-			lockedPubkeys = append(lockedPubkeys, hexutils.HexToBytes(pubkey))
-			lockedSigs = append(lockedSigs, Sign(safe3Addr, hexutils.HexToBytes(privkey)))
-		}
-		flag, err = api.ExistMasterNodeNeedToRedeem(ctx, safe3Addr, blockNrOrHash)
-		if err == nil && flag {
-			mnPubkeys = append(mnPubkeys, hexutils.HexToBytes(pubkey))
-			mnSigs = append(mnSigs, Sign(safe3Addr, hexutils.HexToBytes(privkey)))
-		}
-	}
-
-	txs := make([]common.Hash, 0)
-	if len(availablePubkeys) > 0 {
-		if availableTx, err := contract_api.BatchRedeemAvailable(ctx, api.blockChainAPI, api.transactionPoolAPI, from, availablePubkeys, availableSigs, targetAddr); err == nil {
-			txs = append(txs, availableTx)
-		}
-	}
-	if len(lockedPubkeys) > 0 {
-		if lockedTx, err := contract_api.BatchRedeemLocked(ctx, api.blockChainAPI, api.transactionPoolAPI, from, lockedPubkeys, lockedSigs, targetAddr); err == nil {
-			txs = append(txs, lockedTx)
-		}
-	}
-	if len(mnPubkeys) > 0 {
-		mnEnodes := make([]string, len(mnPubkeys))
-		for i, _ := range mnPubkeys {
-			mnEnodes[i] = ""
-		}
-		if mnTx, err := contract_api.BatchRedeemMasterNode(ctx, api.blockChainAPI, api.transactionPoolAPI, from, lockedPubkeys, lockedSigs, mnEnodes, targetAddr); err == nil {
-			txs = append(txs, mnTx)
-		}
-	}
-	return txs, nil
+func parseKey(key string) []byte {
+	//fmt.Printf("%s\n", hexutils.BytesToHex(base58.Decode(key)))
+	//fmt.Printf("%s\n", hexutils.BytesToHex(base58.Decode(key)[1:33]))
+	return base58.Decode(key)[1:33]
 }
 
 func (api *PublicSafe3API) RedeemWithKeys(ctx context.Context, from common.Address, keys []string, targetAddr common.Address) ([]common.Hash, error) {
@@ -101,7 +50,7 @@ func (api *PublicSafe3API) RedeemWithKeys(ctx context.Context, from common.Addre
 	mnSigs := make([]hexutil.Bytes, 0)
 	blockNrOrHash := rpc.BlockNumberOrHashWithNumber(rpc.PendingBlockNumber)
 	for _, key := range keys {
-		privkey := safe3wallet.ParseKey(key)
+		privkey := parseKey(key)
 		priv, _ := crypto.ToECDSA(privkey)
 
 		// compressed pubkey
@@ -167,7 +116,7 @@ func (api *PublicSafe3API) RedeemWithKeys(ctx context.Context, from common.Addre
 }
 
 func (api *PublicSafe3API) ApplyRedeemSpecialWithKey(ctx context.Context, from common.Address, key string) ([]common.Hash, error) {
-	privkey := safe3wallet.ParseKey(key)
+	privkey := parseKey(key)
 	priv, _ := crypto.ToECDSA(privkey)
 
 	txs := make([]common.Hash, 0)

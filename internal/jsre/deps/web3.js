@@ -14914,13 +14914,6 @@ module.exports = XMLHttpRequest;
     }
 
     var methods = function () {
-      var redeemWithWallet = new Method({
-        name: 'redeemWithWallet',
-        call: 'safe3_redeemWithWallet',
-        params: 4,
-        inputFormatter: [formatters.inputAddressFormatter, formatters.formatInputString, formatters.formatInputString, formatters.inputAddressFormatter]
-      });
-
       var redeemWithKeys = new Method({
         name: 'redeemWithKeys',
         call: 'safe3_redeemWithKeys',
@@ -15041,7 +15034,6 @@ module.exports = XMLHttpRequest;
       });
 
       return [
-        redeemWithWallet,
         redeemWithKeys,
         applyRedeemSpecialWithKey,
         vote4Special,

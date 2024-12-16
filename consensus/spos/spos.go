@@ -1190,6 +1190,16 @@ func (s *Spos) CheckRewardTransaction(block *types.Block) error {
 	if err != nil {
 		return err
 	}
+
+	if method.Name != "reward" {
+		return fmt.Errorf("invalid function call: expected 'reward', got '%s'", method.Name)
+	}
+
+	expectedTotalReward := getBlockSubsidy(block.NumberU64(), withSuperBlockPart)
+	if transaction.Value().Cmp(expectedTotalReward) != 0 {
+		return fmt.Errorf("invalid transaction value: expected %s, got %s", expectedTotalReward.String(), transaction.Value().String())
+	}
+
 	inputsMap := make(map[string]interface{})
 	if err := method.Inputs.UnpackIntoMap(inputsMap, inputdata[4:]); err != nil {
 		return err

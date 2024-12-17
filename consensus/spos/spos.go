@@ -428,6 +428,11 @@ func (s *Spos) verifyCascadingFields(chain consensus.ChainHeaderReader, header *
 		return consensus.ErrUnknownAncestor
 	}
 
+	err := s.validateBlockBroadcastTime(header, parent)
+	if err != nil {
+		return err
+	}
+
 	tempBlock := s.chain.GetBlockByHash(parent.Hash())
 	if tempBlock == nil {
 		return fmt.Errorf("spos-verifyCascadingFields miss parent, parent.number: %d, parent.hash: %s", parent.Number, header.ParentHash.Hex())
@@ -1357,4 +1362,31 @@ func (s *Spos) LoopAddSuperNodePeer() {
 			return
 		}
 	}
+}
+
+func (s *Spos) validateBlockBroadcastTime(header *types.Header, prevBlock *types.Header) error {
+	number := header.Number.Int64()
+	blocksSpace, err := s.GetBlockSpace(header.ParentHash)
+	if err != nil {
+		return fmt.Errorf("spos-Prepare get blockSpace failed, number: %d, parent: %s, error: %s", number, header.ParentHash, err.Error())
+	}
+
+	expectedBroadcastTime := prevBlock.Time + blocksSpace
+	receivedTime := time.Now().Unix()
+	timeDifference := int64(header.Time) - int64(prevBlock.Time)
+
+	//if the time difference is greater than three times the interval between block production, it may be caused by all miner restart
+	if timeDifference > int64(blocksSpace * 3 ) {
+		log.Info("Detected large time gap, likely due to all miner restart, allowing the block")
+		return nil
+	}
+
+	// the maximum allowable error range is set to 2/3 block interval
+	maxAllowedDeviation := int64(blocksSpace * 2 / 3)
+
+	if receivedTime < int64(expectedBroadcastTime) - maxAllowedDeviation {
+		return errors.New("block broadcasted too early")
+	}
+
+	return nil
 }

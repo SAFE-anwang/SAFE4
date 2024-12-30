@@ -72,6 +72,11 @@ const (
 	pushForwardHeight  = 14	          //Push forward the block height
 )
 
+const (
+	secondsPerYear           =  365 * 24 * 60 * 60 // Number of seconds in a year
+	defaultBlockSpaceSeconds = uint64(30)
+)
+
 // Spos SAFE-proof-of-stake protocol constants.
 var (
 	epochLength = uint64(200) // Default number of blocks after which to checkpoint and reset the pending votes
@@ -81,7 +86,6 @@ var (
 
 	BlockReward = big.NewInt(1e+18)
 
-	subsidyHalvingInterval = big.NewInt(1051200)  //Number of blocks per year
 	nextDecrementHeight =  big.NewInt(200)      //Half the height the next time
 
 	uncleHash = types.CalcUncleHash(nil) // Always Keccak256(RLP([])) as uncles are meaningless outside of PoW.
@@ -758,7 +762,12 @@ func (s *Spos) Prepare(chain consensus.ChainHeaderReader, header *types.Header) 
 
 // Finalize implements consensus.Engine, ensuring no uncles are set
 func (s *Spos) Finalize(chain consensus.ChainHeaderReader, header *types.Header, state *state.StateDB, txs []*types.Transaction, uncles []*types.Header) {
-	accumulateRewards(state, header)
+	blocksSpace, err := s.GetBlockSpace(header.ParentHash)
+	if err != nil {
+		blocksSpace = defaultBlockSpaceSeconds
+	}
+
+	accumulateRewards(state, header, blocksSpace)
 	header.Root = state.IntermediateRoot(chain.Config().IsEIP158(header.Number))
 	header.UncleHash = types.CalcUncleHash(nil)
 }
@@ -766,7 +775,12 @@ func (s *Spos) Finalize(chain consensus.ChainHeaderReader, header *types.Header,
 // FinalizeAndAssemble implements consensus.Engine, ensuring no uncles are set, and returns the final block.
 func (s *Spos) FinalizeAndAssemble(chain consensus.ChainHeaderReader, header *types.Header, state *state.StateDB, txs []*types.Transaction, uncles []*types.Header, receipts []*types.Receipt) (*types.Block, error) {
 	if GetCompleteBlockFlag() {
-		accumulateRewards(state, header)
+		blocksSpace, err := s.GetBlockSpace(header.ParentHash)
+		if err != nil {
+			blocksSpace = defaultBlockSpaceSeconds
+		}
+
+		accumulateRewards(state, header, blocksSpace)
 		if err := s.distributeReward(header, state, &txs, &receipts); err != nil {
 			return nil, err
 		}
@@ -1006,10 +1020,10 @@ func encodeSigHeader(w io.Writer, header *types.Header) {
 	}
 }
 
-func accumulateRewards(state *state.StateDB, header *types.Header) {
+func accumulateRewards(state *state.StateDB, header *types.Header, blockSpaceSeconds uint64) {
 	// Accumulate the rewards for the miner
 	number := header.Number.Uint64()
-	totalReward := getBlockSubsidy(number, withSuperBlockPart)
+	totalReward := getBlockSubsidy(number, withSuperBlockPart, blockSpaceSeconds)
 	state.AddBalance(header.Coinbase, totalReward)
 }
 
@@ -1072,8 +1086,18 @@ const (
 	onlySuperBlockPart
 )
 
-func getBlockSubsidy(nBlockNum uint64, flag uint64) *big.Int {
+func getDynamicSubsidyHalvingInterval(blockSpaceSeconds uint64) *big.Int {
+	return big.NewInt(int64(secondsPerYear / blockSpaceSeconds))
+}
+
+func getBlockSubsidy(nBlockNum uint64, flag uint64, blockSpaceSeconds uint64) *big.Int {
 	subsidy := BlockReward.Uint64()
+
+	if blockSpaceSeconds == 0 {
+		blockSpaceSeconds = defaultBlockSpaceSeconds
+	}
+
+	subsidyHalvingInterval := getDynamicSubsidyHalvingInterval(blockSpaceSeconds)
 
 	// yearly decline of production by ~7.1% per year, projected ~18M coins max by year 2050+.
 	for  i := nextDecrementHeight.Uint64(); i <= nBlockNum; i += subsidyHalvingInterval.Uint64(){
@@ -1114,7 +1138,13 @@ func getMasternodePayment(blockReward *big.Int) *big.Int {
 
 func (s *Spos) distributeReward(header *types.Header, state *state.StateDB, txs *[]*types.Transaction, receipts *[]*types.Receipt) error {
 	number := header.Number.Uint64()
-	totalReward := getBlockSubsidy(number, withoutSuperBlockPart)
+
+	blockSpace, err := s.GetBlockSpace(header.ParentHash)
+	if err != nil {
+		blockSpace = defaultBlockSpaceSeconds
+	}
+
+	totalReward := getBlockSubsidy(number, withoutSuperBlockPart, blockSpace)
 	masterNodePayment := getMasternodePayment(totalReward)
 	superNodeReward := new(big.Int).Sub(totalReward, masterNodePayment)
 	mnAddr, err := s.GetNextMasterNode(header.ParentHash)
@@ -1122,7 +1152,7 @@ func (s *Spos) distributeReward(header *types.Header, state *state.StateDB, txs 
 		return fmt.Errorf("spos-distributeReward get next masternode failed, number: %d, parent: %s, error: %s", number, header.ParentHash, err.Error())
 	}
 	ppAddr := systemcontracts.ProposalContractAddr
-	ppAmount := getBlockSubsidy(number, onlySuperBlockPart)
+	ppAmount := getBlockSubsidy(number, onlySuperBlockPart, blockSpace)
 	return s.Reward(header.Coinbase, superNodeReward, mnAddr, masterNodePayment, ppAddr, ppAmount, header, state, txs, receipts)
 }
 
@@ -1202,7 +1232,12 @@ func (s *Spos) CheckRewardTransaction(block *types.Block) error {
 		return fmt.Errorf("invalid function call: expected 'reward', got '%s'", method.Name)
 	}
 
-	expectedTotalReward := getBlockSubsidy(block.NumberU64(), withSuperBlockPart)
+	blockSpace, err := s.GetBlockSpace(block.ParentHash())
+	if err != nil {
+		blockSpace = defaultBlockSpaceSeconds
+	}
+
+	expectedTotalReward := getBlockSubsidy(block.NumberU64(), withSuperBlockPart, blockSpace)
 	if transaction.Value().Cmp(expectedTotalReward) != 0 {
 		return fmt.Errorf("invalid transaction value: expected %s, got %s", expectedTotalReward.String(), transaction.Value().String())
 	}
@@ -1225,10 +1260,10 @@ func (s *Spos) CheckRewardTransaction(block *types.Block) error {
 	}
 
 	blocknumber := block.NumberU64()
-	totalReward := getBlockSubsidy(blocknumber, withoutSuperBlockPart)
+	totalReward := getBlockSubsidy(blocknumber, withoutSuperBlockPart, blockSpace)
 	masterNodePayment := getMasternodePayment(totalReward)
 	superNodeReward := new(big.Int).Sub(totalReward, masterNodePayment)
-	proposalReward := getBlockSubsidy(blocknumber, onlySuperBlockPart)
+	proposalReward := getBlockSubsidy(blocknumber, onlySuperBlockPart, blockSpace)
 
 	nextMNAddr, err := s.GetNextMasterNode(block.ParentHash())
 	if err != nil {

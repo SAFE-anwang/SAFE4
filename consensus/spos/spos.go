@@ -439,13 +439,16 @@ func (s *Spos) verifyCascadingFields(chain consensus.ChainHeaderReader, header *
 
 	tempBlock := s.chain.GetBlockByHash(parent.Hash())
 	if tempBlock == nil {
-		return fmt.Errorf("spos-verifyCascadingFields miss parent, parent.number: %d, parent.hash: %s", parent.Number, header.ParentHash.Hex())
+		return fmt.Errorf("spos-verifyCascadingFields-1 miss parent, parent.number: %d, parent.hash: %s", parent.Number, header.ParentHash.Hex())
 	}
 	var missBlocks []*types.Block
 	for true {
 		if _, err := s.chain.StateAt(tempBlock.Root()); err == nil {
 			for i:= len(missBlocks)-1; i >= 0; i-- {
 				tempParent := s.chain.GetBlockByHash(missBlocks[i].ParentHash())
+				if tempParent == nil {
+					return fmt.Errorf("spos-verifyCascadingFields-2 miss parent, parent.number: %d, parent.hash: %s", missBlocks[i].NumberU64()-1, missBlocks[i].ParentHash().Hex())
+				}
 				statedb, err := state.New(tempParent.Root(), s.chain.StateCache(), s.chain.Snapshots())
 				if err != nil {
 					return err
@@ -466,6 +469,9 @@ func (s *Spos) verifyCascadingFields(chain consensus.ChainHeaderReader, header *
 		} else {
 			missBlocks = append(missBlocks, tempBlock)
 			tempBlock = s.chain.GetBlockByHash(tempBlock.ParentHash())
+			if tempBlock == nil {
+				return fmt.Errorf("spos-verifyCascadingFields-3 miss parent, parent.number: %d, parent.hash: %s", tempBlock.NumberU64()-1, tempBlock.ParentHash().Hex())
+			}
 		}
 	}
 

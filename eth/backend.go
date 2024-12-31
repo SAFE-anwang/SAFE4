@@ -386,36 +386,64 @@ func (s *Ethereum) APIs() []rpc.API {
 			Version:   "1.0",
 			Service:   NewPublicSysPropertyAPI(s),
 			Public:    true,
-		},{
+		}, {
+			Namespace: "sysproperty",
+			Version:   "1.0",
+			Service:   NewPrivateSysPropertyAPI(s),
+		}, {
 			Namespace: "account",
 			Version:   "1.0",
-			Service:   NewPublicAccountAPI(s),
+			Service:   NewPublicAccountManagerAPI(s),
 			Public:    true,
-		},{
+		}, {
+			Namespace: "account",
+			Version:   "1.0",
+			Service:   NewPrivateAccountManagerAPI(s),
+		}, {
 			Namespace: "masternode",
 			Version:   "1.0",
 			Service:   NewPublicMasterNodeAPI(s),
 			Public:    true,
+		}, {
+			Namespace: "masternode",
+			Version:   "1.0",
+			Service:   NewPrivateMasterNodeAPI(s),
 		}, {
 			Namespace: "supernode",
 			Version:   "1.0",
 			Service:   NewPublicSuperNodeAPI(s),
 			Public:    true,
 		}, {
+			Namespace: "supernode",
+			Version:   "1.0",
+			Service:   NewPrivateSuperNodeAPI(s),
+		}, {
 			Namespace: "snvote",
 			Version:   "1.0",
 			Service:   NewPublicSNVoteAPI(s),
 			Public:    true,
+		}, {
+			Namespace: "snvote",
+			Version:   "1.0",
+			Service:   NewPrivateSNVoteAPI(s),
 		}, {
 			Namespace: "proposal",
 			Version:   "1.0",
 			Service:   NewPublicProposalAPI(s),
 			Public:    true,
 		}, {
+			Namespace: "proposal",
+			Version:   "1.0",
+			Service:   NewPrivateProposalAPI(s),
+		}, {
 			Namespace: "safe3",
 			Version:   "1.0",
 			Service:   NewPublicSafe3API(s),
 			Public:    true,
+		}, {
+			Namespace: "safe3",
+			Version:   "1.0",
+			Service:   NewPrivateSafe3API(s),
 		},
 	}...)
 

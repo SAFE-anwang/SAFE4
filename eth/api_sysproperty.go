@@ -10,26 +10,35 @@ import (
 	"math/big"
 )
 
-type PublicSysPropertyAPI struct {
+type PrivateSysPropertyAPI struct {
 	e                  *Ethereum
 	blockChainAPI      *ethapi.PublicBlockChainAPI
 	transactionPoolAPI *ethapi.PublicTransactionPoolAPI
 }
 
-func NewPublicSysPropertyAPI(e *Ethereum) *PublicSysPropertyAPI {
-	return &PublicSysPropertyAPI{e, e.GetPublicBlockChainAPI(), e.GetPublicTransactionPoolAPI()}
+func NewPrivateSysPropertyAPI(e *Ethereum) *PrivateSysPropertyAPI {
+	return &PrivateSysPropertyAPI{e, e.GetPublicBlockChainAPI(), e.GetPublicTransactionPoolAPI()}
 }
 
-func (api *PublicSysPropertyAPI) Add(ctx context.Context, from common.Address, name string, value *big.Int, description string) (common.Hash, error) {
+func (api *PrivateSysPropertyAPI) Add(ctx context.Context, from common.Address, name string, value *big.Int, description string) (common.Hash, error) {
 	return contract_api.AddProperty(ctx, api.blockChainAPI, api.transactionPoolAPI, from, name, value, description)
 }
 
-func (api *PublicSysPropertyAPI) ApplyUpdate(ctx context.Context, from common.Address, name string, value *big.Int, reason string) (common.Hash, error) {
+func (api *PrivateSysPropertyAPI) ApplyUpdate(ctx context.Context, from common.Address, name string, value *big.Int, reason string) (common.Hash, error) {
 	return contract_api.ApplyUpdateProperty(ctx, api.blockChainAPI, api.transactionPoolAPI, from, name, value, reason)
 }
 
-func (api *PublicSysPropertyAPI) Vote4Update(ctx context.Context, from common.Address, name string, voteResult *big.Int) (common.Hash, error) {
+func (api *PrivateSysPropertyAPI) Vote4Update(ctx context.Context, from common.Address, name string, voteResult *big.Int) (common.Hash, error) {
 	return contract_api.Vote4UpdateProperty(ctx, api.blockChainAPI, api.transactionPoolAPI, from, name, voteResult)
+}
+
+type PublicSysPropertyAPI struct {
+	e             *Ethereum
+	blockChainAPI *ethapi.PublicBlockChainAPI
+}
+
+func NewPublicSysPropertyAPI(e *Ethereum) *PublicSysPropertyAPI {
+	return &PublicSysPropertyAPI{e, e.GetPublicBlockChainAPI()}
 }
 
 func (api *PublicSysPropertyAPI) GetInfo(ctx context.Context, name string, blockNrOrHash rpc.BlockNumberOrHash) (*types.PropertyInfo, error) {

@@ -12,23 +12,23 @@ import (
 	"math/big"
 )
 
-type PublicSuperNodeAPI struct {
+type PrivateSuperNodeAPI struct {
 	e                  *Ethereum
 	blockChainAPI      *ethapi.PublicBlockChainAPI
 	transactionPoolAPI *ethapi.PublicTransactionPoolAPI
 }
 
-func NewPublicSuperNodeAPI(e *Ethereum) *PublicSuperNodeAPI {
-	return &PublicSuperNodeAPI{e, e.GetPublicBlockChainAPI(), e.GetPublicTransactionPoolAPI()}
+func NewPrivateSuperNodeAPI(e *Ethereum) *PrivateSuperNodeAPI {
+	return &PrivateSuperNodeAPI{e, e.GetPublicBlockChainAPI(), e.GetPublicTransactionPoolAPI()}
 }
 
-func (api *PublicSuperNodeAPI) Start(ctx context.Context, addr common.Address) (bool, error) {
+func (api *PrivateSuperNodeAPI) Start(ctx context.Context, addr common.Address) (bool, error) {
 	progress := api.e.APIBackend.SyncProgress()
 	if progress.CurrentBlock < progress.HighestBlock {
 		return false, errors.New("syncing now")
 	}
 
-	info, err := api.GetInfo(ctx, addr, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber))
+	info, err := contract_api.GetSuperNodeInfo(ctx, api.blockChainAPI, addr, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber))
 	if err != nil {
 		return false, err
 	}
@@ -46,36 +46,45 @@ func (api *PublicSuperNodeAPI) Start(ctx context.Context, addr common.Address) (
 	return true, nil
 }
 
-func (api *PublicSuperNodeAPI) Register(ctx context.Context, from common.Address, value *hexutil.Big, isUnion bool, addr common.Address, lockDay *big.Int, name string, enode string, description string, creatorIncentive *big.Int, partnerIncentive *big.Int, voterIncentive *big.Int) (common.Hash, error) {
+func (api *PrivateSuperNodeAPI) Register(ctx context.Context, from common.Address, value *hexutil.Big, isUnion bool, addr common.Address, lockDay *big.Int, name string, enode string, description string, creatorIncentive *big.Int, partnerIncentive *big.Int, voterIncentive *big.Int) (common.Hash, error) {
 	return contract_api.RegisterSuperNode(ctx, api.blockChainAPI, api.transactionPoolAPI, from, value, isUnion, addr, lockDay, name, enode, description, creatorIncentive, partnerIncentive, voterIncentive)
 }
 
-func (api *PublicSuperNodeAPI) AppendRegister(ctx context.Context, from common.Address, value *hexutil.Big, addr common.Address, lockDay *big.Int) (common.Hash, error) {
+func (api *PrivateSuperNodeAPI) AppendRegister(ctx context.Context, from common.Address, value *hexutil.Big, addr common.Address, lockDay *big.Int) (common.Hash, error) {
 	return contract_api.AppendRegisterSuperNode(ctx, api.blockChainAPI, api.transactionPoolAPI, from, value, addr, lockDay)
 }
 
-func (api *PublicSuperNodeAPI) TurnRegister(ctx context.Context, from common.Address, addr common.Address, lockID *big.Int) (common.Hash, error) {
+func (api *PrivateSuperNodeAPI) TurnRegister(ctx context.Context, from common.Address, addr common.Address, lockID *big.Int) (common.Hash, error) {
 	return contract_api.TurnRegisterSuperNode(ctx, api.blockChainAPI, api.transactionPoolAPI, from, addr, lockID)
 }
 
-func (api *PublicSuperNodeAPI) ChangeAddress(ctx context.Context, from common.Address, addr common.Address, newAddr common.Address) (common.Hash, error) {
+func (api *PrivateSuperNodeAPI) ChangeAddress(ctx context.Context, from common.Address, addr common.Address, newAddr common.Address) (common.Hash, error) {
 	return contract_api.ChangeSuperNodeAddress(ctx, api.blockChainAPI, api.transactionPoolAPI, from, addr, newAddr)
 }
 
-func (api *PublicSuperNodeAPI) ChangeName(ctx context.Context, from common.Address, addr common.Address, name string) (common.Hash, error) {
+func (api *PrivateSuperNodeAPI) ChangeName(ctx context.Context, from common.Address, addr common.Address, name string) (common.Hash, error) {
 	return contract_api.ChangeSuperNodeName(ctx, api.blockChainAPI, api.transactionPoolAPI, from, addr, name)
 }
 
-func (api *PublicSuperNodeAPI) ChangeEnode(ctx context.Context, from common.Address, addr common.Address, enode string) (common.Hash, error) {
+func (api *PrivateSuperNodeAPI) ChangeEnode(ctx context.Context, from common.Address, addr common.Address, enode string) (common.Hash, error) {
 	return contract_api.ChangeSuperNodeEnode(ctx, api.blockChainAPI, api.transactionPoolAPI, from, addr, enode)
 }
 
-func (api *PublicSuperNodeAPI) ChangeDescription(ctx context.Context, from common.Address, addr common.Address, description string) (common.Hash, error) {
+func (api *PrivateSuperNodeAPI) ChangeDescription(ctx context.Context, from common.Address, addr common.Address, description string) (common.Hash, error) {
 	return contract_api.ChangeSuperNodeDescription(ctx, api.blockChainAPI, api.transactionPoolAPI, from, addr, description)
 }
 
-func (api *PublicSuperNodeAPI) ChangeIsOfficial(ctx context.Context, from common.Address, addr common.Address, flag bool) (common.Hash, error) {
+func (api *PrivateSuperNodeAPI) ChangeIsOfficial(ctx context.Context, from common.Address, addr common.Address, flag bool) (common.Hash, error) {
 	return contract_api.ChangeSuperNodeIsOfficial(ctx, api.blockChainAPI, api.transactionPoolAPI, from, addr, flag)
+}
+
+type PublicSuperNodeAPI struct {
+	e             *Ethereum
+	blockChainAPI *ethapi.PublicBlockChainAPI
+}
+
+func NewPublicSuperNodeAPI(e *Ethereum) *PublicSuperNodeAPI {
+	return &PublicSuperNodeAPI{e, e.GetPublicBlockChainAPI()}
 }
 
 func (api *PublicSuperNodeAPI) GetInfo(ctx context.Context, addr common.Address, blockNrOrHash rpc.BlockNumberOrHash) (*types.SuperNodeInfo, error) {

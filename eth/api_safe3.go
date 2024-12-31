@@ -17,14 +17,14 @@ import (
 	"math/big"
 )
 
-type PublicSafe3API struct {
+type PrivateSafe3API struct {
 	e                  *Ethereum
 	blockChainAPI      *ethapi.PublicBlockChainAPI
 	transactionPoolAPI *ethapi.PublicTransactionPoolAPI
 }
 
-func NewPublicSafe3API(e *Ethereum) *PublicSafe3API {
-	return &PublicSafe3API{e, e.GetPublicBlockChainAPI(), e.GetPublicTransactionPoolAPI()}
+func NewPrivateSafe3API(e *Ethereum) *PrivateSafe3API {
+	return &PrivateSafe3API{e, e.GetPublicBlockChainAPI(), e.GetPublicTransactionPoolAPI()}
 }
 
 func Sign(safe3Addr string, privkey []byte) []byte {
@@ -41,7 +41,7 @@ func parseKey(key string) []byte {
 	return base58.Decode(key)[1:33]
 }
 
-func (api *PublicSafe3API) RedeemWithKeys(ctx context.Context, from common.Address, keys []string, targetAddr common.Address) ([]common.Hash, error) {
+func (api *PrivateSafe3API) RedeemWithKeys(ctx context.Context, from common.Address, keys []string, targetAddr common.Address) ([]common.Hash, error) {
 	availablePubkeys := make([]hexutil.Bytes, 0)
 	availableSigs := make([]hexutil.Bytes, 0)
 	lockedPubkeys := make([]hexutil.Bytes, 0)
@@ -56,17 +56,17 @@ func (api *PublicSafe3API) RedeemWithKeys(ctx context.Context, from common.Addre
 		// compressed pubkey
 		pubkey := crypto.CompressPubkey(&priv.PublicKey)
 		safe3Addr := getSafe3Addr(pubkey)
-		flag, err := api.ExistAvailableNeedToRedeem(ctx, safe3Addr, blockNrOrHash)
+		flag, err := contract_api.ExistAvailableNeedToRedeem(ctx, api.blockChainAPI, safe3Addr, blockNrOrHash)
 		if err == nil && flag {
 			availablePubkeys = append(availablePubkeys, pubkey)
 			availableSigs = append(availableSigs, Sign(safe3Addr, privkey))
 		}
-		flag, err = api.ExistLockedNeedToRedeem(ctx, safe3Addr, blockNrOrHash)
+		flag, err = contract_api.ExistLockedNeedToRedeem(ctx, api.blockChainAPI, safe3Addr, blockNrOrHash)
 		if err == nil && flag {
 			lockedPubkeys = append(lockedPubkeys, pubkey)
 			lockedSigs = append(lockedSigs, Sign(safe3Addr, privkey))
 		}
-		flag, err = api.ExistMasterNodeNeedToRedeem(ctx, safe3Addr, blockNrOrHash)
+		flag, err = contract_api.ExistMasterNodeNeedToRedeem(ctx, api.blockChainAPI, safe3Addr, blockNrOrHash)
 		if err == nil && flag {
 			mnPubkeys = append(mnPubkeys, pubkey)
 			mnSigs = append(mnSigs, Sign(safe3Addr, privkey))
@@ -75,17 +75,17 @@ func (api *PublicSafe3API) RedeemWithKeys(ctx context.Context, from common.Addre
 		// uncompressed pubkey
 		pubkey = crypto.FromECDSAPub(&priv.PublicKey)
 		safe3Addr = getSafe3Addr(pubkey)
-		flag, err = api.ExistAvailableNeedToRedeem(ctx, safe3Addr, blockNrOrHash)
+		flag, err = contract_api.ExistAvailableNeedToRedeem(ctx, api.blockChainAPI, safe3Addr, blockNrOrHash)
 		if err == nil && flag {
 			availablePubkeys = append(availablePubkeys, pubkey)
 			availableSigs = append(availableSigs, Sign(safe3Addr, privkey))
 		}
-		flag, err = api.ExistLockedNeedToRedeem(ctx, safe3Addr, blockNrOrHash)
+		flag, err = contract_api.ExistLockedNeedToRedeem(ctx, api.blockChainAPI, safe3Addr, blockNrOrHash)
 		if err == nil && flag {
 			lockedPubkeys = append(lockedPubkeys, pubkey)
 			lockedSigs = append(lockedSigs, Sign(safe3Addr, privkey))
 		}
-		flag, err = api.ExistMasterNodeNeedToRedeem(ctx, safe3Addr, blockNrOrHash)
+		flag, err = contract_api.ExistMasterNodeNeedToRedeem(ctx, api.blockChainAPI, safe3Addr, blockNrOrHash)
 		if err == nil && flag {
 			mnPubkeys = append(mnPubkeys, pubkey)
 			mnSigs = append(mnSigs, Sign(safe3Addr, privkey))
@@ -115,7 +115,7 @@ func (api *PublicSafe3API) RedeemWithKeys(ctx context.Context, from common.Addre
 	return txs, nil
 }
 
-func (api *PublicSafe3API) ApplyRedeemSpecialWithKey(ctx context.Context, from common.Address, key string) ([]common.Hash, error) {
+func (api *PrivateSafe3API) ApplyRedeemSpecialWithKey(ctx context.Context, from common.Address, key string) ([]common.Hash, error) {
 	privkey := parseKey(key)
 	priv, _ := crypto.ToECDSA(privkey)
 
@@ -146,8 +146,17 @@ func (api *PublicSafe3API) ApplyRedeemSpecialWithKey(ctx context.Context, from c
 	return txs, nil
 }
 
-func (api *PublicSafe3API) Vote4Special(ctx context.Context, from common.Address, safe3Addr string, voteResult *big.Int) (common.Hash, error) {
+func (api *PrivateSafe3API) Vote4Special(ctx context.Context, from common.Address, safe3Addr string, voteResult *big.Int) (common.Hash, error) {
 	return contract_api.Vote4Special(ctx, api.blockChainAPI, api.transactionPoolAPI, from, safe3Addr, voteResult)
+}
+
+type PublicSafe3API struct {
+	e             *Ethereum
+	blockChainAPI *ethapi.PublicBlockChainAPI
+}
+
+func NewPublicSafe3API(e *Ethereum) *PublicSafe3API {
+	return &PublicSafe3API{e, e.GetPublicBlockChainAPI()}
 }
 
 func (api *PublicSafe3API) GetAllAvailableNum(ctx context.Context, blockNrOrHash rpc.BlockNumberOrHash) (*big.Int, error) {

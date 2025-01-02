@@ -1422,8 +1422,8 @@ func (s *Spos) validateBlockBroadcastTime(header *types.Header, prevBlock *types
 		return nil
 	}
 
-	// the maximum allowable error range is set to 2/3 block interval
-	maxAllowedDeviation := int64(blocksSpace * 2 / 3)
+	// the maximum allowable error range is set to 1/3 block interval
+	maxAllowedDeviation := int64(blocksSpace / 3)
 
 	if receivedTime < int64(expectedBroadcastTime) - maxAllowedDeviation {
 		return errors.New("block broadcasted too early")

@@ -22,6 +22,7 @@ type SuperNodeInfo struct {
 	Id                  *big.Int                `json:"id"            gencodec:"required"`
 	Name                string                  `json:"name"          gencodec:"required"`
 	Addr                common.Address          `json:"addr"          gencodec:"required"`
+	IsUnion             bool                    `json:"isUnion"       gencodec:"required"`
 	Creator             common.Address          `json:"creator"       gencodec:"required"`
 	Enode               string                  `json:"enode"         gencodec:"required"`
 	Description         string                  `json:"description"   gencodec:"required"`

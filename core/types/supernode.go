@@ -22,7 +22,6 @@ type SuperNodeInfo struct {
 	Id                  *big.Int                `json:"id"            gencodec:"required"`
 	Name                string                  `json:"name"          gencodec:"required"`
 	Addr                common.Address          `json:"addr"          gencodec:"required"`
-	IsUnion             bool                    `json:"isUnion"       gencodec:"required"`
 	Creator             common.Address          `json:"creator"       gencodec:"required"`
 	Enode               string                  `json:"enode"         gencodec:"required"`
 	Description         string                  `json:"description"   gencodec:"required"`
@@ -30,6 +29,7 @@ type SuperNodeInfo struct {
 	State               *big.Int                `json:"state"         gencodec:"required"`
 	Founders            []SuperNodeMemberInfo   `json:"founders"      gencodec:"required"`
 	IncentivePlan       SuperNodeIncentivePlan  `json:"incentivePlan" gencodec:"required"`
+	IsUnion             bool                    `json:"isUnion"       gencodec:"required"`
 	LastRewardHeight    *big.Int                `json:"lastRewardHeight" gencodec:"required"`
 	CreateHeight        *big.Int                `json:"createHeight"  gencodec:"required"`
 	UpdateHeight        *big.Int                `json:"updateHeight"  gencodec:"required"`

@@ -1229,9 +1229,13 @@ func (s *Spos) CheckRewardTransaction(block *types.Block) error {
 	}
 
 	inputdata := transaction.Data()
+	if len(inputdata) != 196 {
+		return fmt.Errorf("invalid system-reward-tx inputdata: %s", hexutil.Encode(inputdata))
+	}
+
 	method, err := vABI.MethodById(inputdata)
 	if err != nil {
-		return err
+		return fmt.Errorf("invalid system-reward-tx, get method failed, err: %v", err)
 	}
 
 	if method.Name != "reward" {

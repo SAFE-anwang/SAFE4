@@ -400,8 +400,8 @@ func (monitor *NodeStateMonitor) collectMasterNodes(from common.Address) ([]*big
 
 	for _, info = range infos {
 		id := info.Id.Int64()
-		log.Debug("collect-masternode-state", "id", id, "global-state", info.State, "local-state", monitor.mnMonitorInfos[id].curState, "missNum", monitor.mnMonitorInfos[id].missNum)
 		if v, ok := monitor.mnMonitorInfos[id]; ok {
+			log.Debug("collect-masternode-state", "id", id, "global-state", info.State, "local-state", v.curState, "missNum", v.missNum)
 			if v.curState != info.State.Int64() {
 				if v.curState == StateRunning || (v.curState == StateStop && v.missNum >= MaxMissNum) {
 					flag := false
@@ -420,22 +420,6 @@ func (monitor *NodeStateMonitor) collectMasterNodes(from common.Address) ([]*big
 					}
 					delete(monitor.mnMonitorInfos, id)
 				}
-			} else {
-				flag := false
-				entries, err := contract_api.GetMasterNodeUploadEntries(monitor.ctx, monitor.blockChainAPI, info.Id, rpc.BlockNumberOrHashWithNumber(rpc.PendingBlockNumber))
-				if err == nil {
-					for _, entry := range entries {
-						if entry.State.Int64() != v.curState && entry.Caller == from {
-							flag = true
-							break
-						}
-					}
-				}
-				if flag {
-					ids = append(ids, info.Id)
-					states = append(states, big.NewInt(v.curState))
-				}
-				delete(monitor.mnMonitorInfos, id)
 			}
 		}
 	}
@@ -489,8 +473,8 @@ func (monitor *NodeStateMonitor) collectSuperNodes(from common.Address) ([]*big.
 
 	for _, info = range infos {
 		id := info.Id.Int64()
-		log.Debug("collect-supernode-state", "id", id, "global-state", info.State, "local-state", monitor.snMonitorInfos[id].curState, "missNum", monitor.snMonitorInfos[id].missNum)
 		if v, ok := monitor.snMonitorInfos[id]; ok {
+			log.Debug("collect-supernode-state", "id", id, "global-state", info.State, "local-state", v.curState, "missNum", v.missNum)
 			if v.curState != info.State.Int64() {
 				if v.curState == StateRunning || (v.curState == StateStop && v.missNum >= MaxMissNum) {
 					flag := false
@@ -509,22 +493,6 @@ func (monitor *NodeStateMonitor) collectSuperNodes(from common.Address) ([]*big.
 					}
 					delete(monitor.snMonitorInfos, id)
 				}
-			} else {
-				flag := false
-				entries, err := contract_api.GetSuperNodeUploadEntries(monitor.ctx, monitor.blockChainAPI, info.Id, rpc.BlockNumberOrHashWithNumber(rpc.PendingBlockNumber))
-				if err == nil {
-					for _, entry := range entries {
-						if entry.State.Int64() != v.curState && entry.Caller == from {
-							flag = true
-							break
-						}
-					}
-				}
-				if flag {
-					ids = append(ids, info.Id)
-					states = append(states, big.NewInt(v.curState))
-				}
-				delete(monitor.mnMonitorInfos, id)
 			}
 		}
 	}

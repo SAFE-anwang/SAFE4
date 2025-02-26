@@ -852,8 +852,10 @@ func (s *Spos) Seal(chain consensus.ChainHeaderReader, block *types.Block, resul
 		temp := "enode://" + common.Bytes2Hex(crypto.FromECDSAPub(node.Pubkey())[1:]) + "@" + node.IP().String()
 
 		for _, peerInfo := range peerInfos {
-			if peerInfo.Enode[0:len(temp)] == temp {
-				connectPeerCount++
+			if len(peerInfo.Enode) >= len(temp) {
+				if peerInfo.Enode[0:len(temp)] == temp {
+					connectPeerCount++
+				}
 			}
 		}
 	}

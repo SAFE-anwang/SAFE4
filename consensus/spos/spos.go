@@ -773,7 +773,7 @@ func (s *Spos) Finalize(chain consensus.ChainHeaderReader, header *types.Header,
 		blocksSpace = defaultBlockSpaceSeconds
 	}
 
-	accumulateRewards(state, header, blocksSpace)
+	s.accumulateRewards(state, header, blocksSpace)
 	header.Root = state.IntermediateRoot(chain.Config().IsEIP158(header.Number))
 	header.UncleHash = types.CalcUncleHash(nil)
 }
@@ -786,7 +786,7 @@ func (s *Spos) FinalizeAndAssemble(chain consensus.ChainHeaderReader, header *ty
 			blocksSpace = defaultBlockSpaceSeconds
 		}
 
-		accumulateRewards(state, header, blocksSpace)
+		s.accumulateRewards(state, header, blocksSpace)
 		if err := s.distributeReward(header, state, &txs, &receipts); err != nil {
 			return nil, err
 		}
@@ -865,10 +865,10 @@ func (s *Spos) Seal(chain consensus.ChainHeaderReader, block *types.Block, resul
 		return nil
 	}
 
-	miningRewardTransactionsExist := false
 	tx := block.Transactions()[block.Transactions().Len() - 1]
-	if tx.To() != nil && *tx.To() == systemcontracts.SystemRewardContractAddr {
-		miningRewardTransactionsExist = true
+	err, miningRewardTransactionsExist := systemcontracts.IsSystemRewardTx(tx)
+	if err != nil {
+		return fmt.Errorf("spos-Seal check last transaction failed, number: %d, parent: %s, error: %s", number, header.ParentHash.Hex(), err.Error())
 	}
 
 	if !miningRewardTransactionsExist {
@@ -1028,10 +1028,10 @@ func encodeSigHeader(w io.Writer, header *types.Header) {
 	}
 }
 
-func accumulateRewards(state *state.StateDB, header *types.Header, blockSpaceSeconds uint64) {
+func (s *Spos) accumulateRewards(state *state.StateDB, header *types.Header, blockSpaceSeconds uint64) {
 	// Accumulate the rewards for the miner
 	number := header.Number.Uint64()
-	totalReward := getBlockSubsidy(number, withSuperBlockPart, blockSpaceSeconds)
+	totalReward := s.getBlockSubsidy(number, blockSpaceSeconds)
 	state.AddBalance(header.Coinbase, totalReward)
 }
 
@@ -1088,17 +1088,11 @@ func sortSupernode(Signers map[common.Address]struct{}, scoreTime uint64) []comm
 	return resultSuperNode
 }
 
-const (
-	withSuperBlockPart = iota
-	withoutSuperBlockPart
-	onlySuperBlockPart
-)
-
 func getDynamicSubsidyHalvingInterval(blockSpaceSeconds uint64) *big.Int {
 	return big.NewInt(int64(secondsPerYear / blockSpaceSeconds))
 }
 
-func getBlockSubsidy(nBlockNum uint64, flag uint64, blockSpaceSeconds uint64) *big.Int {
+func (s *Spos) getBlockSubsidy(nBlockNum uint64, blockSpaceSeconds uint64) *big.Int {
 	subsidy := BlockReward.Uint64()
 
 	if blockSpaceSeconds == 0 {
@@ -1111,37 +1105,47 @@ func getBlockSubsidy(nBlockNum uint64, flag uint64, blockSpaceSeconds uint64) *b
 	for  i := nextDecrementHeight.Uint64(); i <= nBlockNum; i += subsidyHalvingInterval.Uint64(){
 		subsidy -= subsidy / 14
 	}
-
-    superblockPart := subsidy / 10
-
-	switch flag {
-	case withSuperBlockPart:
-		return new(big.Int).SetUint64(subsidy)
-	case withoutSuperBlockPart:
-		return new(big.Int).SetUint64(subsidy - superblockPart)
-	case onlySuperBlockPart:
-		return new(big.Int).SetUint64(superblockPart)
-	default:
-		return big.NewInt(0)
-	}
+	return new(big.Int).SetUint64(subsidy)
 }
 
-func getMasternodePayment(blockReward *big.Int) *big.Int {
+func (s *Spos) getSuperBlockPayment(totalReward *big.Int) *big.Int {
+	return new(big.Int).SetUint64(totalReward.Uint64() / 10)
+}
+
+func (s *Spos) getMasterNodePayment(totalReward *big.Int) *big.Int {
+	blockReward := totalReward.Uint64() - s.getSuperBlockPayment(totalReward).Uint64()
 	//start at 20%
-	masternodePayment := blockReward.Uint64() / 5
+	masternodePayment := blockReward / 5
 
 	//The SAFE 3 height is greater than 935600, and the revenue of the master node is only about 50%
-	masternodePayment += blockReward.Uint64() / 20
-	masternodePayment += blockReward.Uint64() / 20
-	masternodePayment += blockReward.Uint64() / 20
-	masternodePayment += blockReward.Uint64() / 40
-	masternodePayment += blockReward.Uint64() / 40
-	masternodePayment += blockReward.Uint64() / 40
-	masternodePayment += blockReward.Uint64() / 40
-	masternodePayment += blockReward.Uint64() / 40
-	masternodePayment += blockReward.Uint64() / 40
+	masternodePayment += blockReward / 20
+	masternodePayment += blockReward / 20
+	masternodePayment += blockReward / 20
+	masternodePayment += blockReward / 40
+	masternodePayment += blockReward / 40
+	masternodePayment += blockReward / 40
+	masternodePayment += blockReward / 40
+	masternodePayment += blockReward / 40
+	masternodePayment += blockReward / 40
 
 	return new(big.Int).SetUint64(masternodePayment)
+}
+
+func (s *Spos) getSuperNodePayment(totalReward *big.Int) *big.Int {
+	return new(big.Int).SetUint64(totalReward.Uint64() - s.getSuperBlockPayment(totalReward).Uint64() - s.getMasterNodePayment(totalReward).Uint64())
+}
+
+func (s *Spos) getTxFee(hash common.Hash, txs []*types.Transaction) (*big.Int, error) {
+	txFee := uint64(0)
+	for _, tx := range txs {
+		txFee += tx.Gas() * tx.GasPrice().Uint64()
+	}
+
+	percent, err := s.getPercent(hash)
+	if err != nil {
+		return nil, fmt.Errorf("spos-getTxFee failed, block hash: %s, err: %s", hash.Hex(), err.Error())
+	}
+	return new(big.Int).SetUint64(txFee * percent / 100), nil
 }
 
 func (s *Spos) distributeReward(header *types.Header, state *state.StateDB, txs *[]*types.Transaction, receipts *[]*types.Receipt) error {
@@ -1152,15 +1156,21 @@ func (s *Spos) distributeReward(header *types.Header, state *state.StateDB, txs 
 		blockSpace = defaultBlockSpaceSeconds
 	}
 
-	totalReward := getBlockSubsidy(number, withoutSuperBlockPart, blockSpace)
-	masterNodePayment := getMasternodePayment(totalReward)
-	superNodeReward := new(big.Int).Sub(totalReward, masterNodePayment)
+	txFee, err := s.getTxFee(header.ParentHash, *txs)
+	if err != nil {
+		return err
+	}
+	totalReward := s.getBlockSubsidy(number, blockSpace)
+	totalReward = totalReward.Add(totalReward, txFee)
+
+	masterNodePayment := s.getMasterNodePayment(totalReward)
+	superNodeReward := s.getSuperNodePayment(totalReward)
 	mnAddr, err := s.GetNextMasterNode(header.ParentHash)
 	if err != nil {
 		return fmt.Errorf("spos-distributeReward get next masternode failed, number: %d, parent: %s, error: %s", number, header.ParentHash, err.Error())
 	}
 	ppAddr := systemcontracts.ProposalContractAddr
-	ppAmount := getBlockSubsidy(number, onlySuperBlockPart, blockSpace)
+	ppAmount := s.getSuperBlockPayment(totalReward)
 	return s.Reward(header.Coinbase, superNodeReward, mnAddr, masterNodePayment, ppAddr, ppAmount, header, state, txs, receipts)
 }
 
@@ -1249,7 +1259,12 @@ func (s *Spos) CheckRewardTransaction(block *types.Block) error {
 		blockSpace = defaultBlockSpaceSeconds
 	}
 
-	expectedTotalReward := getBlockSubsidy(block.NumberU64(), withSuperBlockPart, blockSpace)
+	txFee, err := s.getTxFee(block.ParentHash(), block.Transactions())
+	if err != nil {
+		return err
+	}
+	expectedTotalReward := s.getBlockSubsidy(block.NumberU64(), blockSpace)
+	expectedTotalReward = expectedTotalReward.Add(expectedTotalReward, txFee)
 	if transaction.Value().Cmp(expectedTotalReward) != 0 {
 		return fmt.Errorf("invalid transaction value: expected %s, got %s", expectedTotalReward.String(), transaction.Value().String())
 	}
@@ -1271,11 +1286,9 @@ func (s *Spos) CheckRewardTransaction(block *types.Block) error {
 		return err
 	}
 
-	blocknumber := block.NumberU64()
-	totalReward := getBlockSubsidy(blocknumber, withoutSuperBlockPart, blockSpace)
-	masterNodePayment := getMasternodePayment(totalReward)
-	superNodeReward := new(big.Int).Sub(totalReward, masterNodePayment)
-	proposalReward := getBlockSubsidy(blocknumber, onlySuperBlockPart, blockSpace)
+	masterNodePayment := s.getMasterNodePayment(expectedTotalReward)
+	superNodeReward := s.getSuperNodePayment(expectedTotalReward)
+	proposalReward := s.getSuperBlockPayment(expectedTotalReward)
 
 	nextMNAddr, err := s.GetNextMasterNode(block.ParentHash())
 	if err != nil {
@@ -1292,6 +1305,14 @@ func (s *Spos) CheckRewardTransaction(block *types.Block) error {
 
 func (s *Spos) GetBlockSpace(hash common.Hash) (uint64, error) {
 	blockSpace, err := contract_api.GetPropertyValue(s.ctx, s.blockChainAPI, "block_space", rpc.BlockNumberOrHashWithHash(hash, false))
+	if err != nil {
+		return 0, err
+	}
+	return blockSpace.Uint64(), nil
+}
+
+func (s *Spos) getPercent(hash common.Hash) (uint64, error) {
+	blockSpace, err := contract_api.GetPropertyValue(s.ctx, s.blockChainAPI, "miner_reward_percent", rpc.BlockNumberOrHashWithHash(hash, false))
 	if err != nil {
 		return 0, err
 	}

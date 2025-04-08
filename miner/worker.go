@@ -618,7 +618,7 @@ func (w *worker) mainLoop() {
 				}
 				txs := make(map[common.Address]types.Transactions)
 				for _, tx := range ev.Txs {
-					if tx.To() != nil && *tx.To() == systemcontracts.SystemRewardContractAddr {
+					if systemcontracts.IsSystemRewardTx(tx) {
 						continue
 					}
 					acc, _ := types.Sender(w.current.signer, tx)
@@ -1108,7 +1108,7 @@ func (w *worker) fillTransactions(interrupt *int32, env *environment) error {
 	for k, value := range localTxs{
 		var newtransactions types.Transactions
 		for _,temptransaction := range value{
-			if temptransaction.To() == nil || *temptransaction.To() != systemcontracts.SystemRewardContractAddr {
+			if !systemcontracts.IsSystemRewardTx(temptransaction) {
 				newtransactions = append(newtransactions, temptransaction)
 			}
 		}
@@ -1130,7 +1130,7 @@ func (w *worker) fillTransactions(interrupt *int32, env *environment) error {
 	for k, value := range remoteTxs {
 		var newtransactions types.Transactions
 		for _, temptransaction := range value {
-			if temptransaction.To() == nil || *temptransaction.To() != systemcontracts.SystemRewardContractAddr {
+			if !systemcontracts.IsSystemRewardTx(temptransaction) {
 				newtransactions = append(newtransactions, temptransaction)
 			}
 		}

@@ -866,12 +866,7 @@ func (s *Spos) Seal(chain consensus.ChainHeaderReader, block *types.Block, resul
 	}
 
 	tx := block.Transactions()[block.Transactions().Len() - 1]
-	err, miningRewardTransactionsExist := systemcontracts.IsSystemRewardTx(tx)
-	if err != nil {
-		return fmt.Errorf("spos-Seal check last transaction failed, number: %d, parent: %s, error: %s", number, header.ParentHash.Hex(), err.Error())
-	}
-
-	if !miningRewardTransactionsExist {
+	if !systemcontracts.IsSystemRewardTx(tx) {
 		log.Info("Sealing paused, mining reward transactions are not included in the block")
 		return nil
 	}
@@ -1224,8 +1219,8 @@ func (s *Spos) Reward(snAddr common.Address, snCount *big.Int, mnAddr common.Add
 
 func (s *Spos) CheckRewardTransaction(block *types.Block) error {
 	transactions := block.Transactions()
-	for i, tx := range transactions {
-		if tx.To() != nil && *tx.To() == systemcontracts.SystemRewardContractAddr && i != transactions.Len() - 1 {
+	for i := 0; i < transactions.Len() - 1; i++ {
+		if systemcontracts.IsSystemRewardTx(transactions[i]) {
 			return fmt.Errorf("block[%s] exist multiple system-reward-tx", block.Hash().Hex())
 		}
 	}

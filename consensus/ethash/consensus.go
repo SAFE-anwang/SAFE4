@@ -674,7 +674,7 @@ func accumulateRewards(config *params.ChainConfig, state *state.StateDB, header 
 	state.AddBalance(header.Coinbase, reward)
 }
 
-func (ethash *Ethash)CheckRewardTransaction(block *types.Block) error {
+func (ethash *Ethash)CheckRewardTransaction(block *types.Block, receipts types.Receipts) error {
 	return nil
 }
 

@@ -1130,15 +1130,18 @@ func (s *Spos) getSuperNodePayment(totalReward *big.Int) *big.Int {
 	return new(big.Int).SetUint64(totalReward.Uint64() - s.getSuperBlockPayment(totalReward).Uint64() - s.getMasterNodePayment(totalReward).Uint64())
 }
 
-func (s *Spos) getTxFee(hash common.Hash, txs []*types.Transaction) (*big.Int, error) {
+func (s *Spos) getTxFee(hash common.Hash, receipts types.Receipts, txs types.Transactions) (*big.Int, error) {
 	txFee := uint64(0)
-	for _, tx := range txs {
-		txFee += tx.Gas() * tx.GasPrice().Uint64()
+	for i, tx := range txs {
+		if systemcontracts.IsSystemRewardTx(tx) {
+			break
+		}
+		txFee += receipts[i].GasUsed * tx.GasPrice().Uint64()
 	}
 
 	percent, err := s.getPercent(hash)
 	if err != nil {
-		return nil, fmt.Errorf("spos-getTxFee failed, block hash: %s, err: %s", hash.Hex(), err.Error())
+		return nil, err
 	}
 	return new(big.Int).SetUint64(txFee * percent / 100), nil
 }
@@ -1151,9 +1154,9 @@ func (s *Spos) distributeReward(header *types.Header, state *state.StateDB, txs 
 		blockSpace = defaultBlockSpaceSeconds
 	}
 
-	txFee, err := s.getTxFee(header.ParentHash, *txs)
+	txFee, err := s.getTxFee(header.ParentHash, *receipts, *txs)
 	if err != nil {
-		return err
+		return fmt.Errorf("spos-distributeReward get all tx fee failed, number: %d, parent: %s, error: %s", number, header.ParentHash, err.Error())
 	}
 	totalReward := s.getBlockSubsidy(number, blockSpace)
 	totalReward = totalReward.Add(totalReward, txFee)
@@ -1217,7 +1220,7 @@ func (s *Spos) Reward(snAddr common.Address, snCount *big.Int, mnAddr common.Add
 	return err
 }
 
-func (s *Spos) CheckRewardTransaction(block *types.Block) error {
+func (s *Spos) CheckRewardTransaction(block *types.Block, receipts types.Receipts) error {
 	transactions := block.Transactions()
 	for i := 0; i < transactions.Len() - 1; i++ {
 		if systemcontracts.IsSystemRewardTx(transactions[i]) {
@@ -1254,9 +1257,9 @@ func (s *Spos) CheckRewardTransaction(block *types.Block) error {
 		blockSpace = defaultBlockSpaceSeconds
 	}
 
-	txFee, err := s.getTxFee(block.ParentHash(), block.Transactions())
+	txFee, err := s.getTxFee(block.ParentHash(), receipts, block.Transactions())
 	if err != nil {
-		return err
+		return fmt.Errorf("check-reward-tx get all tx fee failed, number: %d, parent: %s, error: %s", block.NumberU64(), block.ParentHash(), err.Error())
 	}
 	expectedTotalReward := s.getBlockSubsidy(block.NumberU64(), blockSpace)
 	expectedTotalReward = expectedTotalReward.Add(expectedTotalReward, txFee)

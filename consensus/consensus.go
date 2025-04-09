@@ -121,7 +121,7 @@ type Engine interface {
 	Close() error
 
 	//CheckRewardTransaction check allocation reward transactions
-	CheckRewardTransaction(block *types.Block) error
+	CheckRewardTransaction(block *types.Block, receipts types.Receipts) error
 
 	VerifyNextHeader()
 }

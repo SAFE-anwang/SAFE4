@@ -371,7 +371,7 @@ func IsTTDReached(chain consensus.ChainHeaderReader, parentHash common.Hash, num
 	return td.Cmp(chain.Config().TerminalTotalDifficulty) >= 0, nil
 }
 
-func (beacon *Beacon) CheckRewardTransaction(block *types.Block) error{
+func (beacon *Beacon) CheckRewardTransaction(block *types.Block, receipts types.Receipts) error{
 	return nil
 }
 

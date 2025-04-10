@@ -14761,6 +14761,13 @@ module.exports = XMLHttpRequest;
         inputFormatter: [formatters.inputDefaultBlockNumberFormatter]
       });
 
+      var getImmatureBalance = new Method({
+        name: 'getImmatureBalance',
+        call: 'proposal_getImmatureBalance',
+        params: 1,
+        inputFormatter: [formatters.inputDefaultBlockNumberFormatter]
+      });
+
       var create = new Method({
         name: 'create',
         call: 'proposal_create',
@@ -14875,6 +14882,7 @@ module.exports = XMLHttpRequest;
 
       return [
         getBalance,
+        getImmatureBalance,
         create,
         vote,
         changeTitle,

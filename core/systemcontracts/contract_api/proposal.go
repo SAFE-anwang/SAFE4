@@ -18,6 +18,12 @@ func GetProposalBalance(ctx context.Context, blockChainAPI *ethapi.PublicBlockCh
 	return ret, err
 }
 
+func GetProposalImmatureBalance(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, blockNrOrHash rpc.BlockNumberOrHash) (*big.Int, error) {
+	ret := new(big.Int)
+	err := QueryContract(ctx, blockChainAPI, blockNrOrHash, systemcontracts.ProposalContractAddr, "getImmatureBalance", nil, &ret)
+	return ret, err
+}
+
 func CreateProposal(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, transactionPoolAPI *ethapi.PublicTransactionPoolAPI, from common.Address, title string, payAmount *hexutil.Big, payTimes *big.Int, startPayTime *big.Int, endPayTime *big.Int, description string) (common.Hash, error) {
 	return CallContract(ctx, blockChainAPI, transactionPoolAPI, from, (*hexutil.Big)(big.NewInt(1000000000000000000)), systemcontracts.ProposalContractAddr, "create", getValues(title, payAmount, payTimes, startPayTime, endPayTime, description))
 }

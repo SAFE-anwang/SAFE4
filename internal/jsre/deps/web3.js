@@ -13867,6 +13867,13 @@ module.exports = XMLHttpRequest;
         inputFormatter: [formatters.inputAddressFormatter, formatters.formatInputInt, formatters.formatInputInt]
       });
 
+      var getImmatureAmount = new Method({
+        name: 'getImmatureAmount',
+        call: 'account_getImmatureAmount',
+        params: 2,
+        inputFormatter: [formatters.inputAddressFormatter, formatters.inputDefaultBlockNumberFormatter]
+      });
+
       var getTotalAmount = new Method({
         name: 'getTotalAmount',
         call: 'account_getTotalAmount',
@@ -13952,6 +13959,7 @@ module.exports = XMLHttpRequest;
         withdrawByID,
         transfer,
         addLockDay,
+        getImmatureAmount,
         getTotalAmount,
         getTotalIDs,
         getAvailableAmount,

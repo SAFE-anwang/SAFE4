@@ -40,6 +40,12 @@ func AddAccountLockDay(ctx context.Context, blockChainAPI *ethapi.PublicBlockCha
 	return CallContract(ctx, blockChainAPI, transactionPoolAPI, from, nil, systemcontracts.AccountManagerContractAddr, "addLockDay", getValues(id, day))
 }
 
+func GetAccountImmatureAmount(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, addr common.Address, blockNrOrHash rpc.BlockNumberOrHash) (*big.Int, error) {
+	ret := new(big.Int)
+	err := QueryContract(ctx, blockChainAPI, blockNrOrHash, systemcontracts.AccountManagerContractAddr, "getImmatureAmount", getValues(addr), &ret)
+	return ret, err
+}
+
 func GetAccountTotalAmount(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, addr common.Address, blockNrOrHash rpc.BlockNumberOrHash) (*types.AccountAmountInfo, error) {
 	return getAccountAmountInfo(ctx, blockChainAPI, "getTotalAmount", addr, blockNrOrHash)
 }

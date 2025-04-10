@@ -58,6 +58,10 @@ func NewPublicAccountManagerAPI(e *Ethereum) *PublicAccountManagerAPI {
 	return &PublicAccountManagerAPI{e, e.GetPublicBlockChainAPI()}
 }
 
+func (api *PublicAccountManagerAPI) GetImmatureAmount(ctx context.Context, addr common.Address, blockNrOrHash rpc.BlockNumberOrHash) (*big.Int, error) {
+	return contract_api.GetAccountImmatureAmount(ctx, api.blockChainAPI, addr, blockNrOrHash)
+}
+
 func (api *PublicAccountManagerAPI) GetTotalAmount(ctx context.Context, addr common.Address, blockNrOrHash rpc.BlockNumberOrHash) (*types.AccountAmountInfo, error) {
 	return contract_api.GetAccountTotalAmount(ctx, api.blockChainAPI, addr, blockNrOrHash)
 }

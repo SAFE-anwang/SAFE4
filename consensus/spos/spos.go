@@ -265,6 +265,11 @@ type Spos struct {
 func New(chainConfig *params.ChainConfig, db ethdb.Database) *Spos {
 	ctx, cancel := context.WithCancel(context.Background())
 
+	if chainConfig.ChainID.Uint64() == params.SafeTestChainConfig.ChainID.Uint64() {
+		nextDecrementHeight = big.NewInt(200)
+		BlockReward = big.NewInt(1e+18)
+	}
+
 	// Set any missing consensus parameters to their defaults
 	sposConfig := chainConfig.Spos
 	if sposConfig != nil && sposConfig.Epoch == 0 {

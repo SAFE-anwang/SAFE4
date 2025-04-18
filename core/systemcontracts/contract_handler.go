@@ -38,7 +38,7 @@ func IsSystemRewardMessage(to *common.Address, data []byte) bool {
 
 	vABI, err := abi.JSON(strings.NewReader(SystemRewardABI))
 	if err != nil {
-		log.Info("IsSystemRewardTx: parse SystemRewardABI failed", "error", err)
+		log.Info("IsSystemRewardMessage: parse SystemRewardABI failed", "error", err)
 		return false
 	}
 	method, err := vABI.MethodById(data)
@@ -46,4 +46,24 @@ func IsSystemRewardMessage(to *common.Address, data []byte) bool {
 		return false
 	}
 	return method.Name == "reward"
+}
+
+func IsNodeStateMessage(to *common.Address, data []byte) bool {
+	if to == nil || len(data) == 0 {
+		return false
+	}
+	if *to != MasterNodeStateContractAddr && *to != SuperNodeStateContractAddr {
+		return false
+	}
+
+	vABI, err := abi.JSON(strings.NewReader(MasterNodeStateABI))
+	if err != nil {
+		log.Info("IsNodeStateMessage: parse NodeStateABI failed", "error", err)
+		return false
+	}
+	method, err := vABI.MethodById(data)
+	if err != nil {
+		return false
+	}
+	return method.Name == "upload"
 }

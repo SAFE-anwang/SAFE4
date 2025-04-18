@@ -12,7 +12,7 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/core/systemcontracts"
 	"github.com/ethereum/go-ethereum/internal/ethapi"
-	"github.com/ethereum/go-ethereum/params"
+	eth_params "github.com/ethereum/go-ethereum/params"
 	"github.com/ethereum/go-ethereum/rpc"
 )
 
@@ -76,21 +76,34 @@ func CallContract(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI
 	data := result[0].Interface().([]byte)
 
 	msgData := (hexutil.Bytes)(data)
-	args := ethapi.TransactionArgs{
-		From:     &from,
-		To:       &contractAddr,
-		Data:     &msgData,
-		GasPrice: (*hexutil.Big)(GetCurrentGasPrice(ctx, blockChainAPI)),
+
+	var args ethapi.TransactionArgs
+	if contractAddr != systemcontracts.MasterNodeStateContractAddr && contractAddr != systemcontracts.SuperNodeStateContractAddr {
+		args = ethapi.TransactionArgs{
+			From:     &from,
+			To:       &contractAddr,
+			Data:     &msgData,
+			GasPrice: (*hexutil.Big)(GetCurrentGasPrice(ctx, blockChainAPI)),
+		}
+		if value != nil {
+			args.Value = value
+		}
+		gas, err := blockChainAPI.EstimateGas(ctx, args, nil)
+		if err != nil {
+			return common.Hash{}, err
+		}
+		gas = gas * 6 / 5
+		args.Gas = &gas
+	} else {
+		gas := eth_params.MaxSystemRewardTxGas
+		args = ethapi.TransactionArgs{
+			From:     &from,
+			To:       &contractAddr,
+			Data:     &msgData,
+			Gas:      (*hexutil.Uint64)(&gas),
+			GasPrice: (*hexutil.Big)(common.Big0),
+		}
 	}
-	if value != nil {
-		args.Value = value
-	}
-	gas, err := blockChainAPI.EstimateGas(ctx, args, nil)
-	if err != nil {
-		return common.Hash{}, err
-	}
-	gas = gas * 6 / 5
-	args.Gas = &gas
 	return transactionPoolAPI.SendTransaction(ctx, args)
 }
 
@@ -156,7 +169,7 @@ func QueryContract4MultiReturn(ctx context.Context, blockChainAPI *ethapi.Public
 func GetCurrentGasPrice(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI) *big.Int {
 	gasPrice, err := GetPropertyValue(ctx, blockChainAPI, "gas_price", rpc.BlockNumberOrHashWithNumber(rpc.PendingBlockNumber))
 	if err != nil || gasPrice.Int64() == 0 {
-		gasPrice = big.NewInt(params.GWei / 100)
+		gasPrice = big.NewInt(eth_params.GWei / 100)
 	}
 	return gasPrice
 }
@@ -164,7 +177,7 @@ func GetCurrentGasPrice(ctx context.Context, blockChainAPI *ethapi.PublicBlockCh
 func GetLatestGasPrice(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI) *big.Int {
 	gasPrice, err := GetPropertyValue(ctx, blockChainAPI, "gas_price", rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber))
 	if err != nil || gasPrice.Int64() == 0 {
-		gasPrice = big.NewInt(params.GWei / 100)
+		gasPrice = big.NewInt(eth_params.GWei / 100)
 	}
 	return gasPrice
 }

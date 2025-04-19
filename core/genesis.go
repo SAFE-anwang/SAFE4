@@ -31,8 +31,7 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/common/math"
 	"github.com/ethereum/go-ethereum/core/rawdb"
-	"github.com/ethereum/go-ethereum/core/safe3/safe3storage_mainnet"
-	"github.com/ethereum/go-ethereum/core/safe3/safe3storage_testnet"
+	"github.com/ethereum/go-ethereum/core/safe3/safe3storage"
 	"github.com/ethereum/go-ethereum/core/state"
 	"github.com/ethereum/go-ethereum/core/systemcontracts"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -114,16 +113,10 @@ func (ga *GenesisAlloc) flush(db ethdb.Database) (common.Hash, error) {
 }
 
 func preload(root common.Hash, database state.Database) (common.Hash, error) {
-	var list *[]string
-	switch chainType {
-	case 0:
-		list = &safe3storage_mainnet.StorageList
-	case 1:
-		list = &safe3storage_testnet.StorageList
-	default:
+	if chainType != 0 && chainType != 1 {
 		return root, nil
 	}
-	for i, data := range *list {
+	for i, data := range safe3storage.StorageList {
 		log.Info("loading storage", "index", i+1)
 		statedb, err := state.New(root, database, nil)
 		if err != nil {

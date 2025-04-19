@@ -84,9 +84,9 @@ var (
 	extraVanity = 32                     // Fixed number of extra-data prefix bytes reserved for signer vanity
 	extraSeal   = crypto.SignatureLength // Fixed number of extra-data suffix bytes reserved for signer seal
 
-	BlockReward = big.NewInt(1e+18)
+	BlockReward = big.NewInt(0.47659905e+18)
 
-	nextDecrementHeight =  big.NewInt(200)      //Half the height the next time
+	nextDecrementHeight =  big.NewInt(550752)      //Half the height the next time
 
 	uncleHash = types.CalcUncleHash(nil) // Always Keccak256(RLP([])) as uncles are meaningless outside of PoW.
 

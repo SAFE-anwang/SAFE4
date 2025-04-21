@@ -719,11 +719,8 @@ func (s *Spos) Prepare(chain consensus.ChainHeaderReader, header *types.Header) 
 	header.Coinbase = s.signer
 	header.Nonce = types.BlockNonce{}
 
-	for true {
-		if s.blockChainAPI != nil {
-			break
-		}
-		time.Sleep(1 * time.Second)
+	for s.blockChainAPI == nil {
+		time.Sleep(time.Second)
 	}
 
 	number := header.Number.Uint64()

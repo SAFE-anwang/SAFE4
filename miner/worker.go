@@ -318,10 +318,12 @@ func (w *worker) setGasCeil(ceil uint64) {
 }
 
 // setExtra sets the content used to initialize the block extra field.
+var isInitExtra = false
 func (w *worker) setExtra(extra []byte) {
 	w.mu.Lock()
 	defer w.mu.Unlock()
 	w.extra = extra
+	isInitExtra = true
 }
 
 // setRecommitInterval updates the interval for miner sealing work recommitting.
@@ -1012,6 +1014,9 @@ type generateParams struct {
 // either based on the last chain head or specified parent. In this function
 // the pending transactions are not filled yet, only the empty task returned.
 func (w *worker) prepareWork(genParams *generateParams) (*environment, error) {
+	for !isInitExtra {
+		time.Sleep(time.Second)
+	}
 	w.mu.RLock()
 	defer w.mu.RUnlock()
 

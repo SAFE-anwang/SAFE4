@@ -86,7 +86,7 @@ var (
 
 	BlockReward = big.NewInt(0.47659905e+18)
 
-	nextDecrementHeight =  big.NewInt(550752)      //Half the height the next time
+	nextDecrementHeight =  big.NewInt(528291)      //Half the height the next time
 
 	uncleHash = types.CalcUncleHash(nil) // Always Keccak256(RLP([])) as uncles are meaningless outside of PoW.
 
@@ -264,11 +264,6 @@ type Spos struct {
 // signers set to the ones provided by the user.
 func New(chainConfig *params.ChainConfig, db ethdb.Database) *Spos {
 	ctx, cancel := context.WithCancel(context.Background())
-
-	if chainConfig.ChainID.Uint64() == params.SafeTestChainConfig.ChainID.Uint64() {
-		nextDecrementHeight = big.NewInt(200)
-		BlockReward = big.NewInt(1e+18)
-	}
 
 	// Set any missing consensus parameters to their defaults
 	sposConfig := chainConfig.Spos

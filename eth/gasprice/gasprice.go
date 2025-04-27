@@ -24,8 +24,10 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core"
+	"github.com/ethereum/go-ethereum/core/systemcontracts/contract_api"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/event"
+	"github.com/ethereum/go-ethereum/internal/ethapi"
 	"github.com/ethereum/go-ethereum/log"
 	"github.com/ethereum/go-ethereum/params"
 	"github.com/ethereum/go-ethereum/rpc"
@@ -146,7 +148,7 @@ func NewOracle(backend OracleBackend, params Config) *Oracle {
 // Note, for legacy transactions and the legacy eth_gasPrice RPC call, it will be
 // necessary to add the basefee to the returned number to fall back to the legacy
 // behavior.
-func (oracle *Oracle) SuggestTipCap(ctx context.Context) (*big.Int, error) {
+func (oracle *Oracle) SuggestTipCap(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI) (*big.Int, error) {
 	head, _ := oracle.backend.HeaderByNumber(ctx, rpc.LatestBlockNumber)
 	headHash := head.Hash()
 
@@ -212,6 +214,12 @@ func (oracle *Oracle) SuggestTipCap(ctx context.Context) (*big.Int, error) {
 	}
 	if price.Cmp(oracle.maxPrice) > 0 {
 		price = new(big.Int).Set(oracle.maxPrice)
+	}
+	if blockChainAPI != nil {
+		expected := contract_api.GetCurrentGasPrice(ctx, blockChainAPI)
+		if price.Cmp(expected) > 0 {
+			price = new(big.Int).Set(expected)
+		}
 	}
 	oracle.cacheLock.Lock()
 	oracle.lastHead = headHash

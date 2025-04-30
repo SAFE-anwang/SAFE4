@@ -544,7 +544,8 @@ func handleNodePing(backend Backend, msg Decoder, peer *Peer) error {
 	// check block height
 	localHeight := backend.Chain().CurrentHeader().Number.Uint64()
 	remoteHeight := packet.Ping.CurHeight.Uint64()
-	if remoteHeight + 50 < localHeight || remoteHeight > localHeight + 50 {
+	if remoteHeight + 20 < localHeight || remoteHeight > localHeight + 20 {
+		peer.markNodePing(packet.Ping.Hash())
 		return nil
 	}
 

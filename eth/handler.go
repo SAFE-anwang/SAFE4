@@ -613,26 +613,56 @@ func (h *handler) BroadcastBlock(block *types.Block, propagate bool) {
 			log.Error("Propagating dangling block", "number", block.Number(), "hash", hash)
 			return
 		}
-		// Send the block to seeds and top-supernodes
-		count := 0
-		var temps []*ethPeer
+
+		// split peers
+		var commons []*ethPeer
+		var supernodes []*ethPeer
+		var seeds []*ethPeer
 		if spos, ok := h.chain.Engine().(*spos.Spos); ok {
 			curHash := h.chain.CurrentBlock().Hash()
 			for _, peer := range peers {
 				enode := peer.Info().Enode
 				if h.seedPeers[enode] {
-					peer.AsyncSendNewBlock(block, td)
-					count++
+					seeds = append(seeds, peer)
 				} else if flag, _ := spos.ExistSuperNodeEnode(enode, curHash); flag {
-					peer.AsyncSendNewBlock(block, td)
-					count++
+					supernodes = append(supernodes, peer)
 				} else {
-					temps = append(temps, peer)
+					commons = append(commons, peer)
 				}
 			}
 		}
-		// Send the block to a subset of our peers
-		transfer := temps[:int(math.Sqrt(float64(len(temps))))]
+
+		count := 0
+		// Send the block to a subset of supernodes
+		if block.Difficulty().Int64() == 2 {
+			for _, peer := range supernodes {
+				peer.AsyncSendNewBlock(block, td)
+				count++
+			}
+		} else {
+			transfers := supernodes[:int(math.Sqrt(float64(len(supernodes))))]
+			for _, peer := range transfers {
+				peer.AsyncSendNewBlock(block, td)
+				count++
+			}
+		}
+
+		// Send the block to a subset of seeds
+		if block.Difficulty().Int64() == 2 {
+			for _, peer := range seeds {
+				peer.AsyncSendNewBlock(block, td)
+				count++
+			}
+		} else {
+			transfers := seeds[:int(math.Sqrt(float64(len(seeds))))]
+			for _, peer := range transfers {
+				peer.AsyncSendNewBlock(block, td)
+				count++
+			}
+		}
+
+		// Send the block to a subset of common peers
+		transfer := commons[:int(math.Sqrt(float64(len(commons))))]
 		for _, peer := range transfer {
 			peer.AsyncSendNewBlock(block, td)
 		}

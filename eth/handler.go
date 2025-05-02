@@ -27,6 +27,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/consensus"
 	"github.com/ethereum/go-ethereum/consensus/beacon"
+	"github.com/ethereum/go-ethereum/consensus/spos"
 	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/core/forkid"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -126,6 +127,8 @@ type handler struct {
 	chainSync *chainSyncer
 	wg        sync.WaitGroup
 	peerWG    sync.WaitGroup
+
+	seedPeers map[string]bool
 }
 
 // newHandler returns a handler for all Ethereum chain management protocol.
@@ -146,6 +149,16 @@ func newHandler(config *handlerConfig) (*handler, error) {
 		requiredBlocks: config.RequiredBlocks,
 		quitSync:       make(chan struct{}),
 		monitor:        config.Monitor,
+	}
+	h.seedPeers = make(map[string]bool)
+	if h.chain.Config().ChainID.Cmp(params.SafeChainConfig.ChainID) == 0 {
+		for _, enode := range params.MainnetBootnodes {
+			h.seedPeers[enode] = true
+		}
+	} else {
+		for _, enode := range params.SafeTestBootnodes {
+			h.seedPeers[enode] = true
+		}
 	}
 	if config.Sync == downloader.FullSync {
 		// The database seems empty as the current block is the genesis. Yet the snap
@@ -600,12 +613,30 @@ func (h *handler) BroadcastBlock(block *types.Block, propagate bool) {
 			log.Error("Propagating dangling block", "number", block.Number(), "hash", hash)
 			return
 		}
+		// Send the block to seeds and top-supernodes
+		count := 0
+		var temps []*ethPeer
+		if spos, ok := h.chain.Engine().(*spos.Spos); ok {
+			curHash := h.chain.CurrentBlock().Hash()
+			for _, peer := range peers {
+				enode := peer.Info().Enode
+				if h.seedPeers[enode] {
+					peer.AsyncSendNewBlock(block, td)
+					count++
+				} else if flag, _ := spos.ExistSuperNodeEnode(enode, curHash); flag {
+					peer.AsyncSendNewBlock(block, td)
+					count++
+				} else {
+					temps = append(temps, peer)
+				}
+			}
+		}
 		// Send the block to a subset of our peers
-		transfer := peers[:int(math.Sqrt(float64(len(peers))))]
+		transfer := temps[:int(math.Sqrt(float64(len(temps))))]
 		for _, peer := range transfer {
 			peer.AsyncSendNewBlock(block, td)
 		}
-		log.Trace("Propagated block", "hash", hash, "recipients", len(transfer), "duration", common.PrettyDuration(time.Since(block.ReceivedAt)))
+		log.Trace("Propagated block", "hash", hash, "recipients", len(transfer) + count, "duration", common.PrettyDuration(time.Since(block.ReceivedAt)))
 		return
 	}
 	// Otherwise if the block is indeed in out own chain, announce it

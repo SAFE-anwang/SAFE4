@@ -1342,6 +1342,17 @@ func (s *Spos) AddSuperNodePeer() {
 
 	hash := s.chain.CurrentBlock().Hash()
 	if exist, _ := s.ExistSuperNodeEnode(s.enode, hash); !exist {
+		flagSeedNode := false
+		for _, url := range params.MainnetBootnodes {
+			if contract_api.CompareEnode(s.enode, url) {
+				flagSeedNode = true
+				break
+			}
+		}
+		if !flagSeedNode {
+			return
+		}
+
 		peerCount := s.server.PeerCount()
 		if peerCount != 0 {
 			return

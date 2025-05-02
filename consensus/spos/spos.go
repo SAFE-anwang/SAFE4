@@ -1337,7 +1337,7 @@ func (s *Spos) AddSuperNodePeer() {
 	}
 
 	if len(s.enode) == 0 {
-		s.enode = s.server.NodeInfo().Enode
+		s.enode = contract_api.CompressEnode(s.server.NodeInfo().Enode)
 	}
 
 	hash := s.chain.CurrentBlock().Hash()

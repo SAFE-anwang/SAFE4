@@ -32,7 +32,7 @@ func (api *PrivateMasterNodeAPI) Start(ctx context.Context, addr common.Address)
 	if err != nil {
 		return false, err
 	}
-	enode := api.e.p2pServer.NodeInfo().Enode
+	enode := contract_api.CompressEnode(api.e.p2pServer.NodeInfo().Enode)
 	if !contract_api.CompareEnode(enode, info.Enode) {
 		return false, errors.New("start failed, incompatible masternode enode, local: [" + enode + "], state: [" + info.Enode + "]")
 	}

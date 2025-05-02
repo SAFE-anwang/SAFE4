@@ -148,7 +148,7 @@ func ExistSuperNodeName(ctx context.Context, blockChainAPI *ethapi.PublicBlockCh
 
 func ExistSuperNodeEnode(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, enode string, blockNrOrHash rpc.BlockNumberOrHash) (bool, error) {
 	ret := new(bool)
-	if err := QueryContract(ctx, blockChainAPI, blockNrOrHash, systemcontracts.SuperNodeStorageContractAddr, "existEnode", getValues(enode), &ret); err != nil {
+	if err := QueryContract(ctx, blockChainAPI, blockNrOrHash, systemcontracts.SuperNodeStorageContractAddr, "existEnode", getValues(CompressEnode(enode)), &ret); err != nil {
 		return false, err
 	}
 	return *ret, nil

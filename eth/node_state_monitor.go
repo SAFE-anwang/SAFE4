@@ -70,7 +70,7 @@ func (monitor *NodeStateMonitor) Start(e *Ethereum) {
 	monitor.e = e
 	monitor.blockChainAPI = monitor.e.GetPublicBlockChainAPI()
 	monitor.transactionPoolAPI = monitor.e.GetPublicTransactionPoolAPI()
-	monitor.enode = monitor.e.p2pServer.NodeInfo().Enode
+	monitor.enode = contract_api.CompressEnode(monitor.e.p2pServer.NodeInfo().Enode)
 
 	monitor.wg.Add(1)
 	monitor.uploadStopCh = make(chan struct{})

@@ -128,7 +128,7 @@ func ExistMasterNodeID(ctx context.Context, blockChainAPI *ethapi.PublicBlockCha
 
 func ExistMasterNodeEnode(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, enode string, blockNrOrHash rpc.BlockNumberOrHash) (bool, error) {
 	ret := new(bool)
-	if err := QueryContract(ctx, blockChainAPI, blockNrOrHash, systemcontracts.MasterNodeStorageContractAddr, "existEnode", getValues(enode), &ret); err != nil {
+	if err := QueryContract(ctx, blockChainAPI, blockNrOrHash, systemcontracts.MasterNodeStorageContractAddr, "existEnode", getValues(CompressEnode(enode)), &ret); err != nil {
 		return false, err
 	}
 	return *ret, nil
@@ -168,7 +168,7 @@ func ExistNodeAddress(ctx context.Context, blockChainAPI *ethapi.PublicBlockChai
 
 func ExistNodeEnode(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, enode string, blockNrOrHash rpc.BlockNumberOrHash) (bool, error) {
 	ret := new(bool)
-	if err := QueryContract(ctx, blockChainAPI, blockNrOrHash, systemcontracts.MasterNodeStorageContractAddr, "existNodeEnode", getValues(enode), &ret); err != nil {
+	if err := QueryContract(ctx, blockChainAPI, blockNrOrHash, systemcontracts.MasterNodeStorageContractAddr, "existNodeEnode", getValues(CompressEnode(enode)), &ret); err != nil {
 		return false, err
 	}
 	return *ret, nil

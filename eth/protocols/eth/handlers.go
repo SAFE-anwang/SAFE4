@@ -541,11 +541,13 @@ func handleNodePing(backend Backend, msg Decoder, peer *Peer) error {
 		return fmt.Errorf("%w: unknown node type: %v", errDecode, nodeType)
 	}
 
+	h := packet.Ping.Hash()
+	peer.markNodePing(h)
+
 	// check block height
 	localHeight := backend.Chain().CurrentHeader().Number.Uint64()
 	remoteHeight := packet.Ping.CurHeight.Uint64()
-	if remoteHeight + 20 < localHeight || remoteHeight > localHeight + 20 {
-		peer.markNodePing(packet.Ping.Hash())
+	if localHeight >= remoteHeight + 25 { // discard expire node-ping
 		return nil
 	}
 
@@ -564,8 +566,6 @@ func handleNodePing(backend Backend, msg Decoder, peer *Peer) error {
 		return fmt.Errorf("%w: validate signature failed, message: %v", errDecode, msg)
 	}
 
-	h := packet.Ping.Hash()
 	log.Trace("handleNodePing", "peer", peer.id, "hash", h.Hex())
-	peer.markNodePing(h)
 	return backend.Handle(peer, &packet)
 }

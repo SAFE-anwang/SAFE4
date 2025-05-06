@@ -101,6 +101,9 @@ func (monitor *NodeStateMonitor) HandlePing(ping *types.NodePing) error {
 		return nil
 	}
 
+	localHeight := monitor.e.blockchain.CurrentBlock().NumberU64()
+	remoteHeight := ping.CurHeight.Uint64()
+
 	addr, err := monitor.e.Etherbase()
 	if err == nil && monitor.isTopSuperNode(addr) {
 		log.Debug("Handle received nodePing", "node-type", ping.NodeType, "node-id", ping.Id, "node-height", ping.CurHeight)
@@ -131,6 +134,9 @@ func (monitor *NodeStateMonitor) HandlePing(ping *types.NodePing) error {
 
 			monitor.lock.Lock()
 			monitor.mnMonitorInfos[ping.Id.Int64()] = MonitorInfo{StateRunning, 0, curTime}
+			if localHeight > remoteHeight + 20 {
+				monitor.mnMonitorInfos[ping.Id.Int64()] = MonitorInfo{StateStop, 5, curTime}
+			}
 			monitor.lock.Unlock()
 		} else if nodeType == int64(types.SuperNodeType) {
 			info, err := contract_api.GetSuperNodeInfoByID(monitor.ctx, monitor.blockChainAPI, ping.Id, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber))
@@ -144,6 +150,9 @@ func (monitor *NodeStateMonitor) HandlePing(ping *types.NodePing) error {
 
 			monitor.lock.Lock()
 			monitor.snMonitorInfos[ping.Id.Int64()] = MonitorInfo{StateRunning, 0, curTime}
+			if localHeight > remoteHeight + 20 {
+				monitor.snMonitorInfos[ping.Id.Int64()] = MonitorInfo{StateStop, 5, curTime}
+			}
 			monitor.lock.Unlock()
 		}
 	}

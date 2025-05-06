@@ -3,6 +3,7 @@ package eth
 import (
 	"context"
 	"fmt"
+	mapset "github.com/deckarep/golang-set"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/core/systemcontracts/contract_api"
@@ -30,6 +31,7 @@ const StateUploadDuration = 120
 const MaxMissNum = 5
 
 const CoinbaseDuration = 10
+const maxKnownNodePings = 40960
 
 type MonitorInfo struct {
 	curState int64
@@ -55,6 +57,8 @@ type NodeStateMonitor struct {
 	mnMonitorInfos map[int64]MonitorInfo
 	snMonitorInfos map[int64]MonitorInfo
 
+	knownPings *knownCache
+
 	enode string
 }
 
@@ -63,6 +67,7 @@ func newNodeStateMonitor() *NodeStateMonitor {
 	monitor.ctx, monitor.cancelCtx = context.WithCancel(context.Background())
 	monitor.mnMonitorInfos = make(map[int64]MonitorInfo)
 	monitor.snMonitorInfos = make(map[int64]MonitorInfo)
+	monitor.knownPings = newKnownCache(maxKnownNodePings)
 	return monitor
 }
 
@@ -103,6 +108,12 @@ func (monitor *NodeStateMonitor) HandlePing(ping *types.NodePing) error {
 
 	localHeight := monitor.e.blockchain.CurrentBlock().NumberU64()
 	remoteHeight := ping.CurHeight.Uint64()
+
+	pingHash := ping.Hash()
+	if monitor.knownPings.Contains(pingHash) {
+		return nil
+	}
+	monitor.knownPings.Add(pingHash)
 
 	addr, err := monitor.e.Etherbase()
 	if err == nil && monitor.isTopSuperNode(addr) {
@@ -576,4 +587,45 @@ func CheckPublicIP(url string) (bool, error) {
 	}
 
 	return true, nil
+}
+
+type knownCache struct {
+	hashes mapset.Set
+	max    int
+}
+
+// newKnownCache creates a new knownCache with a max capacity.
+func newKnownCache(max int) *knownCache {
+	return &knownCache{
+		max:    max,
+		hashes: mapset.NewSet(),
+	}
+}
+
+// Add adds a list of elements to the set.
+func (k *knownCache) Add(hashes ...common.Hash) {
+	for k.hashes.Cardinality() > max(0, k.max-len(hashes)) {
+		k.hashes.Pop()
+	}
+	for _, hash := range hashes {
+		k.hashes.Add(hash)
+	}
+}
+
+// Contains returns whether the given item is in the set.
+func (k *knownCache) Contains(hash common.Hash) bool {
+	return k.hashes.Contains(hash)
+}
+
+// Cardinality returns the number of elements in the set.
+func (k *knownCache) Cardinality() int {
+	return k.hashes.Cardinality()
+}
+
+// max is a helper function which returns the larger of the two given integers.
+func max(a, b int) int {
+	if a > b {
+		return a
+	}
+	return b
 }

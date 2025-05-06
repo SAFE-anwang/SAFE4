@@ -30,7 +30,7 @@ const StateBroadcastDuration = 60
 const StateUploadDuration = 120
 const MaxMissNum = 5
 
-const CoinbaseDuration = 10
+const CoinbaseDuration = 30
 const maxKnownNodePings = 40960
 
 type MonitorInfo struct {

@@ -1439,20 +1439,20 @@ func (s *Spos) LoopAddSuperNodePeer() {
 }
 
 func (s *Spos) validateBlockBroadcastTime(header *types.Header, prevBlock *types.Header, blockSpace uint64) error {
-	expectedBroadcastTime := prevBlock.Time + blockSpace
+	if header.Difficulty.Cmp(diffInTurn) == 0 {
+		return nil
+	}
+
+	expectedBroadcastTime := int64(prevBlock.Time) + int64(blockSpace)
 	receivedTime := time.Now().Unix()
 	timeDifference := int64(header.Time) - int64(prevBlock.Time)
 
-	//if the time difference is greater than three times the interval between block production, it may be caused by all miner restart
-	if timeDifference > int64(blockSpace * 3 ) {
+	if timeDifference > int64(blockSpace*3) {
 		log.Info("Detected large time gap, likely due to all miner restart, allowing the block")
 		return nil
 	}
 
-	// the maximum allowable error range is set to 1/3 block interval
-	maxAllowedDeviation := int64(blockSpace / 3)
-
-	if receivedTime < int64(expectedBroadcastTime) - maxAllowedDeviation {
+	if receivedTime < expectedBroadcastTime {
 		return errors.New("block broadcasted too early")
 	}
 

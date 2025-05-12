@@ -20,6 +20,7 @@ package spos
 import (
 	"bytes"
 	"context"
+	"math"
 
 	//"crypto/ecdsa"
 	"errors"
@@ -857,8 +858,9 @@ func (s *Spos) Seal(chain consensus.ChainHeaderReader, block *types.Block, resul
 		}
 	}
 
-	if connectPeerCount <= (len(topAddrs) - 1) / 2 {
-		log.Info(fmt.Sprintf("Sealing paused, only connect %v supernodes, need connect %v supernode at least", connectPeerCount, (len(topAddrs) - 1) / 2))
+	minCount := int(math.Min(2, float64((len(topAddrs)-1)/2)))
+	if connectPeerCount < minCount {
+		log.Info(fmt.Sprintf("Sealing paused, only connect %v supernodes, need connect %v supernode at least", connectPeerCount, minCount))
 		return nil
 	}
 

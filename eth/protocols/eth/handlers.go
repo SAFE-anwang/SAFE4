@@ -528,6 +528,8 @@ func handlePooledTransactions66(backend Backend, msg Decoder, peer *Peer) error 
 	return backend.Handle(peer, &txs.PooledTransactionsPacket)
 }
 
+var knownPings = newKnownCache(maxKnownNodePings)
+
 func handleNodePing(backend Backend, msg Decoder, peer *Peer) error {
 	// MasterNode pings arrived
 	var packet NodePingPacket
@@ -542,6 +544,10 @@ func handleNodePing(backend Backend, msg Decoder, peer *Peer) error {
 	}
 
 	h := packet.Ping.Hash()
+	if knownPings.Contains(h) {
+		return nil
+	}
+	knownPings.Add(h)
 	peer.markNodePing(h)
 
 	// check block height

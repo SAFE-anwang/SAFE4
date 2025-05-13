@@ -3,7 +3,6 @@ package eth
 import (
 	"context"
 	"fmt"
-	mapset "github.com/deckarep/golang-set"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/core/systemcontracts/contract_api"
@@ -26,12 +25,12 @@ const (
 	StateStop
 )
 
-const StateBroadcastDuration = 60
-const StateUploadDuration = 120
-const MaxMissNum = 5
+const StateBroadcastDuration = 300
+const StateUploadDuration = 37
+const MaxMissNum = 10
 
 const CoinbaseDuration = 30
-const maxKnownNodePings = 40960
+const batchSize = 15
 
 type MonitorInfo struct {
 	curState int64
@@ -57,8 +56,6 @@ type NodeStateMonitor struct {
 	mnMonitorInfos map[int64]MonitorInfo
 	snMonitorInfos map[int64]MonitorInfo
 
-	knownPings *knownCache
-
 	enode string
 }
 
@@ -67,7 +64,6 @@ func newNodeStateMonitor() *NodeStateMonitor {
 	monitor.ctx, monitor.cancelCtx = context.WithCancel(context.Background())
 	monitor.mnMonitorInfos = make(map[int64]MonitorInfo)
 	monitor.snMonitorInfos = make(map[int64]MonitorInfo)
-	monitor.knownPings = newKnownCache(maxKnownNodePings)
 	return monitor
 }
 
@@ -109,12 +105,6 @@ func (monitor *NodeStateMonitor) HandlePing(ping *types.NodePing) error {
 	localHeight := monitor.e.blockchain.CurrentBlock().NumberU64()
 	remoteHeight := ping.CurHeight.Uint64()
 
-	pingHash := ping.Hash()
-	if monitor.knownPings.Contains(pingHash) {
-		return nil
-	}
-	monitor.knownPings.Add(pingHash)
-
 	addr, err := monitor.e.Etherbase()
 	if err == nil && monitor.isTopSuperNode(addr) {
 		log.Debug("Handle received nodePing", "node-type", ping.NodeType, "node-id", ping.Id, "node-height", ping.CurHeight)
@@ -146,7 +136,7 @@ func (monitor *NodeStateMonitor) HandlePing(ping *types.NodePing) error {
 			monitor.lock.Lock()
 			monitor.mnMonitorInfos[ping.Id.Int64()] = MonitorInfo{StateRunning, 0, curTime}
 			if localHeight > remoteHeight + 20 {
-				monitor.mnMonitorInfos[ping.Id.Int64()] = MonitorInfo{StateStop, 5, curTime}
+				monitor.mnMonitorInfos[ping.Id.Int64()] = MonitorInfo{StateStop, MaxMissNum, curTime}
 			}
 			monitor.lock.Unlock()
 		} else if nodeType == int64(types.SuperNodeType) {
@@ -162,7 +152,7 @@ func (monitor *NodeStateMonitor) HandlePing(ping *types.NodePing) error {
 			monitor.lock.Lock()
 			monitor.snMonitorInfos[ping.Id.Int64()] = MonitorInfo{StateRunning, 0, curTime}
 			if ping.Version.Int64() < int64(types.NodePingVersion) || localHeight > remoteHeight + 20 {
-				monitor.snMonitorInfos[ping.Id.Int64()] = MonitorInfo{StateStop, 5, curTime}
+				monitor.snMonitorInfos[ping.Id.Int64()] = MonitorInfo{StateStop, MaxMissNum, curTime}
 			}
 			monitor.lock.Unlock()
 		}
@@ -227,22 +217,10 @@ func (monitor *NodeStateMonitor) uploadLoop() {
 				monitor.lock.Unlock()
 
 				if len(mnIDs) != 0 && len(mnIDs) == len(mnStates) {
-					i := 0
-					for ; i < len(mnIDs) / 10; i++ {
-						monitor.uploadMNState(addr, mnIDs[10*i:10*(i+1)], mnStates[10*i:10*(i+1)])
-					}
-					if len(mnIDs) % 10 != 0 {
-						monitor.uploadMNState(addr, mnIDs[10*i:], mnStates[10*i:])
-					}
+					monitor.uploadMNState(addr, mnIDs, mnStates)
 				}
 				if len(snIDs) != 0 && len(snIDs) == len(snStates) {
-					i := 0
-					for ; i < len(snIDs) / 10; i++ {
-						monitor.uploadSNState(addr, snIDs[10*i:10*(i+1)], snStates[10*i:10*(i+1)])
-					}
-					if len(snIDs) % 10 != 0 {
-						monitor.uploadSNState(addr, snIDs[10*i:], snStates[10*i:])
-					}
+					monitor.uploadSNState(addr, snIDs, snStates)
 				}
 			}
 		}
@@ -477,7 +455,7 @@ func (monitor *NodeStateMonitor) collectMasterNodes(from common.Address) ([]*big
 						states = append(states, big.NewInt(v.curState))
 					}
 					delete(monitor.mnMonitorInfos, id)
-					if len(ids) == 10 {
+					if len(ids) == batchSize {
 						break
 					}
 				}
@@ -553,7 +531,7 @@ func (monitor *NodeStateMonitor) collectSuperNodes(from common.Address) ([]*big.
 						states = append(states, big.NewInt(v.curState))
 					}
 					delete(monitor.snMonitorInfos, id)
-					if len(ids) == 10 {
+					if len(ids) == batchSize {
 						break
 					}
 				}
@@ -613,45 +591,4 @@ func CheckPublicIP(url string) (bool, error) {
 	}
 
 	return true, nil
-}
-
-type knownCache struct {
-	hashes mapset.Set
-	max    int
-}
-
-// newKnownCache creates a new knownCache with a max capacity.
-func newKnownCache(max int) *knownCache {
-	return &knownCache{
-		max:    max,
-		hashes: mapset.NewSet(),
-	}
-}
-
-// Add adds a list of elements to the set.
-func (k *knownCache) Add(hashes ...common.Hash) {
-	for k.hashes.Cardinality() > max(0, k.max-len(hashes)) {
-		k.hashes.Pop()
-	}
-	for _, hash := range hashes {
-		k.hashes.Add(hash)
-	}
-}
-
-// Contains returns whether the given item is in the set.
-func (k *knownCache) Contains(hash common.Hash) bool {
-	return k.hashes.Contains(hash)
-}
-
-// Cardinality returns the number of elements in the set.
-func (k *knownCache) Cardinality() int {
-	return k.hashes.Cardinality()
-}
-
-// max is a helper function which returns the larger of the two given integers.
-func max(a, b int) int {
-	if a > b {
-		return a
-	}
-	return b
 }

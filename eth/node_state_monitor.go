@@ -170,6 +170,34 @@ func (monitor *NodeStateMonitor) HandlePing(ping *types.NodePing) error {
 	return nil
 }
 
+func (monitor *NodeStateMonitor) uploadMNState(addr common.Address, ids []*big.Int, states []*big.Int) {
+	hash, err := contract_api.UploadMasterNodeStates(monitor.ctx, monitor.blockChainAPI, monitor.transactionPoolAPI, addr, ids, states)
+	log.Info("Upload masternode state", "caller", addr, "ids", ids, "states", states, "hash", hash.Hex(), "error", err)
+	if err != nil {
+		for i, id := range ids {
+			if states[i].Int64() == StateRunning {
+				monitor.mnMonitorInfos[id.Int64()] = MonitorInfo{StateRunning, 0, time.Now().Unix()}
+			} else {
+				monitor.mnMonitorInfos[id.Int64()] = MonitorInfo{StateStop, 5, time.Now().Unix()}
+			}
+		}
+	}
+}
+
+func (monitor *NodeStateMonitor) uploadSNState(addr common.Address, ids []*big.Int, states []*big.Int) {
+	hash, err := contract_api.UploadSuperNodeStates(monitor.ctx, monitor.blockChainAPI, monitor.transactionPoolAPI, addr, ids, states)
+	log.Info("Upload supernode state", "caller", addr, "ids", ids, "states", states, "hash", hash.Hex(), "error", err)
+	if err != nil {
+		for i, id := range ids {
+			if states[i].Int64() == StateRunning {
+				monitor.snMonitorInfos[id.Int64()] = MonitorInfo{StateRunning, 0, time.Now().Unix()}
+			} else {
+				monitor.snMonitorInfos[id.Int64()] = MonitorInfo{StateStop, 5, time.Now().Unix()}
+			}
+		}
+	}
+}
+
 func (monitor *NodeStateMonitor) uploadLoop() {
 	ticker := time.NewTicker(StateUploadDuration * time.Second)
 	defer ticker.Stop()
@@ -199,29 +227,21 @@ func (monitor *NodeStateMonitor) uploadLoop() {
 				monitor.lock.Unlock()
 
 				if len(mnIDs) != 0 && len(mnIDs) == len(mnStates) {
-					hash, err := contract_api.UploadMasterNodeStates(monitor.ctx, monitor.blockChainAPI, monitor.transactionPoolAPI, addr, mnIDs, mnStates)
-					log.Info("Upload masternode state", "caller", addr, "ids", mnIDs, "states", mnStates, "hash", hash.Hex(), "error", err)
-					if err != nil {
-						for i, id := range mnIDs {
-							if mnStates[i].Int64() == StateRunning {
-								monitor.mnMonitorInfos[id.Int64()] = MonitorInfo{StateRunning, 0, time.Now().Unix()}
-							} else {
-								monitor.mnMonitorInfos[id.Int64()] = MonitorInfo{StateStop, 5, time.Now().Unix()}
-							}
-						}
+					i := 0
+					for ; i < len(mnIDs) / 10; i++ {
+						monitor.uploadMNState(addr, mnIDs[10*i:10*(i+1)], mnStates[10*i:10*(i+1)])
+					}
+					if len(mnIDs) % 10 != 0 {
+						monitor.uploadMNState(addr, mnIDs[10*i:], mnStates[10*i:])
 					}
 				}
 				if len(snIDs) != 0 && len(snIDs) == len(snStates) {
-					hash, err := contract_api.UploadSuperNodeStates(monitor.ctx, monitor.blockChainAPI, monitor.transactionPoolAPI, addr, snIDs, snStates)
-					log.Info("Upload supernode state", "caller", addr, "ids", snIDs, "states", snStates, "hash", hash.Hex(), "error", err)
-					if err != nil {
-						for i, id := range snIDs {
-							if snStates[i].Int64() == StateRunning {
-								monitor.snMonitorInfos[id.Int64()] = MonitorInfo{StateRunning, 0, time.Now().Unix()}
-							} else {
-								monitor.snMonitorInfos[id.Int64()] = MonitorInfo{StateStop, 5, time.Now().Unix()}
-							}
-						}
+					i := 0
+					for ; i < len(snIDs) / 10; i++ {
+						monitor.uploadSNState(addr, snIDs[10*i:10*(i+1)], snStates[10*i:10*(i+1)])
+					}
+					if len(snIDs) % 10 != 0 {
+						monitor.uploadSNState(addr, snIDs[10*i:], snStates[10*i:])
 					}
 				}
 			}

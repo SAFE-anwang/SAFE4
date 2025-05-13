@@ -173,29 +173,29 @@ func (monitor *NodeStateMonitor) HandlePing(ping *types.NodePing) error {
 func (monitor *NodeStateMonitor) uploadMNState(addr common.Address, ids []*big.Int, states []*big.Int) {
 	hash, err := contract_api.UploadMasterNodeStates(monitor.ctx, monitor.blockChainAPI, monitor.transactionPoolAPI, addr, ids, states)
 	log.Info("Upload masternode state", "caller", addr, "ids", ids, "states", states, "hash", hash.Hex(), "error", err)
-	if err != nil {
-		for i, id := range ids {
-			if states[i].Int64() == StateRunning {
-				monitor.mnMonitorInfos[id.Int64()] = MonitorInfo{StateRunning, 0, time.Now().Unix()}
-			} else {
-				monitor.mnMonitorInfos[id.Int64()] = MonitorInfo{StateStop, 5, time.Now().Unix()}
-			}
-		}
-	}
+	//if err != nil {
+	//	for i, id := range ids {
+	//		if states[i].Int64() == StateRunning {
+	//			monitor.mnMonitorInfos[id.Int64()] = MonitorInfo{StateRunning, 0, time.Now().Unix()}
+	//		} else {
+	//			monitor.mnMonitorInfos[id.Int64()] = MonitorInfo{StateStop, 5, time.Now().Unix()}
+	//		}
+	//	}
+	//}
 }
 
 func (monitor *NodeStateMonitor) uploadSNState(addr common.Address, ids []*big.Int, states []*big.Int) {
 	hash, err := contract_api.UploadSuperNodeStates(monitor.ctx, monitor.blockChainAPI, monitor.transactionPoolAPI, addr, ids, states)
 	log.Info("Upload supernode state", "caller", addr, "ids", ids, "states", states, "hash", hash.Hex(), "error", err)
-	if err != nil {
-		for i, id := range ids {
-			if states[i].Int64() == StateRunning {
-				monitor.snMonitorInfos[id.Int64()] = MonitorInfo{StateRunning, 0, time.Now().Unix()}
-			} else {
-				monitor.snMonitorInfos[id.Int64()] = MonitorInfo{StateStop, 5, time.Now().Unix()}
-			}
-		}
-	}
+	//if err != nil {
+	//	for i, id := range ids {
+	//		if states[i].Int64() == StateRunning {
+	//			monitor.snMonitorInfos[id.Int64()] = MonitorInfo{StateRunning, 0, time.Now().Unix()}
+	//		} else {
+	//			monitor.snMonitorInfos[id.Int64()] = MonitorInfo{StateStop, 5, time.Now().Unix()}
+	//		}
+	//	}
+	//}
 }
 
 func (monitor *NodeStateMonitor) uploadLoop() {
@@ -477,6 +477,9 @@ func (monitor *NodeStateMonitor) collectMasterNodes(from common.Address) ([]*big
 						states = append(states, big.NewInt(v.curState))
 					}
 					delete(monitor.mnMonitorInfos, id)
+					if len(ids) == 10 {
+						break
+					}
 				}
 			}
 		}
@@ -550,6 +553,9 @@ func (monitor *NodeStateMonitor) collectSuperNodes(from common.Address) ([]*big.
 						states = append(states, big.NewInt(v.curState))
 					}
 					delete(monitor.snMonitorInfos, id)
+					if len(ids) == 10 {
+						break
+					}
 				}
 			}
 		}

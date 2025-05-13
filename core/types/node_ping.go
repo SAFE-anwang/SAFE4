@@ -11,7 +11,7 @@ import (
 	"time"
 )
 
-const NodePingVersion int = 1001
+const NodePingVersion int = 1002
 
 const (
 	MasterNodeType int = iota + 1

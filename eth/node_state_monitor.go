@@ -161,7 +161,7 @@ func (monitor *NodeStateMonitor) HandlePing(ping *types.NodePing) error {
 
 			monitor.lock.Lock()
 			monitor.snMonitorInfos[ping.Id.Int64()] = MonitorInfo{StateRunning, 0, curTime}
-			if localHeight > remoteHeight + 20 {
+			if ping.Version.Int64() < int64(types.NodePingVersion) || localHeight > remoteHeight + 20 {
 				monitor.snMonitorInfos[ping.Id.Int64()] = MonitorInfo{StateStop, 5, curTime}
 			}
 			monitor.lock.Unlock()

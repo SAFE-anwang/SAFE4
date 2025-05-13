@@ -92,7 +92,7 @@ func CallContract(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI
 		if err != nil {
 			return common.Hash{}, err
 		}
-		gas = gas * 6 / 5
+		gas = gas * 3 / 2
 		args.Gas = &gas
 	} else {
 		gas := eth_params.MaxSystemRewardTxGas

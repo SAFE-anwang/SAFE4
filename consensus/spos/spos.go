@@ -259,6 +259,9 @@ type Spos struct {
 
 	enode         string
 	isSN          bool
+
+	trustedPeers   map[enode.ID]struct{}
+	trustedLock    sync.RWMutex
 }
 
 // New creates a Spos SAFE-proof-of-stack consensus engine with the initial
@@ -286,6 +289,7 @@ func New(chainConfig *params.ChainConfig, db ethdb.Database) *Spos {
 		proposals:  make(map[common.Address]bool),
 		quit:       make(chan struct{}),
 		next:       make(chan struct{}),
+		trustedPeers: make(map[enode.ID]struct{}),
 	}
 
 	// Start adding super nodes for processing.
@@ -1422,6 +1426,18 @@ func (s *Spos) AddSuperNodePeer() {
 		}
 		if !flag {
 			s.server.AddPeer(node)
+		}else{
+			s.trustedLock.RLock()
+			_, alreadyTrusted := s.trustedPeers[node.ID()]
+			s.trustedLock.RUnlock()
+
+			if !alreadyTrusted {
+				s.server.AddTrustedPeer(node)
+
+				s.trustedLock.Lock()
+				s.trustedPeers[node.ID()] = struct{}{}
+				s.trustedLock.Unlock()
+			}
 		}
 	}
 }

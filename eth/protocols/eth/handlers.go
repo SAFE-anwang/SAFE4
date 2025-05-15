@@ -544,6 +544,7 @@ func handleNodePing(backend Backend, msg Decoder, peer *Peer) error {
 	}
 
 	h := packet.Ping.Hash()
+	log.Debug("handleNodePing", "node-type", nodeType, "node-id", packet.Ping.Id, "node-height", packet.Ping.CurHeight, "hash", h, "peer", peer.id, "peer.ip", peer.Node().IP())
 	if knownPings.Contains(h) {
 		return nil
 	}
@@ -572,6 +573,5 @@ func handleNodePing(backend Backend, msg Decoder, peer *Peer) error {
 		return fmt.Errorf("%w: validate signature failed, message: %v", errDecode, msg)
 	}
 
-	log.Trace("handleNodePing", "peer", peer.id, "hash", h.Hex())
 	return backend.Handle(peer, &packet)
 }

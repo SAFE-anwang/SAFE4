@@ -92,17 +92,21 @@ func CallContract(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI
 		if err != nil {
 			return common.Hash{}, err
 		}
-		gas = gas * 3 / 2
+		gas = gas * 6 / 5
 		args.Gas = &gas
 	} else {
-		gas := eth_params.MaxSystemRewardTxGas
 		args = ethapi.TransactionArgs{
 			From:     &from,
 			To:       &contractAddr,
 			Data:     &msgData,
-			Gas:      (*hexutil.Uint64)(&gas),
 			GasPrice: (*hexutil.Big)(common.Big0),
 		}
+		gas, err := blockChainAPI.EstimateGas(ctx, args, nil)
+		if err != nil {
+			return common.Hash{}, err
+		}
+		gas = gas * 7 / 5
+		args.Gas = &gas
 	}
 	return transactionPoolAPI.SendTransaction(ctx, args)
 }

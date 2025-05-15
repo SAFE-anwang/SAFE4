@@ -543,6 +543,7 @@ func handleNodePing(backend Backend, msg Decoder, peer *Peer) error {
 		return fmt.Errorf("%w: unknown node type: %v", errDecode, nodeType)
 	}
 
+	packet.Ping.Time = common.Big0
 	h := packet.Ping.Hash()
 	if knownPings.Contains(h) {
 		return nil

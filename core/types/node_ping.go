@@ -8,6 +8,7 @@ import (
 	"io"
 	"math/big"
 	"sync/atomic"
+	"time"
 )
 
 const NodePingVersion int = 1002
@@ -43,7 +44,7 @@ type NodePing struct {
 }
 
 func NewNodePing(id *big.Int, nodeType int, blockHash common.Hash, height *big.Int, privateKey *ecdsa.PrivateKey) (*NodePing, error) {
-	base := &NodePingBase{ big.NewInt(int64(NodePingVersion)), id, big.NewInt(int64(nodeType)), blockHash, height, common.Big0}
+	base := &NodePingBase{ big.NewInt(int64(NodePingVersion)), id, big.NewInt(int64(nodeType)), blockHash, height, big.NewInt(time.Now().Unix())}
 	h := rlpHash(base)
 	sig, err := crypto.Sign(h.Bytes(), privateKey)
 	if err != nil {

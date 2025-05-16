@@ -529,7 +529,10 @@ func (monitor *NodeStateMonitor) collectMasterNodes(from common.Address) ([]*big
 	// upload running state first
 	for _, info = range infos {
 		id := info.Id.Int64()
-		if v, ok := monitor.mnMonitorInfos[id]; ok {
+		monitor.mnLock.Lock()
+		v, ok := monitor.mnMonitorInfos[id]
+		monitor.mnLock.Unlock()
+		if ok {
 			log.Debug("collect-masternode-state-running", "id", id, "global-state", info.State, "local-state", v.curState, "missNum", v.missNum)
 			if v.curState != info.State.Int64() {
 				if v.curState == StateRunning || len(info.Enode) == 0 {
@@ -564,7 +567,10 @@ func (monitor *NodeStateMonitor) collectMasterNodes(from common.Address) ([]*big
 	// upload stopped state later
 	for _, info = range infos {
 		id := info.Id.Int64()
-		if v, ok := monitor.mnMonitorInfos[id]; ok {
+		monitor.mnLock.Lock()
+		v, ok := monitor.mnMonitorInfos[id]
+		monitor.mnLock.Unlock()
+		if ok {
 			log.Debug("collect-masternode-state-stop", "id", id, "global-state", info.State, "local-state", v.curState, "missNum", v.missNum)
 			if v.curState != info.State.Int64() {
 				if v.curState == StateStop && v.missNum >= mnMaxMissNum {
@@ -621,6 +627,7 @@ func (monitor *NodeStateMonitor) collectSuperNodes(from common.Address) ([]*big.
 	var info types.SuperNodeInfo
 	for _, info = range infos {
 		id := info.Id.Int64()
+		monitor.snLock.Lock()
 		if v, ok := monitor.snMonitorInfos[id]; ok {
 			if time.Now().Unix() > v.lastTime+snStateBroadcastDuration {
 				v.curState = StateStop
@@ -631,11 +638,15 @@ func (monitor *NodeStateMonitor) collectSuperNodes(from common.Address) ([]*big.
 		} else {
 			monitor.snMonitorInfos[id] = MonitorInfo{StateStop, 0, time.Now().Unix()}
 		}
+		monitor.snLock.Unlock()
 	}
 
 	for _, info = range infos {
 		id := info.Id.Int64()
-		if v, ok := monitor.snMonitorInfos[id]; ok {
+		monitor.snLock.Lock()
+		v, ok := monitor.snMonitorInfos[id]
+		monitor.snLock.Unlock()
+		if ok {
 			log.Debug("collect-supernode-state", "id", id, "global-state", info.State, "local-state", v.curState, "missNum", v.missNum)
 			if v.curState != info.State.Int64() {
 				if v.curState == StateRunning || (v.curState == StateStop && v.missNum >= snMaxMissNum) {

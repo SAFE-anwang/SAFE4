@@ -26,13 +26,13 @@ const (
 )
 
 const mnStateBroadcastDuration = 3600 // 60 minute
-const snStateBroadcastDuration = 120  // 2 minute
+const snStateBroadcastDuration = 300  // 5 minute
 
 const mnStateUploadDuration = 161
 const snStateUploadDuration = 41
 
 const mnMaxMissNum = 12 // 0.5 day
-const snMaxMissNum = 2  // 4 minute = 8 block
+const snMaxMissNum = 2  // 10 minute = 20 block
 
 const coinbaseDuration = 60
 const batchSize = 20
@@ -144,7 +144,7 @@ func (monitor *NodeStateMonitor) HandlePing(ping *types.NodePing) error {
 	}
 
 	addr, err := monitor.e.Etherbase()
-	if err != nil || monitor.isTopSuperNode(addr) {
+	if err != nil || !monitor.isTopSuperNode(addr) {
 		return nil
 	}
 
@@ -283,7 +283,16 @@ func (monitor *NodeStateMonitor) broadcastLoop() {
 	defer monitor.wg.Done()
 
 	for monitor.isSyncing() {
-		time.Sleep(10)
+		time.Sleep(5 * time.Second)
+		if monitor.exit {
+			return
+		}
+	}
+
+	// wait 60s
+	tempTime := time.Now().Unix()
+	for time.Now().Unix() < tempTime+60 {
+		time.Sleep(5 * time.Second)
 		if monitor.exit {
 			return
 		}
@@ -500,7 +509,7 @@ func (monitor *NodeStateMonitor) collectMasterNodes(from common.Address) ([]*big
 		}
 		monitor.mnLock.Lock()
 		if v, ok := monitor.mnMonitorInfos[id]; ok {
-			if time.Now().Unix() >= v.lastTime+mnStateBroadcastDuration {
+			if time.Now().Unix() > v.lastTime+mnStateBroadcastDuration {
 				v.curState = StateStop
 				v.missNum++
 				v.lastTime = time.Now().Unix()
@@ -518,26 +527,20 @@ func (monitor *NodeStateMonitor) collectMasterNodes(from common.Address) ([]*big
 		if v, ok := monitor.mnMonitorInfos[id]; ok {
 			log.Debug("collect-masternode-state-running", "id", id, "global-state", info.State, "local-state", v.curState, "missNum", v.missNum)
 			if v.curState != info.State.Int64() {
-				if v.curState == StateRunning {
-					flag := false
-					entries, err := contract_api.GetMasterNodeUploadEntries(monitor.ctx, monitor.blockChainAPI, info.Id, rpc.BlockNumberOrHashWithNumber(rpc.PendingBlockNumber))
-					if err == nil {
-						for _, entry := range entries {
-							if entry.State.Int64() == v.curState && entry.Caller == from {
-								flag = true
-								break
-							}
-						}
+				if v.curState == StateRunning || len(info.Enode) == 0 {
+					tempState, err := contract_api.GetMasterNodeUploadState(monitor.ctx, monitor.blockChainAPI, info.Id, from, rpc.BlockNumberOrHashWithNumber(rpc.PendingBlockNumber))
+					if err != nil {
+						continue
 					}
-					if !flag {
+					if tempState.Int64() != v.curState {
 						ids = append(ids, info.Id)
 						states = append(states, big.NewInt(v.curState))
 						monitor.mnLock.Lock()
 						delete(monitor.mnMonitorInfos, id)
 						monitor.mnLock.Unlock()
-					}
-					if len(ids) >= batchSize {
-						break
+						if len(ids) >= batchSize {
+							break
+						}
 					}
 				}
 			}
@@ -560,25 +563,19 @@ func (monitor *NodeStateMonitor) collectMasterNodes(from common.Address) ([]*big
 			log.Debug("collect-masternode-state-stop", "id", id, "global-state", info.State, "local-state", v.curState, "missNum", v.missNum)
 			if v.curState != info.State.Int64() {
 				if v.curState == StateStop && v.missNum >= mnMaxMissNum {
-					flag := false
-					entries, err := contract_api.GetMasterNodeUploadEntries(monitor.ctx, monitor.blockChainAPI, info.Id, rpc.BlockNumberOrHashWithNumber(rpc.PendingBlockNumber))
-					if err == nil {
-						for _, entry := range entries {
-							if entry.State.Int64() == v.curState && entry.Caller == from {
-								flag = true
-								break
-							}
-						}
+					tempState, err := contract_api.GetMasterNodeUploadState(monitor.ctx, monitor.blockChainAPI, info.Id, from, rpc.BlockNumberOrHashWithNumber(rpc.PendingBlockNumber))
+					if err != nil {
+						continue
 					}
-					if !flag {
+					if tempState.Int64() != v.curState {
 						ids = append(ids, info.Id)
 						states = append(states, big.NewInt(v.curState))
 						monitor.mnLock.Lock()
 						delete(monitor.mnMonitorInfos, id)
 						monitor.mnLock.Unlock()
-					}
-					if len(ids) == batchSize {
-						break
+						if len(ids) == batchSize {
+							break
+						}
 					}
 				}
 			}
@@ -620,7 +617,7 @@ func (monitor *NodeStateMonitor) collectSuperNodes(from common.Address) ([]*big.
 	for _, info = range infos {
 		id := info.Id.Int64()
 		if v, ok := monitor.snMonitorInfos[id]; ok {
-			if time.Now().Unix() >= v.lastTime+snStateBroadcastDuration {
+			if time.Now().Unix() > v.lastTime+snStateBroadcastDuration {
 				v.curState = StateStop
 				v.missNum++
 				v.lastTime = time.Now().Unix()
@@ -637,23 +634,19 @@ func (monitor *NodeStateMonitor) collectSuperNodes(from common.Address) ([]*big.
 			log.Debug("collect-supernode-state", "id", id, "global-state", info.State, "local-state", v.curState, "missNum", v.missNum)
 			if v.curState != info.State.Int64() {
 				if v.curState == StateRunning || (v.curState == StateStop && v.missNum >= snMaxMissNum) {
-					flag := false
-					entries, err := contract_api.GetSuperNodeUploadEntries(monitor.ctx, monitor.blockChainAPI, info.Id, rpc.BlockNumberOrHashWithNumber(rpc.PendingBlockNumber))
-					if err == nil {
-						for _, entry := range entries {
-							if entry.State.Int64() == v.curState && entry.Caller == from {
-								flag = true
-								break
-							}
-						}
+					tempState, err := contract_api.GetSuperNodeUploadState(monitor.ctx, monitor.blockChainAPI, info.Id, from, rpc.BlockNumberOrHashWithNumber(rpc.PendingBlockNumber))
+					if err != nil {
+						continue
 					}
-					if !flag {
+					if tempState.Int64() != v.curState {
 						ids = append(ids, info.Id)
 						states = append(states, big.NewInt(v.curState))
+						monitor.snLock.Lock()
 						delete(monitor.snMonitorInfos, id)
-					}
-					if len(ids) >= batchSize {
-						break
+						monitor.snLock.Unlock()
+						if len(ids) >= batchSize {
+							break
+						}
 					}
 				}
 			}
@@ -664,7 +657,7 @@ func (monitor *NodeStateMonitor) collectSuperNodes(from common.Address) ([]*big.
 
 func (monitor *NodeStateMonitor) isSyncing() bool {
 	progress := monitor.e.APIBackend.SyncProgress()
-	return progress.CurrentBlock < progress.HighestBlock-3
+	return progress.CurrentBlock < progress.HighestBlock
 }
 
 func GetPubKeyFromEnode(enode string) string {

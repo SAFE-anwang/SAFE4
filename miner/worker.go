@@ -1042,7 +1042,7 @@ func (w *worker) prepareWork(genParams *generateParams) (*environment, error) {
 	header := &types.Header{
 		ParentHash: parent.Hash(),
 		Number:     num.Add(num, common.Big1),
-		GasLimit:   core.CalcGasLimit(parent.GasLimit(), w.config.GasCeil),
+		GasLimit:   w.config.GasCeil,
 		Time:       timestamp,
 		Coinbase:   genParams.coinbase,
 	}

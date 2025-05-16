@@ -19,6 +19,7 @@ package miner
 import (
 	"errors"
 	"fmt"
+	"math"
 	"math/big"
 	"sync"
 	"sync/atomic"
@@ -1042,7 +1043,7 @@ func (w *worker) prepareWork(genParams *generateParams) (*environment, error) {
 	header := &types.Header{
 		ParentHash: parent.Hash(),
 		Number:     num.Add(num, common.Big1),
-		GasLimit:   w.config.GasCeil,
+		GasLimit:   uint64(math.Max(float64(core.CalcGasLimit(parent.GasLimit(), w.config.GasCeil)), float64(w.config.GasCeil))),
 		Time:       timestamp,
 		Coinbase:   genParams.coinbase,
 	}

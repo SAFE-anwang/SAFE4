@@ -28,8 +28,8 @@ const (
 const mnStateBroadcastDuration = 3600 // 60 minute
 const snStateBroadcastDuration = 180  // 3 minute
 
-const mnStateUploadDuration = 161
-const snStateUploadDuration = 41
+const mnStateUploadDuration = 311
+const snStateUploadDuration = 67
 
 const mnMaxMissNum = 12 // 0.5 day
 const snMaxMissNum = 4  // 12 minute = 24 block

@@ -25,12 +25,17 @@ const (
 	StateStop
 )
 
-const StateBroadcastDuration = 300
-const StateUploadDuration = 37
-const MaxMissNum = 10
+const mnStateBroadcastDuration = 3600 // 60 minute
+const snStateBroadcastDuration = 120  // 2 minute
 
-const CoinbaseDuration = 30
-const batchSize = 15
+const mnStateUploadDuration = 161
+const snStateUploadDuration = 41
+
+const mnMaxMissNum = 12 // 0.5 day
+const snMaxMissNum = 2  // 4 minute = 8 block
+
+const coinbaseDuration = 60
+const batchSize = 20
 
 type MonitorInfo struct {
 	curState int64
@@ -46,17 +51,23 @@ type NodeStateMonitor struct {
 	blockChainAPI      *ethapi.PublicBlockChainAPI
 	transactionPoolAPI *ethapi.PublicTransactionPoolAPI
 
-	broadcastStopCh chan struct{}
-	uploadStopCh    chan struct{}
-	coinbaseStopCh  chan struct{}
+	broadcastStopCh     chan struct{}
+	uploadSnStateStopCh chan struct{}
+	uploadMnStateStopCh chan struct{}
+	coinbaseStopCh      chan struct{}
 
-	wg   sync.WaitGroup
-	lock sync.RWMutex
+	wg     sync.WaitGroup
+	mnLock sync.RWMutex
+	snLock sync.RWMutex
 
 	mnMonitorInfos map[int64]MonitorInfo
 	snMonitorInfos map[int64]MonitorInfo
 
+	lastMnPingHeights map[int64]int64
+	lastSnPingHeights map[int64]int64
+
 	enode string
+	exit  bool
 }
 
 func newNodeStateMonitor() *NodeStateMonitor {
@@ -64,6 +75,9 @@ func newNodeStateMonitor() *NodeStateMonitor {
 	monitor.ctx, monitor.cancelCtx = context.WithCancel(context.Background())
 	monitor.mnMonitorInfos = make(map[int64]MonitorInfo)
 	monitor.snMonitorInfos = make(map[int64]MonitorInfo)
+	monitor.lastMnPingHeights = make(map[int64]int64)
+	monitor.lastSnPingHeights = make(map[int64]int64)
+	monitor.exit = false
 	return monitor
 }
 
@@ -74,8 +88,12 @@ func (monitor *NodeStateMonitor) Start(e *Ethereum) {
 	monitor.enode = contract_api.CompressEnode(monitor.e.p2pServer.NodeInfo().Enode)
 
 	monitor.wg.Add(1)
-	monitor.uploadStopCh = make(chan struct{})
-	go monitor.uploadLoop()
+	monitor.uploadSnStateStopCh = make(chan struct{})
+	go monitor.uploadSnStateLoop()
+
+	monitor.wg.Add(1)
+	monitor.uploadMnStateStopCh = make(chan struct{})
+	go monitor.uploadMnStateLoop()
 
 	monitor.wg.Add(1)
 	monitor.broadcastStopCh = make(chan struct{})
@@ -87,7 +105,9 @@ func (monitor *NodeStateMonitor) Start(e *Ethereum) {
 }
 
 func (monitor *NodeStateMonitor) Stop() {
-	close(monitor.uploadStopCh)
+	monitor.exit = true
+	close(monitor.uploadSnStateStopCh)
+	close(monitor.uploadMnStateStopCh)
 	close(monitor.broadcastStopCh)
 	close(monitor.coinbaseStopCh)
 	monitor.wg.Wait()
@@ -96,112 +116,108 @@ func (monitor *NodeStateMonitor) Stop() {
 }
 
 func (monitor *NodeStateMonitor) HandlePing(ping *types.NodePing) error {
+	nodeType := ping.NodeType.Int64()
+	id := ping.Id.Int64()
+	pingHeight := ping.CurHeight.Int64()
+	if nodeType == int64(types.MasterNodeType) {
+		monitor.mnLock.Lock()
+		if monitor.lastMnPingHeights[id] >= pingHeight { // discard expired ping
+			monitor.mnLock.Unlock()
+			return nil
+		}
+		monitor.lastMnPingHeights[id] = pingHeight
+		monitor.mnLock.Unlock()
+	} else {
+		monitor.snLock.Lock()
+		if monitor.lastSnPingHeights[id] >= pingHeight { // discard expired ping
+			monitor.snLock.Unlock()
+			return nil
+		}
+		monitor.lastSnPingHeights[id] = pingHeight
+		monitor.snLock.Unlock()
+	}
+
 	monitor.e.eventMux.Post(core.NodePingEvent{Ping: ping})
 
 	if monitor.isSyncing() {
 		return nil
 	}
 
-	localHeight := monitor.e.blockchain.CurrentBlock().NumberU64()
-	remoteHeight := ping.CurHeight.Uint64()
-
 	addr, err := monitor.e.Etherbase()
-	if err == nil && monitor.isTopSuperNode(addr) {
-		log.Debug("Handle received nodePing", "node-type", ping.NodeType, "node-id", ping.Id, "node-height", ping.CurHeight)
+	if err != nil || monitor.isTopSuperNode(addr) {
+		return nil
+	}
 
-		// recover the public key from the signature
-		r, s := ping.R.Bytes(), ping.S.Bytes()
-		v := byte(ping.V.Uint64() - 27)
-		sig := make([]byte, crypto.SignatureLength)
-		copy(sig[32-len(r):32], r)
-		copy(sig[64-len(s):64], s)
-		sig[64] = v
-		pub, err := crypto.Ecrecover(ping.Hash().Bytes(), sig)
-		if err != nil || len(pub) == 0 || pub[0] != 4 {
-			return fmt.Errorf("invalid nodePing, recover public key failed")
+	log.Debug("Handle received nodePing", "node-type", nodeType, "node-id", id, "node-height", pingHeight)
+	localHeight := monitor.e.blockchain.CurrentBlock().Number().Int64()
+
+	// recover the public key from the signature
+	r, s := ping.R.Bytes(), ping.S.Bytes()
+	v := byte(ping.V.Uint64() - 27)
+	sig := make([]byte, crypto.SignatureLength)
+	copy(sig[32-len(r):32], r)
+	copy(sig[64-len(s):64], s)
+	sig[64] = v
+	pub, err := crypto.Ecrecover(ping.Hash().Bytes(), sig)
+	if err != nil || len(pub) == 0 || pub[0] != 4 {
+		return fmt.Errorf("invalid nodePing, recover public key failed")
+	}
+
+	if nodeType == int64(types.MasterNodeType) {
+		info, err := contract_api.GetMasterNodeInfoByID(monitor.ctx, monitor.blockChainAPI, ping.Id, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber))
+		if err != nil || hexutils.BytesToHex(pub)[1:] == GetPubKeyFromEnode(info.Enode) {
+			return fmt.Errorf("invalid masternode ping, verify signature failed")
 		}
 
-		curTime := time.Now().Unix()
-		nodeType := ping.NodeType.Int64()
-		if nodeType == int64(types.MasterNodeType) {
-			info, err := contract_api.GetMasterNodeInfoByID(monitor.ctx, monitor.blockChainAPI, ping.Id, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber))
-			if err != nil || hexutils.BytesToHex(pub)[1:] == GetPubKeyFromEnode(info.Enode) {
-				return fmt.Errorf("invalid masternode ping, verify signature failed")
-			}
-
-			if _, err := CheckPublicIP(info.Enode); err != nil {
-				return fmt.Errorf("invalid masternode ping, %s", err.Error())
-			}
-
-			monitor.lock.Lock()
-			monitor.mnMonitorInfos[ping.Id.Int64()] = MonitorInfo{StateRunning, 0, curTime}
-			if ping.Version.Int64() < int64(types.NodePingVersion) || localHeight > remoteHeight + 20 {
-				monitor.mnMonitorInfos[ping.Id.Int64()] = MonitorInfo{StateStop, MaxMissNum, curTime}
-			}
-			monitor.lock.Unlock()
-		} else if nodeType == int64(types.SuperNodeType) {
-			info, err := contract_api.GetSuperNodeInfoByID(monitor.ctx, monitor.blockChainAPI, ping.Id, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber))
-			if err != nil || hexutils.BytesToHex(pub)[1:] == GetPubKeyFromEnode(info.Enode) {
-				return fmt.Errorf("invalid supernode ping, verify signature failed")
-			}
-
-			if _, err := CheckPublicIP(info.Enode); err != nil {
-				return fmt.Errorf("invalid supernode ping, %s", err.Error())
-			}
-
-			monitor.lock.Lock()
-			monitor.snMonitorInfos[ping.Id.Int64()] = MonitorInfo{StateRunning, 0, curTime}
-			if ping.Version.Int64() < int64(types.NodePingVersion) || localHeight > remoteHeight + 20 {
-				monitor.snMonitorInfos[ping.Id.Int64()] = MonitorInfo{StateStop, MaxMissNum, curTime}
-			}
-			monitor.lock.Unlock()
+		if _, err := CheckPublicIP(info.Enode); err != nil {
+			return fmt.Errorf("invalid masternode ping, %s", err.Error())
 		}
+
+		monitor.mnLock.Lock()
+		monitor.mnMonitorInfos[id] = MonitorInfo{StateRunning, 0, time.Now().Unix()}
+		if ping.Version.Int64() < int64(types.NodePingVersion) || localHeight > pingHeight+360 {
+			monitor.mnMonitorInfos[id] = MonitorInfo{StateStop, mnMaxMissNum, time.Now().Unix()}
+		}
+		monitor.mnLock.Unlock()
+	} else {
+		info, err := contract_api.GetSuperNodeInfoByID(monitor.ctx, monitor.blockChainAPI, ping.Id, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber))
+		if err != nil || hexutils.BytesToHex(pub)[1:] == GetPubKeyFromEnode(info.Enode) {
+			return fmt.Errorf("invalid supernode ping, verify signature failed")
+		}
+
+		if _, err := CheckPublicIP(info.Enode); err != nil {
+			return fmt.Errorf("invalid supernode ping, %s", err.Error())
+		}
+
+		monitor.snLock.Lock()
+		monitor.snMonitorInfos[id] = MonitorInfo{StateRunning, 0, time.Now().Unix()}
+		if ping.Version.Int64() < int64(types.NodePingVersion) || localHeight > pingHeight+6 {
+			monitor.snMonitorInfos[id] = MonitorInfo{StateStop, snMaxMissNum, time.Now().Unix()}
+		}
+		monitor.snLock.Unlock()
 	}
 	return nil
 }
 
-func (monitor *NodeStateMonitor) uploadMNState(addr common.Address, ids []*big.Int, states []*big.Int) {
+func (monitor *NodeStateMonitor) uploadMnState(addr common.Address, ids []*big.Int, states []*big.Int) {
 	hash, err := contract_api.UploadMasterNodeStates(monitor.ctx, monitor.blockChainAPI, monitor.transactionPoolAPI, addr, ids, states)
 	log.Info("Upload masternode state", "caller", addr, "ids", ids, "states", states, "hash", hash.Hex(), "error", err)
-	//if err != nil {
-	//	for i, id := range ids {
-	//		if states[i].Int64() == StateRunning {
-	//			monitor.mnMonitorInfos[id.Int64()] = MonitorInfo{StateRunning, 0, time.Now().Unix()}
-	//		} else {
-	//			monitor.mnMonitorInfos[id.Int64()] = MonitorInfo{StateStop, 5, time.Now().Unix()}
-	//		}
-	//	}
-	//}
 }
 
-func (monitor *NodeStateMonitor) uploadSNState(addr common.Address, ids []*big.Int, states []*big.Int) {
-	hash, err := contract_api.UploadSuperNodeStates(monitor.ctx, monitor.blockChainAPI, monitor.transactionPoolAPI, addr, ids, states)
-	log.Info("Upload supernode state", "caller", addr, "ids", ids, "states", states, "hash", hash.Hex(), "error", err)
-	//if err != nil {
-	//	for i, id := range ids {
-	//		if states[i].Int64() == StateRunning {
-	//			monitor.snMonitorInfos[id.Int64()] = MonitorInfo{StateRunning, 0, time.Now().Unix()}
-	//		} else {
-	//			monitor.snMonitorInfos[id.Int64()] = MonitorInfo{StateStop, 5, time.Now().Unix()}
-	//		}
-	//	}
-	//}
-}
-
-func (monitor *NodeStateMonitor) uploadLoop() {
-	ticker := time.NewTicker(StateUploadDuration * time.Second)
+func (monitor *NodeStateMonitor) uploadMnStateLoop() {
+	ticker := time.NewTicker(mnStateUploadDuration * time.Second)
 	defer ticker.Stop()
 	defer monitor.wg.Done()
 	once := 1
 	for {
 		select {
-		case <-monitor.uploadStopCh:
-			log.Info("Exit node-state-monitor uploadLoop")
+		case <-monitor.uploadMnStateStopCh:
+			log.Info("Exit node-state-monitor uploadMnStateLoop")
 			return
 		case <-ticker.C:
 			if monitor.isSyncing() {
 				if once == 1 {
-					log.Info("Syncing now, wait a moment...")
+					log.Info("uploadMnStateLoop: syncing now, wait a moment...")
 					once = 0
 				}
 				continue
@@ -211,105 +227,160 @@ func (monitor *NodeStateMonitor) uploadLoop() {
 				continue
 			}
 			if monitor.isTopSuperNode(addr) {
-				monitor.lock.Lock()
 				mnIDs, mnStates := monitor.collectMasterNodes(addr)
-				snIDs, snStates := monitor.collectSuperNodes(addr)
-				monitor.lock.Unlock()
-
 				if len(mnIDs) != 0 && len(mnIDs) == len(mnStates) {
-					monitor.uploadMNState(addr, mnIDs, mnStates)
-				}
-				if len(snIDs) != 0 && len(snIDs) == len(snStates) {
-					monitor.uploadSNState(addr, snIDs, snStates)
+					monitor.uploadMnState(addr, mnIDs, mnStates)
 				}
 			}
 		}
 	}
 }
 
-func (monitor *NodeStateMonitor) broadcastLoop() {
-	ticker := time.NewTicker(StateBroadcastDuration * time.Second)
+func (monitor *NodeStateMonitor) uploadSnState(addr common.Address, ids []*big.Int, states []*big.Int) {
+	hash, err := contract_api.UploadSuperNodeStates(monitor.ctx, monitor.blockChainAPI, monitor.transactionPoolAPI, addr, ids, states)
+	log.Info("Upload supernode state", "caller", addr, "ids", ids, "states", states, "hash", hash.Hex(), "error", err)
+}
+
+func (monitor *NodeStateMonitor) uploadSnStateLoop() {
+	ticker := time.NewTicker(snStateUploadDuration * time.Second)
 	defer ticker.Stop()
 	defer monitor.wg.Done()
-	lastAddr := common.Address{}
 	once := 1
+	for {
+		select {
+		case <-monitor.uploadSnStateStopCh:
+			log.Info("Exit node-state-monitor uploadSnStateLoop")
+			return
+		case <-ticker.C:
+			if monitor.isSyncing() {
+				if once == 1 {
+					log.Info("uploadSnStateLoop: syncing now, wait a moment...")
+					once = 0
+				}
+				continue
+			}
+			addr, err := monitor.e.Etherbase()
+			if err != nil {
+				continue
+			}
+			if monitor.isTopSuperNode(addr) {
+				snIDs, snStates := monitor.collectSuperNodes(addr)
+				if len(snIDs) != 0 && len(snIDs) == len(snStates) {
+					monitor.uploadSnState(addr, snIDs, snStates)
+				}
+			}
+		}
+	}
+}
+
+var lastAddr common.Address
+
+func (monitor *NodeStateMonitor) broadcastLoop() {
+	mnTicker := time.NewTicker(mnStateBroadcastDuration * time.Second)
+	snTicker := time.NewTicker(snStateBroadcastDuration * time.Second)
+	defer mnTicker.Stop()
+	defer snTicker.Stop()
+	defer monitor.wg.Done()
+
+	for monitor.isSyncing() {
+		time.Sleep(10)
+		if monitor.exit {
+			return
+		}
+	}
+
+	monitor.snBroadcastPing()
+	monitor.mnBroadcastPing()
+
 	for {
 		select {
 		case <-monitor.broadcastStopCh:
 			log.Info("Exit node-state-monitor broadcastLoop")
 			return
-		case <-ticker.C:
-			if monitor.isSyncing() {
-				if once == 1 {
-					log.Info("Syncing now, wait a moment...")
-					once = 0
-				}
-				continue
-			}
-
-			addr, err := monitor.e.Etherbase()
-			if err != nil {
-				continue
-			}
-			curTime := time.Now().Unix()
-			curBlock := monitor.e.blockchain.CurrentBlock()
-			info1, err := contract_api.GetSuperNodeInfo(monitor.ctx, monitor.blockChainAPI, addr, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber))
-			if err == nil && info1.Id.Int64() != 0 { // supernode
-				if !contract_api.CompareEnode(monitor.enode, info1.Enode) {
-					if lastAddr != addr {
-						log.Error("Broadcast supernode ping failed, incompatible enode", "local-enode", monitor.enode, "node-enode", info1.Enode)
-						lastAddr = addr
-					}
-					continue
-				}
-
-				ping, err := types.NewNodePing(info1.Id, types.SuperNodeType, curBlock.Hash(), curBlock.Number(), monitor.e.p2pServer.Config.PrivateKey)
-				if err != nil {
-					if lastAddr != addr {
-						log.Error("Broadcast supernode ping failed", "error", err)
-						lastAddr = addr
-					}
-					continue
-				}
-
-				monitor.e.handler.BroadcastNodePing(ping)
-				monitor.lock.Lock()
-				monitor.snMonitorInfos[ping.Id.Int64()] = MonitorInfo{StateRunning, 0, curTime}
-				monitor.lock.Unlock()
-				log.Debug("Broadcast supernode ping", "id", ping.Id, "height", ping.CurHeight)
-				continue
-			}
-			info2, err := contract_api.GetMasterNodeInfo(monitor.ctx, monitor.blockChainAPI, addr, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber))
-			if err == nil && info2.Id.Int64() != 0 { // masternode
-				if !contract_api.CompareEnode(monitor.enode, info2.Enode) {
-					if lastAddr != addr {
-						log.Error("Broadcast masternode ping failed, incompatible enode", "local-enode", monitor.enode, "node-enode", info1.Enode)
-						lastAddr = addr
-					}
-					continue
-				}
-
-				ping, err := types.NewNodePing(info2.Id, types.MasterNodeType, curBlock.Hash(), curBlock.Number(), monitor.e.p2pServer.Config.PrivateKey)
-				if err != nil {
-					if lastAddr != addr {
-						log.Error("Broadcast masternode ping failed", "error", err)
-						lastAddr = addr
-					}
-					continue
-				}
-
-				monitor.e.handler.BroadcastNodePing(ping)
-				monitor.lock.Lock()
-				monitor.mnMonitorInfos[ping.Id.Int64()] = MonitorInfo{StateRunning, 0, curTime}
-				monitor.lock.Unlock()
-				log.Debug("Broadcast masternode ping", "id", ping.Id, "height", ping.CurHeight)
-			}
+		case <-snTicker.C:
+			monitor.snBroadcastPing()
+		case <-mnTicker.C:
+			monitor.mnBroadcastPing()
 		}
 	}
 }
 
+func (monitor *NodeStateMonitor) snBroadcastPing() {
+	addr, err := monitor.e.Etherbase()
+	if err != nil {
+		return
+	}
+
+	info, err := contract_api.GetSuperNodeInfo(monitor.ctx, monitor.blockChainAPI, addr, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber))
+	if err != nil || info.Id.Int64() == 0 {
+		return
+	}
+
+	if !contract_api.CompareEnode(monitor.enode, info.Enode) {
+		if lastAddr != addr {
+			log.Error("Broadcast supernode ping failed, incompatible enode", "local-enode", monitor.enode, "node-enode", info.Enode)
+			lastAddr = addr
+		}
+		return
+	}
+
+	curBlock := monitor.e.blockchain.CurrentBlock()
+	ping, err := types.NewNodePing(info.Id, types.SuperNodeType, curBlock.Hash(), curBlock.Number(), monitor.e.p2pServer.Config.PrivateKey)
+	if err != nil {
+		if lastAddr != addr {
+			log.Error("Broadcast supernode ping failed", "error", err)
+			lastAddr = addr
+		}
+		return
+	}
+
+	monitor.e.handler.BroadcastNodePing(ping)
+	monitor.snLock.Lock()
+	monitor.snMonitorInfos[ping.Id.Int64()] = MonitorInfo{StateRunning, 0, time.Now().Unix()}
+	monitor.lastSnPingHeights[ping.Id.Int64()] = curBlock.Number().Int64()
+	monitor.snLock.Unlock()
+	log.Debug("Broadcast supernode ping", "id", ping.Id, "height", ping.CurHeight)
+}
+
+func (monitor *NodeStateMonitor) mnBroadcastPing() {
+	addr, err := monitor.e.Etherbase()
+	if err != nil {
+		return
+	}
+
+	info, err := contract_api.GetMasterNodeInfo(monitor.ctx, monitor.blockChainAPI, addr, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber))
+	if err != nil || info.Id.Int64() == 0 {
+		return
+	}
+
+	if !contract_api.CompareEnode(monitor.enode, info.Enode) {
+		if lastAddr != addr {
+			log.Error("Broadcast masternode ping failed, incompatible enode", "local-enode", monitor.enode, "node-enode", info.Enode)
+			lastAddr = addr
+		}
+		return
+	}
+
+	curBlock := monitor.e.blockchain.CurrentBlock()
+	ping, err := types.NewNodePing(info.Id, types.MasterNodeType, curBlock.Hash(), curBlock.Number(), monitor.e.p2pServer.Config.PrivateKey)
+	if err != nil {
+		if lastAddr != addr {
+			log.Error("Broadcast masternode ping failed", "error", err)
+			lastAddr = addr
+		}
+		return
+	}
+
+	monitor.e.handler.BroadcastNodePing(ping)
+	monitor.mnLock.Lock()
+	monitor.mnMonitorInfos[ping.Id.Int64()] = MonitorInfo{StateRunning, 0, time.Now().Unix()}
+	monitor.lastMnPingHeights[ping.Id.Int64()] = curBlock.Number().Int64()
+	monitor.mnLock.Unlock()
+	log.Debug("Broadcast masternode ping", "id", ping.Id, "height", ping.CurHeight)
+}
+
 func (monitor *NodeStateMonitor) coinbaseLoop() {
-	ticker := time.NewTicker(CoinbaseDuration * time.Second)
+	ticker := time.NewTicker(coinbaseDuration * time.Second)
 	defer ticker.Stop()
 	defer monitor.wg.Done()
 	lastAddr := common.Address{}
@@ -418,28 +489,36 @@ func (monitor *NodeStateMonitor) collectMasterNodes(from common.Address) ([]*big
 		}
 	}
 
-	curTime := time.Now().Unix()
 	var info types.MasterNodeInfo
 	for _, info = range infos {
 		id := info.Id.Int64()
+		if len(info.Enode) == 0 {
+			monitor.mnLock.Lock()
+			monitor.mnMonitorInfos[id] = MonitorInfo{StateStop, mnMaxMissNum, time.Now().Unix()}
+			monitor.mnLock.Unlock()
+			continue
+		}
+		monitor.mnLock.Lock()
 		if v, ok := monitor.mnMonitorInfos[id]; ok {
-			if v.curState != StateRunning || curTime > v.lastTime+StateUploadDuration {
+			if time.Now().Unix() >= v.lastTime+mnStateBroadcastDuration {
 				v.curState = StateStop
 				v.missNum++
-				v.lastTime = curTime
+				v.lastTime = time.Now().Unix()
 				monitor.mnMonitorInfos[id] = v
 			}
 		} else {
-			monitor.mnMonitorInfos[id] = MonitorInfo{StateStop, 1, curTime}
+			monitor.mnMonitorInfos[id] = MonitorInfo{StateStop, 0, time.Now().Unix()}
 		}
+		monitor.mnLock.Unlock()
 	}
 
+	// upload running state first
 	for _, info = range infos {
 		id := info.Id.Int64()
 		if v, ok := monitor.mnMonitorInfos[id]; ok {
-			log.Debug("collect-masternode-state", "id", id, "global-state", info.State, "local-state", v.curState, "missNum", v.missNum)
+			log.Debug("collect-masternode-state-running", "id", id, "global-state", info.State, "local-state", v.curState, "missNum", v.missNum)
 			if v.curState != info.State.Int64() {
-				if v.curState == StateRunning || (v.curState == StateStop && v.missNum >= MaxMissNum) {
+				if v.curState == StateRunning {
 					flag := false
 					entries, err := contract_api.GetMasterNodeUploadEntries(monitor.ctx, monitor.blockChainAPI, info.Id, rpc.BlockNumberOrHashWithNumber(rpc.PendingBlockNumber))
 					if err == nil {
@@ -453,8 +532,51 @@ func (monitor *NodeStateMonitor) collectMasterNodes(from common.Address) ([]*big
 					if !flag {
 						ids = append(ids, info.Id)
 						states = append(states, big.NewInt(v.curState))
+						monitor.mnLock.Lock()
+						delete(monitor.mnMonitorInfos, id)
+						monitor.mnLock.Unlock()
 					}
-					delete(monitor.mnMonitorInfos, id)
+					if len(ids) >= batchSize {
+						break
+					}
+				}
+			}
+		}
+	}
+
+	if len(ids) >= batchSize {
+		return ids, states
+	}
+
+	pending, queued := monitor.e.txPool.Stats()
+	if pending+queued >= 100 {
+		return ids, states
+	}
+
+	// upload stopped state later
+	for _, info = range infos {
+		id := info.Id.Int64()
+		if v, ok := monitor.mnMonitorInfos[id]; ok {
+			log.Debug("collect-masternode-state-stop", "id", id, "global-state", info.State, "local-state", v.curState, "missNum", v.missNum)
+			if v.curState != info.State.Int64() {
+				if v.curState == StateStop && v.missNum >= mnMaxMissNum {
+					flag := false
+					entries, err := contract_api.GetMasterNodeUploadEntries(monitor.ctx, monitor.blockChainAPI, info.Id, rpc.BlockNumberOrHashWithNumber(rpc.PendingBlockNumber))
+					if err == nil {
+						for _, entry := range entries {
+							if entry.State.Int64() == v.curState && entry.Caller == from {
+								flag = true
+								break
+							}
+						}
+					}
+					if !flag {
+						ids = append(ids, info.Id)
+						states = append(states, big.NewInt(v.curState))
+						monitor.mnLock.Lock()
+						delete(monitor.mnMonitorInfos, id)
+						monitor.mnLock.Unlock()
+					}
 					if len(ids) == batchSize {
 						break
 					}
@@ -494,19 +616,18 @@ func (monitor *NodeStateMonitor) collectSuperNodes(from common.Address) ([]*big.
 		}
 	}
 
-	curTime := time.Now().Unix()
 	var info types.SuperNodeInfo
 	for _, info = range infos {
 		id := info.Id.Int64()
 		if v, ok := monitor.snMonitorInfos[id]; ok {
-			if v.curState != StateRunning || curTime > v.lastTime+StateUploadDuration {
+			if time.Now().Unix() >= v.lastTime+snStateBroadcastDuration {
 				v.curState = StateStop
 				v.missNum++
-				v.lastTime = curTime
+				v.lastTime = time.Now().Unix()
 				monitor.snMonitorInfos[id] = v
 			}
 		} else {
-			monitor.snMonitorInfos[id] = MonitorInfo{StateStop, 1, curTime}
+			monitor.snMonitorInfos[id] = MonitorInfo{StateStop, 0, time.Now().Unix()}
 		}
 	}
 
@@ -515,7 +636,7 @@ func (monitor *NodeStateMonitor) collectSuperNodes(from common.Address) ([]*big.
 		if v, ok := monitor.snMonitorInfos[id]; ok {
 			log.Debug("collect-supernode-state", "id", id, "global-state", info.State, "local-state", v.curState, "missNum", v.missNum)
 			if v.curState != info.State.Int64() {
-				if v.curState == StateRunning || (v.curState == StateStop && v.missNum >= MaxMissNum) {
+				if v.curState == StateRunning || (v.curState == StateStop && v.missNum >= snMaxMissNum) {
 					flag := false
 					entries, err := contract_api.GetSuperNodeUploadEntries(monitor.ctx, monitor.blockChainAPI, info.Id, rpc.BlockNumberOrHashWithNumber(rpc.PendingBlockNumber))
 					if err == nil {
@@ -529,9 +650,9 @@ func (monitor *NodeStateMonitor) collectSuperNodes(from common.Address) ([]*big.
 					if !flag {
 						ids = append(ids, info.Id)
 						states = append(states, big.NewInt(v.curState))
+						delete(monitor.snMonitorInfos, id)
 					}
-					delete(monitor.snMonitorInfos, id)
-					if len(ids) == batchSize {
+					if len(ids) >= batchSize {
 						break
 					}
 				}
@@ -543,7 +664,7 @@ func (monitor *NodeStateMonitor) collectSuperNodes(from common.Address) ([]*big.
 
 func (monitor *NodeStateMonitor) isSyncing() bool {
 	progress := monitor.e.APIBackend.SyncProgress()
-	return progress.CurrentBlock < progress.HighestBlock
+	return progress.CurrentBlock < progress.HighestBlock-3
 }
 
 func GetPubKeyFromEnode(enode string) string {

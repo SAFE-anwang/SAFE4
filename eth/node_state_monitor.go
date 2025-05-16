@@ -348,7 +348,7 @@ func (monitor *NodeStateMonitor) snBroadcastPing() {
 	monitor.snMonitorInfos[ping.Id.Int64()] = MonitorInfo{StateRunning, 0, time.Now().Unix()}
 	monitor.lastSnPingHeights[ping.Id.Int64()] = curBlock.Number().Int64()
 	monitor.snLock.Unlock()
-	log.Debug("Broadcast supernode ping", "id", ping.Id, "height", ping.CurHeight)
+	log.Info("Broadcast supernode ping", "id", ping.Id, "height", ping.CurHeight)
 }
 
 func (monitor *NodeStateMonitor) mnBroadcastPing() {
@@ -385,7 +385,7 @@ func (monitor *NodeStateMonitor) mnBroadcastPing() {
 	monitor.mnMonitorInfos[ping.Id.Int64()] = MonitorInfo{StateRunning, 0, time.Now().Unix()}
 	monitor.lastMnPingHeights[ping.Id.Int64()] = curBlock.Number().Int64()
 	monitor.mnLock.Unlock()
-	log.Debug("Broadcast masternode ping", "id", ping.Id, "height", ping.CurHeight)
+	log.Info("Broadcast masternode ping", "id", ping.Id, "height", ping.CurHeight)
 }
 
 func (monitor *NodeStateMonitor) coinbaseLoop() {

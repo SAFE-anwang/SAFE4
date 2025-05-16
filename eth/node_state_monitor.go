@@ -26,13 +26,13 @@ const (
 )
 
 const mnStateBroadcastDuration = 3600 // 60 minute
-const snStateBroadcastDuration = 300  // 5 minute
+const snStateBroadcastDuration = 180  // 3 minute
 
 const mnStateUploadDuration = 161
 const snStateUploadDuration = 41
 
 const mnMaxMissNum = 12 // 0.5 day
-const snMaxMissNum = 2  // 10 minute = 20 block
+const snMaxMissNum = 4  // 12 minute = 24 block
 
 const coinbaseDuration = 60
 const batchSize = 20

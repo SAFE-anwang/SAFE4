@@ -158,7 +158,7 @@ const (
 	RefundQuotient        uint64 = 2
 	RefundQuotientEIP3529 uint64 = 5
 
-	MaxSystemRewardTxGas  uint64 = 20000000
+	MaxSystemRewardTxGas  uint64 = 30000000
 )
 
 // Gas discount table for BLS12-381 G1 and G2 multi exponentiation operations

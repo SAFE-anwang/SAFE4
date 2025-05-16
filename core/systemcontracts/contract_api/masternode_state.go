@@ -22,3 +22,9 @@ func GetMasterNodeUploadEntries(ctx context.Context, blockChainAPI *ethapi.Publi
 	}
 	return *ret, nil
 }
+
+func GetMasterNodeUploadState(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, id *big.Int, addr common.Address, blockNrOrHash rpc.BlockNumberOrHash) (*big.Int, error) {
+	ret := new(big.Int)
+	err := QueryContract(ctx, blockChainAPI, blockNrOrHash, systemcontracts.MasterNodeStateContractAddr, "getByAddr", getValues(id, addr), &ret)
+	return ret, err
+}

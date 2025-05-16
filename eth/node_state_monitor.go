@@ -473,6 +473,11 @@ func (monitor *NodeStateMonitor) collectMasterNodes(from common.Address) ([]*big
 	var ids []*big.Int
 	var states []*big.Int
 
+	pending, queued := monitor.e.txPool.Stats()
+	if pending+queued >= 800 {
+		return ids, states
+	}
+
 	num, err := contract_api.GetMasterNodeNum(monitor.ctx, monitor.blockChainAPI, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber))
 	if err != nil {
 		return ids, states
@@ -551,7 +556,7 @@ func (monitor *NodeStateMonitor) collectMasterNodes(from common.Address) ([]*big
 		return ids, states
 	}
 
-	pending, queued := monitor.e.txPool.Stats()
+	pending, queued = monitor.e.txPool.Stats()
 	if pending+queued >= 100 {
 		return ids, states
 	}

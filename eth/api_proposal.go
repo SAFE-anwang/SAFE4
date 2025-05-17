@@ -21,14 +21,6 @@ func NewPrivateProposalAPI(e *Ethereum) *PrivateProposalAPI {
 	return &PrivateProposalAPI{e, e.GetPublicBlockChainAPI(), e.GetPublicTransactionPoolAPI()}
 }
 
-func (api *PrivateProposalAPI) GetBalance(ctx context.Context, blockNrOrHash rpc.BlockNumberOrHash) (*big.Int, error) {
-	return contract_api.GetProposalBalance(ctx, api.blockChainAPI, blockNrOrHash)
-}
-
-func (api *PrivateProposalAPI) GetImmatureBalance(ctx context.Context, blockNrOrHash rpc.BlockNumberOrHash) (*big.Int, error) {
-	return contract_api.GetProposalImmatureBalance(ctx, api.blockChainAPI, blockNrOrHash)
-}
-
 func (api *PrivateProposalAPI) Create(ctx context.Context, from common.Address, title string, payAmount *hexutil.Big, payTimes *big.Int, startPayTime *big.Int, endPayTime *big.Int, description string) (common.Hash, error) {
 	return contract_api.CreateProposal(ctx, api.blockChainAPI, api.transactionPoolAPI, from, title, payAmount, payTimes, startPayTime, endPayTime, description)
 }
@@ -68,6 +60,14 @@ type PublicProposalAPI struct {
 
 func NewPublicProposalAPI(e *Ethereum) *PublicProposalAPI {
 	return &PublicProposalAPI{e, e.GetPublicBlockChainAPI()}
+}
+
+func (api *PublicProposalAPI) GetBalance(ctx context.Context, blockNrOrHash rpc.BlockNumberOrHash) (*big.Int, error) {
+	return contract_api.GetProposalBalance(ctx, api.blockChainAPI, blockNrOrHash)
+}
+
+func (api *PublicProposalAPI) GetImmatureBalance(ctx context.Context, blockNrOrHash rpc.BlockNumberOrHash) (*big.Int, error) {
+	return contract_api.GetProposalImmatureBalance(ctx, api.blockChainAPI, blockNrOrHash)
 }
 
 func (api *PublicProposalAPI) GetInfo(ctx context.Context, id *big.Int, blockNrOrHash rpc.BlockNumberOrHash) (*types.ProposalInfo, error) {

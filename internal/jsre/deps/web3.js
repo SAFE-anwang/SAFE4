@@ -14044,11 +14044,25 @@ module.exports = XMLHttpRequest;
       inputFormatter: [formatters.inputAddressFormatter, formatters.inputAddressFormatter, formatters.formatInputString]
     });
 
+    var changeEnodeByID = new Method({
+      name: 'changeEnodeByID',
+      call: 'masternode_changeEnodeByID',
+      params: 3,
+      inputFormatter: [formatters.inputAddressFormatter, formatters.formatInputInt, formatters.formatInputString]
+    });
+
     var changeDescription = new Method({
       name: 'changeDescription',
       call: 'masternode_changeDescription',
       params: 3,
       inputFormatter: [formatters.inputAddressFormatter, formatters.inputAddressFormatter, formatters.formatInputString]
+    });
+
+    var changeDescriptionByID = new Method({
+      name: 'changeDescriptionByID',
+      call: 'masternode_changeDescriptionByID',
+      params: 3,
+      inputFormatter: [formatters.inputAddressFormatter, formatters.formatInputInt, formatters.formatInputString]
     });
 
     var changeIsOfficial = new Method({
@@ -14198,7 +14212,9 @@ module.exports = XMLHttpRequest;
       turnRegister,
       changeAddress,
       changeEnode,
+      changeEnodeByID,
       changeDescription,
+      changeDescriptionByID,
       changeIsOfficial,
       getInfo,
       getInfoByID,
@@ -14292,6 +14308,13 @@ module.exports = XMLHttpRequest;
       inputFormatter: [formatters.inputAddressFormatter, formatters.inputAddressFormatter, formatters.formatInputString]
     });
 
+    var changeNameByID = new Method({
+      name: 'changeNameByID',
+      call: 'supernode_changeNameByID',
+      params: 3,
+      inputFormatter: [formatters.inputAddressFormatter, formatters.formatInputInt, formatters.formatInputString]
+    });
+
     var changeEnode = new Method({
       name: 'changeEnode',
       call: 'supernode_changeEnode',
@@ -14299,11 +14322,25 @@ module.exports = XMLHttpRequest;
       inputFormatter: [formatters.inputAddressFormatter, formatters.inputAddressFormatter, formatters.formatInputString]
     });
 
+    var changeEnodeByID = new Method({
+      name: 'changeEnodeByID',
+      call: 'supernode_changeEnodeByID',
+      params: 3,
+      inputFormatter: [formatters.inputAddressFormatter, formatters.formatInputInt, formatters.formatInputString]
+    });
+
     var changeDescription = new Method({
       name: 'changeDescription',
       call: 'supernode_changeDescription',
       params: 3,
       inputFormatter: [formatters.inputAddressFormatter, formatters.inputAddressFormatter, formatters.formatInputString]
+    });
+
+    var changeDescriptionByID = new Method({
+      name: 'changeDescriptionByID',
+      call: 'supernode_changeDescriptionByID',
+      params: 3,
+      inputFormatter: [formatters.inputAddressFormatter, formatters.formatInputInt, formatters.formatInputString]
     });
 
     var changeIsOfficial = new Method({
@@ -14474,8 +14511,11 @@ module.exports = XMLHttpRequest;
       turnRegister,
       changeAddress,
       changeName,
+      changeNameByID,
       changeEnode,
+      changeEnodeByID,
       changeDescription,
+      changeDescriptionByID,
       changeIsOfficial,
       getInfo,
       getInfoByID,

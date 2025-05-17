@@ -66,12 +66,24 @@ func (api *PrivateSuperNodeAPI) ChangeName(ctx context.Context, from common.Addr
 	return contract_api.ChangeSuperNodeName(ctx, api.blockChainAPI, api.transactionPoolAPI, from, addr, name)
 }
 
+func (api *PrivateSuperNodeAPI) ChangeNameByID(ctx context.Context, from common.Address, id *big.Int, name string) (common.Hash, error) {
+	return contract_api.ChangeSuperNodeNameByID(ctx, api.blockChainAPI, api.transactionPoolAPI, from, id, name)
+}
+
 func (api *PrivateSuperNodeAPI) ChangeEnode(ctx context.Context, from common.Address, addr common.Address, enode string) (common.Hash, error) {
 	return contract_api.ChangeSuperNodeEnode(ctx, api.blockChainAPI, api.transactionPoolAPI, from, addr, enode)
 }
 
+func (api *PrivateSuperNodeAPI) ChangeEnodeByID(ctx context.Context, from common.Address, id *big.Int, enode string) (common.Hash, error) {
+	return contract_api.ChangeSuperNodeEnodeByID(ctx, api.blockChainAPI, api.transactionPoolAPI, from, id, enode)
+}
+
 func (api *PrivateSuperNodeAPI) ChangeDescription(ctx context.Context, from common.Address, addr common.Address, description string) (common.Hash, error) {
 	return contract_api.ChangeSuperNodeDescription(ctx, api.blockChainAPI, api.transactionPoolAPI, from, addr, description)
+}
+
+func (api *PrivateSuperNodeAPI) ChangeDescriptionByID(ctx context.Context, from common.Address, id *big.Int, description string) (common.Hash, error) {
+	return contract_api.ChangeSuperNodeDescriptionByID(ctx, api.blockChainAPI, api.transactionPoolAPI, from, id, description)
 }
 
 func (api *PrivateSuperNodeAPI) ChangeIsOfficial(ctx context.Context, from common.Address, addr common.Address, flag bool) (common.Hash, error) {

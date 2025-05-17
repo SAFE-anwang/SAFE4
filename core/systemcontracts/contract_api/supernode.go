@@ -32,12 +32,24 @@ func ChangeSuperNodeName(ctx context.Context, blockChainAPI *ethapi.PublicBlockC
 	return CallContract(ctx, blockChainAPI, transactionPoolAPI, from, nil, systemcontracts.SuperNodeLogicContractAddr, "changeName", getValues(addr, name))
 }
 
+func ChangeSuperNodeNameByID(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, transactionPoolAPI *ethapi.PublicTransactionPoolAPI, from common.Address, id *big.Int, name string) (common.Hash, error) {
+	return CallContract(ctx, blockChainAPI, transactionPoolAPI, from, nil, systemcontracts.SuperNodeLogicContractAddr, "changeNameByID", getValues(id, name))
+}
+
 func ChangeSuperNodeEnode(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, transactionPoolAPI *ethapi.PublicTransactionPoolAPI, from common.Address, addr common.Address, enode string) (common.Hash, error) {
 	return CallContract(ctx, blockChainAPI, transactionPoolAPI, from, nil, systemcontracts.SuperNodeLogicContractAddr, "changeEnode", getValues(addr, enode))
 }
 
+func ChangeSuperNodeEnodeByID(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, transactionPoolAPI *ethapi.PublicTransactionPoolAPI, from common.Address, id *big.Int, enode string) (common.Hash, error) {
+	return CallContract(ctx, blockChainAPI, transactionPoolAPI, from, nil, systemcontracts.SuperNodeLogicContractAddr, "changeEnodeByID", getValues(id, enode))
+}
+
 func ChangeSuperNodeDescription(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, transactionPoolAPI *ethapi.PublicTransactionPoolAPI, from common.Address, addr common.Address, description string) (common.Hash, error) {
 	return CallContract(ctx, blockChainAPI, transactionPoolAPI, from, nil, systemcontracts.SuperNodeLogicContractAddr, "changeDescription", getValues(addr, description))
+}
+
+func ChangeSuperNodeDescriptionByID(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, transactionPoolAPI *ethapi.PublicTransactionPoolAPI, from common.Address, id *big.Int, description string) (common.Hash, error) {
+	return CallContract(ctx, blockChainAPI, transactionPoolAPI, from, nil, systemcontracts.SuperNodeLogicContractAddr, "changeDescriptionByID", getValues(id, description))
 }
 
 func ChangeSuperNodeIsOfficial(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, transactionPoolAPI *ethapi.PublicTransactionPoolAPI, from common.Address, addr common.Address, flag bool) (common.Hash, error) {

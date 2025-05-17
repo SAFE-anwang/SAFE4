@@ -32,8 +32,16 @@ func ChangeMasterNodeEnode(ctx context.Context, blockChainAPI *ethapi.PublicBloc
 	return CallContract(ctx, blockChainAPI, transactionPoolAPI, from, nil, systemcontracts.MasterNodeLogicContractAddr, "changeEnode", getValues(addr, enode))
 }
 
+func ChangeMasterNodeEnodeByID(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, transactionPoolAPI *ethapi.PublicTransactionPoolAPI, from common.Address, id *big.Int, enode string) (common.Hash, error) {
+	return CallContract(ctx, blockChainAPI, transactionPoolAPI, from, nil, systemcontracts.MasterNodeLogicContractAddr, "changeEnodeByID", getValues(id, enode))
+}
+
 func ChangeMasterNodeDescription(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, transactionPoolAPI *ethapi.PublicTransactionPoolAPI, from common.Address, addr common.Address, description string) (common.Hash, error) {
 	return CallContract(ctx, blockChainAPI, transactionPoolAPI, from, nil, systemcontracts.MasterNodeLogicContractAddr, "changeDescription", getValues(addr, description))
+}
+
+func ChangeMasterNodeDescriptionByID(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, transactionPoolAPI *ethapi.PublicTransactionPoolAPI, from common.Address, id *big.Int, description string) (common.Hash, error) {
+	return CallContract(ctx, blockChainAPI, transactionPoolAPI, from, nil, systemcontracts.MasterNodeLogicContractAddr, "changeDescriptionByID", getValues(id, description))
 }
 
 func ChangeMasterNodeIsOfficial(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, transactionPoolAPI *ethapi.PublicTransactionPoolAPI, from common.Address, addr common.Address, flag bool) (common.Hash, error) {

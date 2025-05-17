@@ -2531,6 +2531,7 @@ var SuperNode = require('./web3/methods/supernode');
 var SNVote = require('./web3/methods/snvote');
 var Proposal = require('./web3/methods/proposal');
 var Safe3 = require('./web3/methods/safe3');
+var NodeState = require('./web3/methods/nodestate');
 
 
 
@@ -2551,6 +2552,7 @@ function Web3 (provider) {
     this.snvote = new SNVote(this);
     this.proposal = new Proposal(this);
     this.safe3 = new Safe3(this);
+    this.nodestate = new NodeState(this);
     this.version = {
         api: version.version
     };
@@ -2646,7 +2648,7 @@ Web3.prototype.createBatch = function () {
 module.exports = Web3;
 
 
-},{"./utils/sha3":19,"./utils/utils":20,"./version.json":21,"./web3/batch":24,"./web3/extend":28,"./web3/httpprovider":32,"./web3/iban":33,"./web3/ipcprovider":34,"./web3/methods/db":37,"./web3/methods/eth":38,"./web3/methods/net":39,"./web3/methods/personal":40,"./web3/methods/shh":41,"./web3/methods/swarm":42,"./web3/property":45,"./web3/requestmanager":46,"./web3/settings":47,"./web3/methods/sysproperty":87,"./web3/methods/account":88,"./web3/methods/masternode":89,"./web3/methods/supernode":90,"./web3/methods/snvote":91,"./web3/methods/proposal":92,"./web3/methods/safe3":93,"bignumber.js":"bignumber.js"}],23:[function(require,module,exports){
+},{"./utils/sha3":19,"./utils/utils":20,"./version.json":21,"./web3/batch":24,"./web3/extend":28,"./web3/httpprovider":32,"./web3/iban":33,"./web3/ipcprovider":34,"./web3/methods/db":37,"./web3/methods/eth":38,"./web3/methods/net":39,"./web3/methods/personal":40,"./web3/methods/shh":41,"./web3/methods/swarm":42,"./web3/property":45,"./web3/requestmanager":46,"./web3/settings":47,"./web3/methods/sysproperty":87,"./web3/methods/account":88,"./web3/methods/masternode":89,"./web3/methods/supernode":90,"./web3/methods/snvote":91,"./web3/methods/proposal":92,"./web3/methods/safe3":93,"./web3/methods/nodestate":94,"bignumber.js":"bignumber.js"}],23:[function(require,module,exports){
 /*
     This file is part of web3.js.
 
@@ -15111,6 +15113,86 @@ module.exports = XMLHttpRequest;
     };
 
     module.exports = Safe3;
+
+  },{"./formatters":9,"../formatters":30,"../method":36}],94:[function(require,module,exports){
+    /* This file is part of web3.js. */
+    /**
+     * @file eth.js
+     * @author Marek Kotewicz <marek@ethdev.com>
+     * @author Fabian Vogelsteller <fabian@ethdev.com>
+     * @date 2015
+     */
+
+    "use strict";
+
+    var Method = require('../method');
+    var formatters = require('../formatters');
+
+    function NodeState(web3) {
+      this._requestManager = web3._requestManager;
+
+      var self = this;
+
+      methods().forEach(function(method) {
+        method.attachToObject(self);
+        method.setRequestManager(self._requestManager);
+      });
+    }
+
+    var methods = function () {
+      var uploadMnStates = new Method({
+        name: 'uploadMnStates',
+        call: 'nodestate_uploadMnStates',
+        params: 4,
+        inputFormatter: [formatters.inputAddressFormatter, formatters.inputArrayFormatter, formatters.inputArrayFormatter]
+      });
+
+      var uploadSnStates = new Method({
+        name: 'uploadSnStates',
+        call: 'nodestate_uploadSnStates',
+        params: 4,
+        inputFormatter: [formatters.inputAddressFormatter, formatters.inputArrayFormatter, formatters.inputArrayFormatter]
+      });
+
+      var getMnTempStates = new Method({
+        name: 'getMnTempStates',
+        call: 'nodestate_getMnTempStates',
+        params: 2,
+        inputFormatter: [formatters.formatInputInt, formatters.inputDefaultBlockNumberFormatter]
+      });
+
+      var getSnTempStates = new Method({
+        name: 'getSnTempStates',
+        call: 'nodestate_getSnTempStates',
+        params: 2,
+        inputFormatter: [formatters.formatInputInt, formatters.inputDefaultBlockNumberFormatter]
+      });
+
+      var getMnTempStateByAddr = new Method({
+        name: 'getMnTempStateByAddr',
+        call: 'nodestate_getMnTempStateByAddr',
+        params: 3,
+        inputFormatter: [formatters.formatInputInt, formatters.inputAddressFormatter, formatters.inputDefaultBlockNumberFormatter]
+      });
+
+      var getSnTempStateByAddr = new Method({
+        name: 'getSnTempStateByAddr',
+        call: 'nodestate_getSnTempStateByAddr',
+        params: 3,
+        inputFormatter: [formatters.formatInputInt, formatters.inputAddressFormatter, formatters.inputDefaultBlockNumberFormatter]
+      });
+
+      return [
+        uploadMnStates,
+        uploadSnStates,
+        getMnTempStates,
+        getSnTempStates,
+        getMnTempStateByAddr,
+        getSnTempStateByAddr
+      ];
+    };
+
+    module.exports = NodeState;
 
   },{"./formatters":9,"../formatters":30,"../method":36}],"bignumber.js":[function(require,module,exports){
 'use strict';

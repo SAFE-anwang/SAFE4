@@ -444,6 +444,15 @@ func (s *Ethereum) APIs() []rpc.API {
 			Namespace: "safe3",
 			Version:   "1.0",
 			Service:   NewPrivateSafe3API(s),
+		}, {
+			Namespace: "nodestate",
+			Version:   "1.0",
+			Service:   NewPublicNodeStateAPI(s),
+			Public:    true,
+		}, {
+			Namespace: "nodestate",
+			Version:   "1.0",
+			Service:   NewPrivateNodeStateAPI(s),
 		},
 	}...)
 

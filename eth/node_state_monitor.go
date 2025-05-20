@@ -18,6 +18,7 @@ import (
 	"net"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 )
 
@@ -69,7 +70,7 @@ type NodeStateMonitor struct {
 	lastSnPingHeights map[int64]int64
 
 	enode string
-	exit  bool
+	exit  int32
 }
 
 func newNodeStateMonitor() *NodeStateMonitor {
@@ -80,7 +81,7 @@ func newNodeStateMonitor() *NodeStateMonitor {
 	monitor.knownPings = newKnownCache(20480)
 	monitor.lastMnPingHeights = make(map[int64]int64)
 	monitor.lastSnPingHeights = make(map[int64]int64)
-	monitor.exit = false
+	atomic.StoreInt32(&monitor.exit, 0)
 	return monitor
 }
 
@@ -108,7 +109,7 @@ func (monitor *NodeStateMonitor) Start(e *Ethereum) {
 }
 
 func (monitor *NodeStateMonitor) Stop() {
-	monitor.exit = true
+	atomic.StoreInt32(&monitor.exit, 1)
 	close(monitor.uploadSnStateStopCh)
 	close(monitor.uploadMnStateStopCh)
 	close(monitor.broadcastStopCh)
@@ -119,6 +120,10 @@ func (monitor *NodeStateMonitor) Stop() {
 }
 
 func (monitor *NodeStateMonitor) HandlePing(ping *types.NodePing) error {
+	if atomic.LoadInt32(&monitor.exit) == 1 {
+		return fmt.Errorf("lemengbin monitor is exited")
+	}
+
 	h := ping.Hash()
 	if monitor.knownPings.Contains(h) {
 		return nil
@@ -299,7 +304,7 @@ func (monitor *NodeStateMonitor) broadcastLoop() {
 
 	for monitor.isSyncing() {
 		time.Sleep(5 * time.Second)
-		if monitor.exit {
+		if atomic.LoadInt32(&monitor.exit) == 1 {
 			return
 		}
 	}
@@ -308,7 +313,7 @@ func (monitor *NodeStateMonitor) broadcastLoop() {
 	tempTime := time.Now().Unix()
 	for time.Now().Unix() < tempTime+60 {
 		time.Sleep(5 * time.Second)
-		if monitor.exit {
+		if atomic.LoadInt32(&monitor.exit) == 1 {
 			return
 		}
 	}

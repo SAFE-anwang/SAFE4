@@ -528,28 +528,19 @@ func handlePooledTransactions66(backend Backend, msg Decoder, peer *Peer) error 
 	return backend.Handle(peer, &txs.PooledTransactionsPacket)
 }
 
-var knownPings = newKnownCache(maxKnownNodePings)
-
 func handleNodePing(backend Backend, msg Decoder, peer *Peer) error {
 	// MasterNode pings arrived
 	var packet NodePingPacket
 	if err := msg.Decode(&packet); err != nil {
 		return fmt.Errorf("%w: message %v: %v", errDecode, msg, err)
 	}
-
 	// check node type
 	nodeType := packet.Ping.NodeType.Int64()
 	if nodeType != int64(types.MasterNodeType) && nodeType != int64(types.SuperNodeType) {
 		return fmt.Errorf("%w: unknown node type: %v", errDecode, nodeType)
 	}
 
-	h := packet.Ping.Hash()
-	log.Debug("handleNodePing", "node-type", nodeType, "node-id", packet.Ping.Id, "node-height", packet.Ping.CurHeight, "hash", h, "peer", peer.id, "peer.ip", peer.Node().IP())
-	if knownPings.Contains(h) {
-		return nil
-	}
-	knownPings.Add(h)
-	peer.markNodePing(h)
+	peer.markNodePing(packet.Ping.Hash())
 
 	// check block height
 	localHeight := backend.Chain().CurrentHeader().Number.Uint64()

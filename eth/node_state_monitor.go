@@ -3,6 +3,7 @@ package eth
 import (
 	"context"
 	"fmt"
+	mapset "github.com/deckarep/golang-set"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/core/systemcontracts/contract_api"
@@ -63,6 +64,7 @@ type NodeStateMonitor struct {
 	mnMonitorInfos map[int64]MonitorInfo
 	snMonitorInfos map[int64]MonitorInfo
 
+	knownPings *knownCache
 	lastMnPingHeights map[int64]int64
 	lastSnPingHeights map[int64]int64
 
@@ -75,6 +77,7 @@ func newNodeStateMonitor() *NodeStateMonitor {
 	monitor.ctx, monitor.cancelCtx = context.WithCancel(context.Background())
 	monitor.mnMonitorInfos = make(map[int64]MonitorInfo)
 	monitor.snMonitorInfos = make(map[int64]MonitorInfo)
+	monitor.knownPings = newKnownCache(20480)
 	monitor.lastMnPingHeights = make(map[int64]int64)
 	monitor.lastSnPingHeights = make(map[int64]int64)
 	monitor.exit = false
@@ -116,12 +119,24 @@ func (monitor *NodeStateMonitor) Stop() {
 }
 
 func (monitor *NodeStateMonitor) HandlePing(ping *types.NodePing) error {
+	h := ping.Hash()
+	if monitor.knownPings.Contains(h) {
+		return nil
+	}
+	monitor.knownPings.Add(h)
+
 	nodeType := ping.NodeType.Int64()
 	id := ping.Id.Int64()
 	pingHeight := ping.CurHeight.Int64()
+	log.Debug("handleNodePing", "node-type", nodeType, "node-id", id, "node-height", pingHeight, "hash", h)
+
 	if nodeType == int64(types.MasterNodeType) {
 		monitor.mnLock.Lock()
 		if monitor.lastMnPingHeights[id] >= pingHeight { // discard expired ping
+			monitor.mnLock.Unlock()
+			return nil
+		}
+		if monitor.lastMnPingHeights[id] != 0 && monitor.lastMnPingHeights[id] <= pingHeight - 120 { // decrease broadcast frequency
 			monitor.mnLock.Unlock()
 			return nil
 		}
@@ -721,4 +736,44 @@ func CheckPublicIP(url string) (bool, error) {
 	}
 
 	return true, nil
+}
+
+
+// knownCache is a cache for known hashes.
+type knownCache struct {
+	hashes mapset.Set
+	max    int
+}
+
+// newKnownCache creates a new knownCache with a max capacity.
+func newKnownCache(max int) *knownCache {
+	return &knownCache{
+		max:    max,
+		hashes: mapset.NewSet(),
+	}
+}
+func max(a, b int) int {
+	if a > b {
+		return a
+	}
+	return b
+}
+// Add adds a list of elements to the set.
+func (k *knownCache) Add(hashes ...common.Hash) {
+	for k.hashes.Cardinality() > max(0, k.max-len(hashes)) {
+		k.hashes.Pop()
+	}
+	for _, hash := range hashes {
+		k.hashes.Add(hash)
+	}
+}
+
+// Contains returns whether the given item is in the set.
+func (k *knownCache) Contains(hash common.Hash) bool {
+	return k.hashes.Contains(hash)
+}
+
+// Cardinality returns the number of elements in the set.
+func (k *knownCache) Cardinality() int {
+	return k.hashes.Cardinality()
 }

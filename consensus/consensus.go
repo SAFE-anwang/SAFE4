@@ -122,8 +122,6 @@ type Engine interface {
 
 	//CheckRewardTransaction check allocation reward transactions
 	CheckRewardTransaction(block *types.Block, receipts types.Receipts) error
-
-	VerifyNextHeader()
 }
 
 // PoW is a consensus engine based on proof-of-work.

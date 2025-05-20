@@ -678,5 +678,3 @@ func (ethash *Ethash)CheckRewardTransaction(block *types.Block, receipts types.R
 	return nil
 }
 
-func (ethash *Ethash) VerifyNextHeader() { }
-

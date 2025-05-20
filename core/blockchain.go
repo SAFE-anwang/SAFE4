@@ -1707,10 +1707,6 @@ func (bc *BlockChain) insertChain(chain types.Blocks, verifySeals, setHead bool)
 		dirty, _ := bc.stateCache.TrieDB().Size()
 		stats.report(chain, it.index, dirty, setHead)
 
-		if it.remaining() > 0 {
-			bc.engine.VerifyNextHeader()
-		}
-
 		if !setHead {
 			return it.index, nil // Direct block insertion of a single block
 		}

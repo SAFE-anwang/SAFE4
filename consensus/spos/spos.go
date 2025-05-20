@@ -255,7 +255,6 @@ type Spos struct {
 	server        *p2p.Server
 	wg            sync.WaitGroup
 	quit          chan struct{}
-	next          chan struct{}
 
 	enode         string
 	isSN          bool
@@ -288,7 +287,6 @@ func New(chainConfig *params.ChainConfig, db ethdb.Database) *Spos {
 		signatures: signatures,
 		proposals:  make(map[common.Address]bool),
 		quit:       make(chan struct{}),
-		next:       make(chan struct{}),
 		trustedPeers: make(map[enode.ID]struct{}),
 	}
 
@@ -333,21 +331,14 @@ func (s *Spos) VerifyHeaders(chain consensus.ChainHeaderReader, headers []*types
 		for i, header := range headers {
 			err := s.verifyHeader(chain, header, headers[:i])
 
-		loop:
 			select {
 			case <-abort:
 				return
 			case results <- err:
-				goto loop
-			case <-s.next:
 			}
 		}
 	}()
 	return abort, results
-}
-
-func (s *Spos) VerifyNextHeader() {
-	s.next <- struct{}{}
 }
 
 // verifyHeader checks whether a header conforms to the consensus rules.The
@@ -963,7 +954,6 @@ func (s *Spos) SealHash(header *types.Header) common.Hash {
 func (s *Spos) Close() error {
 	s.cancel()
 	close(s.quit)
-	close(s.next)
 	s.wg.Wait()
 	return nil
 }

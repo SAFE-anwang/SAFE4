@@ -121,7 +121,7 @@ func (monitor *NodeStateMonitor) Stop() {
 
 func (monitor *NodeStateMonitor) HandlePing(ping *types.NodePing) error {
 	if atomic.LoadInt32(&monitor.exit) == 1 {
-		return fmt.Errorf("lemengbin monitor is exited")
+		return fmt.Errorf("node state monitor is exiting")
 	}
 
 	h := ping.Hash()
@@ -133,7 +133,7 @@ func (monitor *NodeStateMonitor) HandlePing(ping *types.NodePing) error {
 	nodeType := ping.NodeType.Int64()
 	id := ping.Id.Int64()
 	pingHeight := ping.CurHeight.Int64()
-	log.Debug("handleNodePing", "node-type", nodeType, "node-id", id, "node-height", pingHeight, "hash", h)
+	log.Trace("handleNodePing", "node-type", nodeType, "node-id", id, "node-height", pingHeight, "hash", h)
 
 	if nodeType == int64(types.MasterNodeType) {
 		monitor.mnLock.Lock()
@@ -141,7 +141,7 @@ func (monitor *NodeStateMonitor) HandlePing(ping *types.NodePing) error {
 			monitor.mnLock.Unlock()
 			return nil
 		}
-		if monitor.lastMnPingHeights[id] != 0 && monitor.lastMnPingHeights[id] <= pingHeight - 120 { // decrease broadcast frequency
+		if monitor.lastMnPingHeights[id] != 0 && monitor.lastMnPingHeights[id] > pingHeight - 110 { // decrease broadcast frequency
 			monitor.mnLock.Unlock()
 			return nil
 		}

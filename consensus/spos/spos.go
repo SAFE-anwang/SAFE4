@@ -253,7 +253,7 @@ type Spos struct {
 	blockChainAPI *ethapi.PublicBlockChainAPI
 
 	server        *p2p.Server
-	quit          chan struct{}
+	exit          bool
 }
 
 // New creates a Spos SAFE-proof-of-stack consensus engine with the initial
@@ -279,7 +279,7 @@ func New(chainConfig *params.ChainConfig, db ethdb.Database) *Spos {
 		recents:    recents,
 		signatures: signatures,
 		proposals:  make(map[common.Address]bool),
-		quit:       make(chan struct{}),
+		exit:       false,
 	}
 }
 
@@ -420,8 +420,14 @@ func (s *Spos) verifyCascadingFields(chain consensus.ChainHeaderReader, header *
 	}
 	var missBlocks []*types.Block
 	for true {
+		if s.exit {
+			return fmt.Errorf("spos is closed");
+		}
 		if _, err := s.chain.StateAt(tempBlock.Root()); err == nil {
 			for i:= len(missBlocks)-1; i >= 0; i-- {
+				if(s.exit) {
+					return fmt.Errorf("spos is closed")
+				}
 				tempParent := s.chain.GetBlockByHash(missBlocks[i].ParentHash())
 				if tempParent == nil {
 					return fmt.Errorf("spos-verifyCascadingFields-2 miss parent, parent.number: %d, parent.hash: %s", missBlocks[i].NumberU64()-1, missBlocks[i].ParentHash().Hex())
@@ -938,8 +944,8 @@ func (s *Spos) SealHash(header *types.Header) common.Hash {
 
 // Close implements consensus.Engine. It's a noop for spos as there are no background threads.
 func (s *Spos) Close() error {
+	s.exit = true
 	s.cancel()
-	close(s.quit)
 	return nil
 }
 

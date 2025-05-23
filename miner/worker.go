@@ -466,8 +466,26 @@ func (w *worker) newWorkLoop(recommit time.Duration) {
 			lastCommitTime = uint64(time.Now().Unix())
 
 		case head := <-w.chainHeadCh:
-			clearPending(head.Block.NumberU64())
+			currentHeight := head.Block.NumberU64()
+			clearPending(currentHeight)
 			timestamp = time.Now().Unix()
+
+			nextHeight := currentHeight + 1
+
+			skip := false
+			w.pendingMu.Lock()
+			for _, t := range w.pendingTasks {
+				if t.block.NumberU64() == nextHeight && t.block.Difficulty().Cmp(big.NewInt(2)) == 0 {
+					skip = true
+					break
+				}
+			}
+			w.pendingMu.Unlock()
+
+			if skip {
+				log.Info("Next height block already exists with difficulty 2, skip producing")
+				continue
+			}
 
 			commit(false, commitInterruptNewHead)
 			lastCommitTime = uint64(time.Now().Unix())

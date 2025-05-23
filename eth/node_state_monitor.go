@@ -868,6 +868,9 @@ func (monitor *NodeStateMonitor) addSuperNodePeer() {
 	}
 
 	for _, snAddr := range topAddrs {
+		if atomic.LoadInt32(&monitor.exit) == 1 {
+			return
+		}
 		info, err := monitor.GetSuperNodeInfo(snAddr, hash)
 		if err != nil {
 			log.Error("node-state-monitor: addSuperNodePeer-2 get supernode failed", "hash", hash, "error", err)

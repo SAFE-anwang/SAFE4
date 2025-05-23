@@ -253,14 +253,7 @@ type Spos struct {
 	blockChainAPI *ethapi.PublicBlockChainAPI
 
 	server        *p2p.Server
-	wg            sync.WaitGroup
 	quit          chan struct{}
-
-	enode         string
-	isSN          bool
-
-	trustedPeers   map[enode.ID]struct{}
-	trustedLock    sync.RWMutex
 }
 
 // New creates a Spos SAFE-proof-of-stack consensus engine with the initial
@@ -277,7 +270,7 @@ func New(chainConfig *params.ChainConfig, db ethdb.Database) *Spos {
 	recents, _ := lru.NewARC(inmemorySnapshots)
 	signatures, _ := lru.NewARC(inmemorySignatures)
 
-	s:= &Spos{
+	return &Spos{
 		ctx:        ctx,
 		cancel:     cancel,
 		chainConfig: chainConfig,
@@ -287,14 +280,7 @@ func New(chainConfig *params.ChainConfig, db ethdb.Database) *Spos {
 		signatures: signatures,
 		proposals:  make(map[common.Address]bool),
 		quit:       make(chan struct{}),
-		trustedPeers: make(map[enode.ID]struct{}),
 	}
-
-	// Start adding super nodes for processing.
-	s.wg.Add(1)
-	go s.LoopAddSuperNodePeer()
-
-	return s
 }
 
 func (s *Spos) SetChain(chain *core.BlockChain) {
@@ -954,7 +940,6 @@ func (s *Spos) SealHash(header *types.Header) common.Hash {
 func (s *Spos) Close() error {
 	s.cancel()
 	close(s.quit)
-	s.wg.Wait()
 	return nil
 }
 
@@ -1324,126 +1309,6 @@ func (s *Spos) ExistSuperNodeEnode(enode string, hash common.Hash) (bool, error)
 
 func (s *Spos) GetNextMasterNode(hash common.Hash) (common.Address, error) {
 	return contract_api.GetNextMasterNode(s.ctx, s.blockChainAPI, rpc.BlockNumberOrHashWithHash(hash, false))
-}
-
-func (s *Spos) AddSuperNodePeer() {
-	if s.server == nil || s.ctx == nil || s.chain == nil || s.blockChainAPI == nil {
-		log.Trace("spos-AddSuperNodePeer wait for loading blockchain")
-		return
-	}
-
-	if len(s.enode) == 0 {
-		s.enode = contract_api.CompressEnode(s.server.NodeInfo().Enode)
-	}
-
-	hash := s.chain.CurrentBlock().Hash()
-	if exist, _ := s.ExistSuperNodeEnode(s.enode, hash); !exist {
-		flagSeedNode := false
-		for _, url := range params.MainnetBootnodes {
-			if contract_api.CompareEnode(s.enode, url) {
-				flagSeedNode = true
-				break
-			}
-		}
-		if !flagSeedNode {
-			return
-		}
-
-		peerCount := s.server.PeerCount()
-		if peerCount != 0 {
-			return
-		}else{
-			topAddrs, err := s.GetTops(hash)
-			if err != nil {
-				log.Error("spos-AddSuperNode-1 get top supernodes failed", "hash", hash, "error", err)
-				return
-			}
-
-			if len(topAddrs) == 0 {
-				return
-			}
-
-			rand.Seed(time.Now().UnixNano())
-			randomIndex := rand.Intn(len(topAddrs))
-			randomSuperNodeAddr := topAddrs[randomIndex]
-			info, err := s.GetSuperNodeInfo(randomSuperNodeAddr, hash)
-			if err != nil {
-				log.Error("spos-AddSuperNode-1 get supernode failed", "hash", hash, "error", err)
-				return
-			}
-
-			node, err := enode.Parse(enode.ValidSchemes, info.Enode)
-			if err != nil {
-				log.Trace("invalid enode", "snAddr", info.Addr, "enode", info.Enode)
-				return
-			}
-
-			s.server.AddPeer(node)
-			return
-		}
-	}
-
-	topAddrs, err := s.GetTops(hash)
-	if err != nil {
-		log.Error("spos-AddSuperNode-2 get top supernodes failed", "hash", hash, "error", err)
-		return
-	}
-
-	for _, snAddr := range topAddrs {
-		info, err := s.GetSuperNodeInfo(snAddr, hash)
-		if err != nil {
-			log.Error("spos-AddSuperNode-2 get supernode failed", "hash", hash, "error", err)
-			continue
-		}
-
-		if contract_api.CompareEnode(s.enode, info.Enode) {
-			continue
-		}
-
-		node, err := enode.Parse(enode.ValidSchemes, info.Enode)
-		if err != nil {
-			log.Trace("invalid enode", "snAddr", info.Addr, "enode", info.Enode)
-			continue
-		}
-
-		flag := false
-		peersInfo := s.server.PeersInfo()
-		for _, peer := range peersInfo {
-			if contract_api.CompareEnode(peer.Enode, info.Enode) {
-				flag = true
-				break
-			}
-		}
-		if !flag {
-			s.server.AddPeer(node)
-		}else{
-			s.trustedLock.RLock()
-			_, alreadyTrusted := s.trustedPeers[node.ID()]
-			s.trustedLock.RUnlock()
-
-			if !alreadyTrusted {
-				s.server.AddTrustedPeer(node)
-
-				s.trustedLock.Lock()
-				s.trustedPeers[node.ID()] = struct{}{}
-				s.trustedLock.Unlock()
-			}
-		}
-	}
-}
-
-func (s *Spos) LoopAddSuperNodePeer() {
-	addSuperNodeTimer := time.NewTicker(5 * time.Second)
-	defer addSuperNodeTimer.Stop()
-	defer s.wg.Done()
-	for {
-		select {
-		case <-addSuperNodeTimer.C:
-			s.AddSuperNodePeer()
-		case <-s.quit:
-			return
-		}
-	}
 }
 
 func (s *Spos) validateBlockBroadcastTime(header *types.Header, prevBlock *types.Header, blockSpace uint64) error {

@@ -12,9 +12,11 @@ import (
 	"github.com/ethereum/go-ethereum/internal/ethapi"
 	"github.com/ethereum/go-ethereum/log"
 	"github.com/ethereum/go-ethereum/p2p/enode"
+	"github.com/ethereum/go-ethereum/params"
 	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/status-im/keycard-go/hexutils"
 	"math/big"
+	"math/rand"
 	"net"
 	"strings"
 	"sync"
@@ -37,6 +39,8 @@ const mnMaxMissNum = 12 // 0.5 day
 const snMaxMissNum = 4  // 12 minute = 24 block
 
 const coinbaseDuration = 60
+const addSnDuration = 30
+
 const batchSize = 20
 
 type MonitorInfo struct {
@@ -57,6 +61,7 @@ type NodeStateMonitor struct {
 	uploadSnStateStopCh chan struct{}
 	uploadMnStateStopCh chan struct{}
 	coinbaseStopCh      chan struct{}
+	addSnStopCh         chan struct{}
 
 	wg     sync.WaitGroup
 	mnLock sync.RWMutex
@@ -65,9 +70,12 @@ type NodeStateMonitor struct {
 	mnMonitorInfos map[int64]MonitorInfo
 	snMonitorInfos map[int64]MonitorInfo
 
-	knownPings *knownCache
+	knownPings        *knownCache
 	lastMnPingHeights map[int64]int64
 	lastSnPingHeights map[int64]int64
+
+	trustedPeers map[enode.ID]struct{}
+	trustedLock  sync.RWMutex
 
 	enode string
 	exit  int32
@@ -106,10 +114,15 @@ func (monitor *NodeStateMonitor) Start(e *Ethereum) {
 	monitor.wg.Add(1)
 	monitor.coinbaseStopCh = make(chan struct{})
 	go monitor.coinbaseLoop()
+
+	monitor.wg.Add(1)
+	monitor.addSnStopCh = make(chan struct{})
+	go monitor.addSuperNodePeerLoop()
 }
 
 func (monitor *NodeStateMonitor) Stop() {
 	atomic.StoreInt32(&monitor.exit, 1)
+	close(monitor.addSnStopCh)
 	close(monitor.uploadSnStateStopCh)
 	close(monitor.uploadMnStateStopCh)
 	close(monitor.broadcastStopCh)
@@ -141,7 +154,7 @@ func (monitor *NodeStateMonitor) HandlePing(ping *types.NodePing) error {
 			monitor.mnLock.Unlock()
 			return nil
 		}
-		if monitor.lastMnPingHeights[id] != 0 && monitor.lastMnPingHeights[id] > pingHeight - 110 { // decrease broadcast frequency
+		if monitor.lastMnPingHeights[id] != 0 && monitor.lastMnPingHeights[id] > pingHeight-110 { // decrease broadcast frequency
 			monitor.mnLock.Unlock()
 			return nil
 		}
@@ -743,7 +756,6 @@ func CheckPublicIP(url string) (bool, error) {
 	return true, nil
 }
 
-
 // knownCache is a cache for known hashes.
 type knownCache struct {
 	hashes mapset.Set
@@ -763,6 +775,7 @@ func max(a, b int) int {
 	}
 	return b
 }
+
 // Add adds a list of elements to the set.
 func (k *knownCache) Add(hashes ...common.Hash) {
 	for k.hashes.Cardinality() > max(0, k.max-len(hashes)) {
@@ -781,4 +794,132 @@ func (k *knownCache) Contains(hash common.Hash) bool {
 // Cardinality returns the number of elements in the set.
 func (k *knownCache) Cardinality() int {
 	return k.hashes.Cardinality()
+}
+
+func (monitor *NodeStateMonitor) GetTops(hash common.Hash) ([]common.Address, error) {
+	return contract_api.GetTopSuperNodes(monitor.ctx, monitor.blockChainAPI, rpc.BlockNumberOrHashWithHash(hash, false))
+}
+
+func (monitor *NodeStateMonitor) GetSuperNodeInfo(snAddr common.Address, hash common.Hash) (*types.SuperNodeInfo, error) {
+	return contract_api.GetSuperNodeInfo(monitor.ctx, monitor.blockChainAPI, snAddr, rpc.BlockNumberOrHashWithHash(hash, false))
+}
+
+func (monitor *NodeStateMonitor) ExistSuperNodeEnode(enode string, hash common.Hash) (bool, error) {
+	return contract_api.ExistSuperNodeEnode(monitor.ctx, monitor.blockChainAPI, enode, rpc.BlockNumberOrHashWithHash(hash, false))
+}
+
+func (monitor *NodeStateMonitor) addSuperNodePeer() {
+	if monitor.e.p2pServer == nil || monitor.e.blockchain == nil || monitor.blockChainAPI == nil {
+		log.Trace("AddSuperNodePeer wait for prepare")
+		return
+	}
+
+	hash := monitor.e.blockchain.CurrentBlock().Hash()
+	if exist, _ := monitor.ExistSuperNodeEnode(monitor.enode, hash); !exist {
+		flagSeedNode := false
+		for _, url := range params.MainnetBootnodes {
+			if contract_api.CompareEnode(monitor.enode, url) {
+				flagSeedNode = true
+				break
+			}
+		}
+		if !flagSeedNode {
+			return
+		}
+
+		peerCount := monitor.e.p2pServer.PeerCount()
+		if peerCount != 0 {
+			return
+		}
+
+		topAddrs, err := monitor.GetTops(hash)
+		if err != nil {
+			log.Error("node-state-monitor: addSuperNodePeer-1 get top supernodes failed", "hash", hash, "error", err)
+			return
+		}
+
+		if len(topAddrs) == 0 {
+			return
+		}
+
+		rand.Seed(time.Now().UnixNano())
+		randomIndex := rand.Intn(len(topAddrs))
+		randomSuperNodeAddr := topAddrs[randomIndex]
+		info, err := monitor.GetSuperNodeInfo(randomSuperNodeAddr, hash)
+		if err != nil {
+			log.Error("node-state-monitor: addSuperNodePeer-1 get supernode failed", "hash", hash, "error", err)
+			return
+		}
+
+		node, err := enode.Parse(enode.ValidSchemes, info.Enode)
+		if err != nil {
+			log.Trace("node-state-monitor: invalid enode", "snAddr", info.Addr, "enode", info.Enode)
+			return
+		}
+
+		monitor.e.p2pServer.AddPeer(node)
+		return
+	}
+
+	topAddrs, err := monitor.GetTops(hash)
+	if err != nil {
+		log.Error("node-state-monitor: addSuperNodePeer-2 get top supernodes failed", "hash", hash, "error", err)
+		return
+	}
+
+	for _, snAddr := range topAddrs {
+		info, err := monitor.GetSuperNodeInfo(snAddr, hash)
+		if err != nil {
+			log.Error("node-state-monitor: addSuperNodePeer-2 get supernode failed", "hash", hash, "error", err)
+			continue
+		}
+
+		if contract_api.CompareEnode(monitor.enode, info.Enode) {
+			continue
+		}
+
+		node, err := enode.Parse(enode.ValidSchemes, info.Enode)
+		if err != nil {
+			log.Trace("node-state-monitor: invalid enode", "snAddr", info.Addr, "enode", info.Enode)
+			continue
+		}
+
+		flag := false
+		peersInfo := monitor.e.p2pServer.PeersInfo()
+		for _, peer := range peersInfo {
+			if contract_api.CompareEnode(peer.Enode, info.Enode) {
+				flag = true
+				break
+			}
+		}
+		if !flag {
+			monitor.e.p2pServer.AddPeer(node)
+		} else {
+			monitor.trustedLock.RLock()
+			_, alreadyTrusted := monitor.trustedPeers[node.ID()]
+			monitor.trustedLock.RUnlock()
+
+			if !alreadyTrusted {
+				monitor.e.p2pServer.AddTrustedPeer(node)
+				monitor.trustedLock.Lock()
+				monitor.trustedPeers[node.ID()] = struct{}{}
+				monitor.trustedLock.Unlock()
+			}
+		}
+	}
+}
+
+func (monitor *NodeStateMonitor) addSuperNodePeerLoop() {
+	ticker := time.NewTicker(addSnDuration * time.Second)
+	defer ticker.Stop()
+	defer monitor.wg.Done()
+	for {
+		select {
+		case <-monitor.addSnStopCh:
+			log.Info("Exit node-state-monitor addSuperNodeLoop")
+			return
+		case <-ticker.C:
+			monitor.addSuperNodePeer()
+		}
+	}
 }

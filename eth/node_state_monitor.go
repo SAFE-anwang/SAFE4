@@ -89,6 +89,7 @@ func newNodeStateMonitor() *NodeStateMonitor {
 	monitor.knownPings = newKnownCache(20480)
 	monitor.lastMnPingHeights = make(map[int64]int64)
 	monitor.lastSnPingHeights = make(map[int64]int64)
+	monitor.trustedPeers = make(map[enode.ID]struct{})
 	atomic.StoreInt32(&monitor.exit, 0)
 	return monitor
 }

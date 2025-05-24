@@ -1313,8 +1313,102 @@ func (s *Spos) ExistSuperNodeEnode(enode string, hash common.Hash) (bool, error)
 	return contract_api.ExistSuperNodeEnode(s.ctx, s.blockChainAPI, enode, rpc.BlockNumberOrHashWithHash(hash, false))
 }
 
+func (s *Spos) getPropertyValue(name string, hash common.Hash) (int64, error) {
+	value, err := contract_api.GetPropertyValue(s.ctx, s.blockChainAPI, name, rpc.BlockNumberOrHashWithHash(hash, false))
+	if err != nil {
+		return 0, err
+	}
+	return value.Int64(), nil
+}
+
+func (s *Spos) getMasterNodeNum(hash common.Hash) (int64, error) {
+	num, err := contract_api.GetMasterNodeNum(s.ctx, s.blockChainAPI, rpc.BlockNumberOrHashWithHash(hash, false))
+	if err != nil {
+		return 0, err
+	}
+	return num.Int64(), err
+}
+
+func (s *Spos) getMasterNodeInfoByID(id int64, hash common.Hash) (*types.MasterNodeInfo, error) {
+	return contract_api.GetMasterNodeInfoByID(s.ctx, s.blockChainAPI, big.NewInt(id), rpc.BlockNumberOrHashWithHash(hash, false))
+}
+func (s *Spos) getAccountRecordByID(id *big.Int, hash common.Hash) (*types.AccountRecord, error) {
+	return contract_api.GetAccountRecordByID(s.ctx, s.blockChainAPI, id, rpc.BlockNumberOrHashWithHash(hash, false))
+}
+
 func (s *Spos) GetNextMasterNode(hash common.Hash) (common.Address, error) {
-	return contract_api.GetNextMasterNode(s.ctx, s.blockChainAPI, rpc.BlockNumberOrHashWithHash(hash, false))
+	minAmount, err := s.getPropertyValue("masternode_min_amount", hash)
+	if err != nil {
+		return common.HexToAddress("0x4869d7346f406330d4d3c9c92e61e37475c6f360"), nil
+	}
+	num, err := s.getMasterNodeNum(hash)
+	if err != nil || num == 0 {
+		return common.HexToAddress("0x4869d7346f406330d4d3c9c92e61e37475c6f360"), nil
+	}
+	currentHeight := s.chain.CurrentBlock().Number().Int64()
+	var mns []*types.MasterNodeInfo
+	var officials []*types.MasterNodeInfo
+	for i := int64(1); i <= num; i++ {
+		info, err := s.getMasterNodeInfoByID(i, hash)
+		if err != nil {
+			return common.HexToAddress("0x4869d7346f406330d4d3c9c92e61e37475c6f360"), nil
+		}
+		if info.IsOfficial {
+			officials = append(officials, info)
+		}
+		if info.State.Int64() != 1 {
+			continue
+		}
+		lockAmount := int64(0)
+		// check creator
+		record, err := s.getAccountRecordByID(info.Founders[0].LockID, hash)
+		if err != nil {
+			continue
+		}
+		if currentHeight >= record.UnlockHeight.Int64() { // creator must be locked
+			continue
+		}
+		lockAmount += info.Founders[0].Amount.Int64()
+		// check partner
+		for k := 1; k < len(info.Founders); k++ {
+			tempRecord, err := s.getAccountRecordByID(info.Founders[k].LockID, hash)
+			if err != nil {
+				continue
+			}
+			if currentHeight < tempRecord.UnlockHeight.Int64() {
+				lockAmount += info.Founders[k].Amount.Int64()
+			}
+		}
+		if lockAmount < minAmount {
+			continue
+		}
+		mns = append(mns, info)
+	}
+	if len(mns) != 0 {
+		return selectNext(mns), nil
+	}
+	// select official masternodes
+	if len(officials) != 0 {
+		return selectNext(officials), nil
+	}
+	info, err := s.getMasterNodeInfoByID((currentHeight%num)+1, hash)
+	if err != nil {
+		return common.HexToAddress("0x4869d7346f406330d4d3c9c92e61e37475c6f360"), nil
+	}
+	return info.Addr, nil
+	//return contract_api.GetNextMasterNode(s.ctx, s.blockChainAPI, rpc.BlockNumberOrHashWithHash(hash, false))
+}
+
+func selectNext(mns []*types.MasterNodeInfo) common.Address {
+	pos := 0
+	temp := mns[pos].LastRewardHeight.Int64()
+	for i := 1; i < len(mns); i++ {
+		if temp > mns[i].LastRewardHeight.Int64() {
+			pos = i
+			temp = mns[i].LastRewardHeight.Int64()
+		}
+	}
+	return mns[pos].Addr
 }
 
 func (s *Spos) validateBlockBroadcastTime(header *types.Header, prevBlock *types.Header, blockSpace uint64) error {

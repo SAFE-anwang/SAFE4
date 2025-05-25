@@ -1260,7 +1260,7 @@ func (s *Spos) CheckRewardTransaction(block *types.Block, receipts types.Receipt
 	ppCount := inputsMap["_ppAmount"].(*big.Int)
 	ppAddr := inputsMap["_ppAddr"].(common.Address)
 	snAddr := inputsMap["_snAddr"].(common.Address)
-	mnAddr := inputsMap["_mnAddr"].(common.Address)
+	//mnAddr := inputsMap["_mnAddr"].(common.Address)
 
 	signer := types.MakeSigner(s.chainConfig, block.Number())
 	from, err := signer.Sender(transaction)
@@ -1272,14 +1272,18 @@ func (s *Spos) CheckRewardTransaction(block *types.Block, receipts types.Receipt
 	superNodeReward := s.getSuperNodePayment(expectedTotalReward)
 	proposalReward := s.getSuperBlockPayment(expectedTotalReward)
 
-	nextMNAddr, err := s.GetNextMasterNode(block.ParentHash())
-	if err != nil {
-		return err
-	}
-
-	if snCount.Cmp(superNodeReward) != 0 || mnCount.Cmp(masterNodePayment) != 0 || ppCount.Cmp(proposalReward) != 0 || ppAddr != systemcontracts.ProposalContractAddr || mnAddr != nextMNAddr || from != snAddr || block.Coinbase() != snAddr {
-		return fmt.Errorf("invalid greward (snCount: %d superNodeReward: %d mnCount:%d masterNodePayment:%d from:%s snAddr:%s miner: %s mnAddr:%s nextMNAddr:%s ppAddr:%s)", snCount, superNodeReward,
-			mnCount, masterNodePayment, from.Hex(), snAddr.Hex(), block.Coinbase(), mnAddr.Hex(), nextMNAddr.Hex(), ppAddr.Hex())
+	//nextMNAddr, err := s.GetNextMasterNode(block.ParentHash())
+	//if err != nil {
+	//	return err
+	//}
+	//
+	//if snCount.Cmp(superNodeReward) != 0 || mnCount.Cmp(masterNodePayment) != 0 || ppCount.Cmp(proposalReward) != 0 || ppAddr != systemcontracts.ProposalContractAddr || mnAddr != nextMNAddr || from != snAddr || block.Coinbase() != snAddr {
+	//	return fmt.Errorf("invalid greward (snCount: %d superNodeReward: %d mnCount:%d masterNodePayment:%d from:%s snAddr:%s miner: %s mnAddr:%s nextMNAddr:%s ppAddr:%s)", snCount, superNodeReward,
+	//		mnCount, masterNodePayment, from.Hex(), snAddr.Hex(), block.Coinbase(), mnAddr.Hex(), nextMNAddr.Hex(), ppAddr.Hex())
+	//}
+	if snCount.Cmp(superNodeReward) != 0 || mnCount.Cmp(masterNodePayment) != 0 || ppCount.Cmp(proposalReward) != 0 || ppAddr != systemcontracts.ProposalContractAddr || from != snAddr || block.Coinbase() != snAddr {
+		return fmt.Errorf("invalid greward (snCount: %d superNodeReward: %d mnCount:%d masterNodePayment:%d from:%s snAddr:%s miner: %s ppAddr:%s)", snCount, superNodeReward,
+			mnCount, masterNodePayment, from.Hex(), snAddr.Hex(), block.Coinbase(), ppAddr.Hex())
 	}
 
 	return nil

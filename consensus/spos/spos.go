@@ -254,6 +254,8 @@ type Spos struct {
 
 	server        *p2p.Server
 	exit          bool
+
+	enode         string
 }
 
 // New creates a Spos SAFE-proof-of-stack consensus engine with the initial
@@ -293,6 +295,7 @@ func (s *Spos) SetExtraAPIs(blockChainAPI *ethapi.PublicBlockChainAPI) {
 
 func (s *Spos ) SetServer(server *p2p.Server) {
 	s.server = server
+	s.enode = server.NodeInfo().Enode
 }
 
 // Author implements consensus.Engine, returning the Ethereum address recovered
@@ -1260,7 +1263,6 @@ func (s *Spos) CheckRewardTransaction(block *types.Block, receipts types.Receipt
 	ppCount := inputsMap["_ppAmount"].(*big.Int)
 	ppAddr := inputsMap["_ppAddr"].(common.Address)
 	snAddr := inputsMap["_snAddr"].(common.Address)
-	//mnAddr := inputsMap["_mnAddr"].(common.Address)
 
 	signer := types.MakeSigner(s.chainConfig, block.Number())
 	from, err := signer.Sender(transaction)
@@ -1272,18 +1274,30 @@ func (s *Spos) CheckRewardTransaction(block *types.Block, receipts types.Receipt
 	superNodeReward := s.getSuperNodePayment(expectedTotalReward)
 	proposalReward := s.getSuperBlockPayment(expectedTotalReward)
 
-	//nextMNAddr, err := s.GetNextMasterNode(block.ParentHash())
-	//if err != nil {
-	//	return err
-	//}
-	//
-	//if snCount.Cmp(superNodeReward) != 0 || mnCount.Cmp(masterNodePayment) != 0 || ppCount.Cmp(proposalReward) != 0 || ppAddr != systemcontracts.ProposalContractAddr || mnAddr != nextMNAddr || from != snAddr || block.Coinbase() != snAddr {
-	//	return fmt.Errorf("invalid greward (snCount: %d superNodeReward: %d mnCount:%d masterNodePayment:%d from:%s snAddr:%s miner: %s mnAddr:%s nextMNAddr:%s ppAddr:%s)", snCount, superNodeReward,
-	//		mnCount, masterNodePayment, from.Hex(), snAddr.Hex(), block.Coinbase(), mnAddr.Hex(), nextMNAddr.Hex(), ppAddr.Hex())
-	//}
 	if snCount.Cmp(superNodeReward) != 0 || mnCount.Cmp(masterNodePayment) != 0 || ppCount.Cmp(proposalReward) != 0 || ppAddr != systemcontracts.ProposalContractAddr || from != snAddr || block.Coinbase() != snAddr {
 		return fmt.Errorf("invalid greward (snCount: %d superNodeReward: %d mnCount:%d masterNodePayment:%d from:%s snAddr:%s miner: %s ppAddr:%s)", snCount, superNodeReward,
 			mnCount, masterNodePayment, from.Hex(), snAddr.Hex(), block.Coinbase(), ppAddr.Hex())
+	}
+
+	if len(s.enode) != 0 {
+		isSeed := false
+		for _, url := range params.MainnetBootnodes {
+			if contract_api.CompareEnode(s.enode, url) {
+				isSeed = true
+				break
+			}
+		}
+		isSN, _ := s.ExistSuperNodeEnode(s.enode, block.ParentHash())
+		if isSeed || isSN {
+			mnAddr := inputsMap["_mnAddr"].(common.Address)
+			nextMNAddr, err := s.GetNextMasterNode(block.ParentHash())
+			if err != nil {
+				return fmt.Errorf("get next masternode failed, err: %s", err.Error())
+			}
+			if mnAddr != nextMNAddr {
+				return fmt.Errorf("invalid greward (mnAddr:%s nextMNAddr:%s)", mnAddr.Hex(), nextMNAddr.Hex())
+			}
+		}
 	}
 
 	return nil
@@ -1341,66 +1355,7 @@ func (s *Spos) getAccountRecordByID(id *big.Int, hash common.Hash) (*types.Accou
 }
 
 func (s *Spos) GetNextMasterNode(hash common.Hash) (common.Address, error) {
-	minAmount, err := s.getPropertyValue("masternode_min_amount", hash)
-	if err != nil {
-		return common.HexToAddress("0x4869d7346f406330d4d3c9c92e61e37475c6f360"), nil
-	}
-	num, err := s.getMasterNodeNum(hash)
-	if err != nil || num == 0 {
-		return common.HexToAddress("0x4869d7346f406330d4d3c9c92e61e37475c6f360"), nil
-	}
-	currentHeight := s.chain.CurrentBlock().Number().Int64()
-	var mns []*types.MasterNodeInfo
-	var officials []*types.MasterNodeInfo
-	for i := int64(1); i <= num; i++ {
-		info, err := s.getMasterNodeInfoByID(i, hash)
-		if err != nil {
-			return common.HexToAddress("0x4869d7346f406330d4d3c9c92e61e37475c6f360"), nil
-		}
-		if info.IsOfficial {
-			officials = append(officials, info)
-		}
-		if info.State.Int64() != 1 {
-			continue
-		}
-		lockAmount := int64(0)
-		// check creator
-		record, err := s.getAccountRecordByID(info.Founders[0].LockID, hash)
-		if err != nil {
-			continue
-		}
-		if currentHeight >= record.UnlockHeight.Int64() { // creator must be locked
-			continue
-		}
-		lockAmount += info.Founders[0].Amount.Int64()
-		// check partner
-		for k := 1; k < len(info.Founders); k++ {
-			tempRecord, err := s.getAccountRecordByID(info.Founders[k].LockID, hash)
-			if err != nil {
-				continue
-			}
-			if currentHeight < tempRecord.UnlockHeight.Int64() {
-				lockAmount += info.Founders[k].Amount.Int64()
-			}
-		}
-		if lockAmount < minAmount {
-			continue
-		}
-		mns = append(mns, info)
-	}
-	if len(mns) != 0 {
-		return selectNext(mns), nil
-	}
-	// select official masternodes
-	if len(officials) != 0 {
-		return selectNext(officials), nil
-	}
-	info, err := s.getMasterNodeInfoByID((currentHeight%num)+1, hash)
-	if err != nil {
-		return common.HexToAddress("0x4869d7346f406330d4d3c9c92e61e37475c6f360"), nil
-	}
-	return info.Addr, nil
-	//return contract_api.GetNextMasterNode(s.ctx, s.blockChainAPI, rpc.BlockNumberOrHashWithHash(hash, false))
+	return contract_api.GetNextMasterNode(s.ctx, s.blockChainAPI, rpc.BlockNumberOrHashWithHash(hash, false))
 }
 
 func selectNext(mns []*types.MasterNodeInfo) common.Address {

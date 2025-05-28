@@ -209,7 +209,7 @@ func (monitor *NodeStateMonitor) HandlePing(ping *types.NodePing) error {
 
 		monitor.mnLock.Lock()
 		monitor.mnMonitorInfos[id] = MonitorInfo{StateRunning, 0, time.Now().Unix()}
-		if ping.Version.Int64() < int64(types.NodePingVersion) || (localHeight > pingHeight+360 && pingHeight != 81330) {
+		if ping.Version.Int64() < int64(types.NodePingVersion) || (localHeight > pingHeight+360) {
 			monitor.mnMonitorInfos[id] = MonitorInfo{StateStop, mnMaxMissNum, time.Now().Unix()}
 		}
 		monitor.mnLock.Unlock()

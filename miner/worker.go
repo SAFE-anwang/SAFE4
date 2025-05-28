@@ -899,11 +899,12 @@ func (w *worker) commitTransaction(env *environment, tx *types.Transaction) ([]*
 
 func (w *worker) commitTransactions(env *environment, txs *types.TransactionsByPriceAndNonce, interrupt *int32) error {
 	gasLimit := env.header.GasLimit
-	if _, ok := w.engine.(*spos.Spos); ok {
-		if gasLimit <= params.MaxSystemRewardTxGas {
-			return fmt.Errorf("invalid header gasLimit[%v] which less than MaxSystemRewardTxGas[%v]", gasLimit, params.MaxSystemRewardTxGas)
+	if s, ok := w.engine.(*spos.Spos); ok {
+		rewardTxGas := s.GetRewardTxGas()
+		if gasLimit <= rewardTxGas {
+			return fmt.Errorf("invalid header gasLimit[%v] which less than MaxSystemRewardTxGas[%v]", gasLimit, rewardTxGas)
 		}
-		gasLimit -= params.MaxSystemRewardTxGas
+		gasLimit -= rewardTxGas
 	}
 	if env.gasPool == nil {
 		env.gasPool = new(core.GasPool).AddGas(gasLimit)

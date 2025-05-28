@@ -256,6 +256,7 @@ type Spos struct {
 	exit          bool
 
 	enode         string
+	rewardTxGas   uint64
 }
 
 // New creates a Spos SAFE-proof-of-stack consensus engine with the initial
@@ -282,7 +283,12 @@ func New(chainConfig *params.ChainConfig, db ethdb.Database) *Spos {
 		signatures: signatures,
 		proposals:  make(map[common.Address]bool),
 		exit:       false,
+		rewardTxGas: params.MaxSystemRewardTxGas,
 	}
+}
+
+func (s *Spos) GetRewardTxGas() uint64 {
+	return s.rewardTxGas
 }
 
 func (s *Spos) SetChain(chain *core.BlockChain) {
@@ -1175,17 +1181,31 @@ func (s *Spos) Reward(snAddr common.Address, snCount *big.Int, mnAddr common.Add
 	value.Add(value, ppCount)
 	msgData := (hexutil.Bytes)(data)
 	nonce := state.GetNonce(snAddr)
-	gas := params.MaxSystemRewardTxGas
+
+	// estimate gas first
 	args := ethapi.TransactionArgs{
 		From:     &snAddr,
 		To:       &systemcontracts.SystemRewardContractAddr,
 		Data:     &msgData,
 		Value:    (*hexutil.Big)(value),
-		Gas:      (*hexutil.Uint64)(&gas),
 		GasPrice: (*hexutil.Big)(common.Big0),
 		Nonce:    (*hexutil.Uint64)(&nonce),
 	}
+	blockNrOrHash := rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(header.Number.Uint64() - 1))
+	tempGas, _ := s.blockChainAPI.EstimateGas(s.ctx, args, &blockNrOrHash)
+	if uint64(tempGas) * 11 / 10 >= s.rewardTxGas {
+		s.rewardTxGas = uint64(tempGas) * 3 / 2
+	}
 
+	args = ethapi.TransactionArgs{
+		From:     &snAddr,
+		To:       &systemcontracts.SystemRewardContractAddr,
+		Data:     &msgData,
+		Value:    (*hexutil.Big)(value),
+		Gas:      (*hexutil.Uint64)(&s.rewardTxGas),
+		GasPrice: (*hexutil.Big)(common.Big0),
+		Nonce:    (*hexutil.Uint64)(&nonce),
+	}
 	rawTx := args.ToTransaction()
 	tx, err := s.signTxFn(accounts.Account{Address: snAddr}, rawTx, s.chainConfig.ChainID)
 	if err != nil {

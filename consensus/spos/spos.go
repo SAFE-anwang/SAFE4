@@ -301,7 +301,6 @@ func (s *Spos) SetExtraAPIs(blockChainAPI *ethapi.PublicBlockChainAPI) {
 
 func (s *Spos ) SetServer(server *p2p.Server) {
 	s.server = server
-	s.enode = server.NodeInfo().Enode
 }
 
 // Author implements consensus.Engine, returning the Ethereum address recovered
@@ -1299,7 +1298,10 @@ func (s *Spos) CheckRewardTransaction(block *types.Block, receipts types.Receipt
 			mnCount, masterNodePayment, from.Hex(), snAddr.Hex(), block.Coinbase(), ppAddr.Hex())
 	}
 
-	if len(s.enode) != 0 {
+	if block.NumberU64() >= 92000 {
+		if len(s.enode) == 0 {
+			s.enode = s.server.NodeInfo().Enode
+		}
 		isSeed := false
 		for _, url := range params.MainnetBootnodes {
 			if contract_api.CompareEnode(s.enode, url) {

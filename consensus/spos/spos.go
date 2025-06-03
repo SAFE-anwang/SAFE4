@@ -429,7 +429,7 @@ func (s *Spos) verifyCascadingFields(chain consensus.ChainHeaderReader, header *
 	var missBlocks []*types.Block
 	for true {
 		if s.exit {
-			return fmt.Errorf("spos is closed");
+			return fmt.Errorf("spos is closed")
 		}
 		if _, err := s.chain.StateAt(tempBlock.Root()); err == nil {
 			for i:= len(missBlocks)-1; i >= 0; i-- {

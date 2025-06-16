@@ -437,7 +437,7 @@ func (s *Spos) verifyCascadingFields(chain consensus.ChainHeaderReader, header *
 		}
 		if _, err := s.chain.StateAt(tempBlock.Root()); err == nil {
 			for i:= len(missBlocks)-1; i >= 0; i-- {
-				if(s.exit) {
+				if s.exit {
 					return fmt.Errorf("spos is closed")
 				}
 				tempParent := s.chain.GetBlockByHash(missBlocks[i].ParentHash())

@@ -55,7 +55,7 @@ const (
 	// above some healthy uncle limit, so use that.
 	maxQueuedBlockAnns = 4
 
-	maxKnownNodePings = 40960
+	maxKnownNodePings = 10
 )
 
 // max is a helper function which returns the larger of the two given integers.

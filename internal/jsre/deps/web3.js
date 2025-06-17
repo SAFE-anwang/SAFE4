@@ -14345,6 +14345,13 @@ module.exports = XMLHttpRequest;
       inputFormatter: [formatters.inputAddressFormatter, formatters.formatInputInt, formatters.formatInputString]
     });
 
+    var changeIncentivePlan = new Method({
+      name: 'changeIncentivePlan',
+      call: 'supernode_changeIncentivePlan',
+      params: 5,
+      inputFormatter: [formatters.inputAddressFormatter, formatters.formatInputInt, formatters.formatInputInt, formatters.formatInputInt, formatters.formatInputInt]
+    });
+
     var changeIsOfficial = new Method({
       name: 'changeIsOfficial',
       call: 'supernode_changeIsOfficial',
@@ -14518,6 +14525,7 @@ module.exports = XMLHttpRequest;
       changeEnodeByID,
       changeDescription,
       changeDescriptionByID,
+      changeIncentivePlan,
       changeIsOfficial,
       getInfo,
       getInfoByID,

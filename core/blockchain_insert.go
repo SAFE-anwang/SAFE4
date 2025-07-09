@@ -58,7 +58,7 @@ func (st *insertStats) report(chain []*types.Block, index int, dirty common.Stor
 		context := []interface{}{
 			"blocks", st.processed, "txs", txs, "mgas", float64(st.usedGas) / 1000000,
 			"elapsed", common.PrettyDuration(elapsed), "mgasps", float64(st.usedGas) * 1000 / float64(elapsed),
-			"number", end.Number(), "hash", end.Hash(), "difficulty", end.Difficulty(),
+			"number", end.Number(), "hash", end.Hash().String(), "difficulty", end.Difficulty(),
 		}
 		if timestamp := time.Unix(int64(end.Time()), 0); time.Since(timestamp) > time.Minute {
 			context = append(context, []interface{}{"age", common.PrettyAge(timestamp)}...)

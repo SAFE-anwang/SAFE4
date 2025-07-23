@@ -427,82 +427,84 @@ func (s *Spos) verifyCascadingFields(chain consensus.ChainHeaderReader, header *
 		return consensus.ErrUnknownAncestor
 	}
 
-	if _, err := s.GetBlockSpace(header.Hash()); err == nil {
-		return nil
-	}
-
-	tempBlock := s.chain.GetBlockByHash(parent.Hash())
-	if tempBlock == nil {
-		return fmt.Errorf("spos-verifyCascadingFields-1 miss parent, parent.number: %d, parent.hash: %s", parent.Number, header.ParentHash.Hex())
-	}
-	var missBlocks []*types.Block
-	for true {
-		if s.exit {
-			return fmt.Errorf("spos is closed")
+	if atomic.LoadUint32(&s.snapSync) == 0 {
+		if _, err := s.GetBlockSpace(header.Hash()); err == nil {
+			return nil
 		}
-		if _, err := s.chain.StateAt(tempBlock.Root()); err == nil {
-			for i:= len(missBlocks)-1; i >= 0; i-- {
-				if s.exit {
-					return fmt.Errorf("spos is closed")
+
+		tempBlock := s.chain.GetBlockByHash(parent.Hash())
+		if tempBlock == nil {
+			return fmt.Errorf("spos-verifyCascadingFields-1 miss parent, parent.number: %d, parent.hash: %s", parent.Number, header.ParentHash.Hex())
+		}
+		var missBlocks []*types.Block
+		for true {
+			if s.exit {
+				return fmt.Errorf("spos is closed")
+			}
+			if _, err := s.chain.StateAt(tempBlock.Root()); err == nil {
+				for i:= len(missBlocks)-1; i >= 0; i-- {
+					if s.exit {
+						return fmt.Errorf("spos is closed")
+					}
+					tempParent := s.chain.GetBlockByHash(missBlocks[i].ParentHash())
+					if tempParent == nil {
+						return fmt.Errorf("spos-verifyCascadingFields-2 miss parent, parent.number: %d, parent.hash: %s", missBlocks[i].NumberU64()-1, missBlocks[i].ParentHash().Hex())
+					}
+					statedb, err := state.New(tempParent.Root(), s.chain.StateCache(), s.chain.Snapshots())
+					if err != nil {
+						return err
+					}
+					statedb.StartPrefetcher("chain")
+					receipts, _, usedGas, err := s.chain.Processor().Process(missBlocks[i], statedb, *s.chain.GetVMConfig())
+					if err != nil {
+						return err
+					}
+					if err = s.chain.Validator().ValidateState(missBlocks[i], statedb, receipts, usedGas); err != nil  {
+						return err
+					}
+					if _, err = statedb.Commit(s.chain.Config().IsEIP158(missBlocks[i].Number())); err != nil {
+						return err
+					}
 				}
-				tempParent := s.chain.GetBlockByHash(missBlocks[i].ParentHash())
-				if tempParent == nil {
-					return fmt.Errorf("spos-verifyCascadingFields-2 miss parent, parent.number: %d, parent.hash: %s", missBlocks[i].NumberU64()-1, missBlocks[i].ParentHash().Hex())
-				}
-				statedb, err := state.New(tempParent.Root(), s.chain.StateCache(), s.chain.Snapshots())
-				if err != nil {
-					return err
-				}
-				statedb.StartPrefetcher("chain")
-				receipts, _, usedGas, err := s.chain.Processor().Process(missBlocks[i], statedb, *s.chain.GetVMConfig())
-				if err != nil {
-					return err
-				}
-				if err = s.chain.Validator().ValidateState(missBlocks[i], statedb, receipts, usedGas); err != nil  {
-					return err
-				}
-				if _, err = statedb.Commit(s.chain.Config().IsEIP158(missBlocks[i].Number())); err != nil {
-					return err
+				break
+			} else {
+				missBlocks = append(missBlocks, tempBlock)
+				tempBlock = s.chain.GetBlockByHash(tempBlock.ParentHash())
+				if tempBlock == nil {
+					return fmt.Errorf("spos-verifyCascadingFields-3 miss parent, parent.number: %d, parent.hash: %s", tempBlock.NumberU64()-1, tempBlock.ParentHash().Hex())
 				}
 			}
-			break
-		} else {
-			missBlocks = append(missBlocks, tempBlock)
-			tempBlock = s.chain.GetBlockByHash(tempBlock.ParentHash())
-			if tempBlock == nil {
-				return fmt.Errorf("spos-verifyCascadingFields-3 miss parent, parent.number: %d, parent.hash: %s", tempBlock.NumberU64()-1, tempBlock.ParentHash().Hex())
+		}
+
+		blockSpace, err := s.GetBlockSpace(header.ParentHash)
+		if err != nil {
+			return fmt.Errorf("spos-verifyCascadingFields get blockSpace failed, number: %d, parent: %s, err: %s", number, header.ParentHash.Hex(), err.Error())
+		}
+
+		if parent.Time + blockSpace > header.Time {
+			return errInvalidTimestamp
+		}
+
+		err = s.validateBlockBroadcastTime(header, parent, blockSpace)
+		if err != nil {
+			return err
+		}
+
+		// Retrieve the snapshot needed to verify this header and cache it
+		snap, err := s.snapshot(chain, number-1, header.ParentHash, parents)
+		if err != nil {
+			return err
+		}
+		// If the block is a checkpoint block, verify the signer list
+		if number%s.config.Epoch == 0 {
+			signers := make([]byte, len(snap.Signers)*common.AddressLength)
+			for i, signer := range snap.signers() {
+				copy(signers[i*common.AddressLength:], signer[:])
 			}
-		}
-	}
-
-	blockSpace, err := s.GetBlockSpace(header.ParentHash)
-	if err != nil {
-		return fmt.Errorf("spos-verifyCascadingFields get blockSpace failed, number: %d, parent: %s, err: %s", number, header.ParentHash.Hex(), err.Error())
-	}
-
-	if parent.Time + blockSpace > header.Time {
-		return errInvalidTimestamp
-	}
-
-	err = s.validateBlockBroadcastTime(header, parent, blockSpace)
-	if err != nil {
-		return err
-	}
-
-	// Retrieve the snapshot needed to verify this header and cache it
-	snap, err := s.snapshot(chain, number-1, header.ParentHash, parents)
-	if err != nil {
-		return err
-	}
-	// If the block is a checkpoint block, verify the signer list
-	if number%s.config.Epoch == 0 {
-		signers := make([]byte, len(snap.Signers)*common.AddressLength)
-		for i, signer := range snap.signers() {
-			copy(signers[i*common.AddressLength:], signer[:])
-		}
-		extraSuffix := len(header.Extra) - extraSeal
-		if !bytes.Equal(header.Extra[extraVanity:extraSuffix], signers) {
-			return errMismatchingCheckpointSigners
+			extraSuffix := len(header.Extra) - extraSeal
+			if !bytes.Equal(header.Extra[extraVanity:extraSuffix], signers) {
+				return errMismatchingCheckpointSigners
+			}
 		}
 	}
 
@@ -667,6 +669,9 @@ func (s *Spos) verifySeal(chain consensus.ChainHeaderReader, header *types.Heade
 	number := header.Number.Uint64()
 	if number == 0 {
 		return errUnknownBlock
+	}
+	if atomic.LoadUint32(&s.snapSync) != 0 {
+		return nil
 	}
 	// Retrieve the snapshot needed to verify this header and cache it
 	snap, err := s.snapshot(chain, number-1, header.ParentHash, parents)

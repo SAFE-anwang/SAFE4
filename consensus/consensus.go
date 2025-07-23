@@ -122,6 +122,9 @@ type Engine interface {
 
 	//CheckRewardTransaction check allocation reward transactions
 	CheckRewardTransaction(block *types.Block, receipts types.Receipts) error
+
+	// SetSnapSync updates latest sync mode
+	SetSnapSync(sync uint32)
 }
 
 // PoW is a consensus engine based on proof-of-work.

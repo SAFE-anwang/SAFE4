@@ -374,3 +374,5 @@ func IsTTDReached(chain consensus.ChainHeaderReader, parentHash common.Hash, num
 func (beacon *Beacon) CheckRewardTransaction(block *types.Block, receipts types.Receipts) error{
 	return nil
 }
+
+func (beacon *Beacon) SetSnapSync(sync uint32) {}

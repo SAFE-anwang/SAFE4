@@ -21,6 +21,7 @@ import (
 	"bytes"
 	"context"
 	"math"
+	"sync/atomic"
 
 	//"crypto/ecdsa"
 	"errors"
@@ -251,12 +252,12 @@ type Spos struct {
 
 	chain         *core.BlockChain
 	blockChainAPI *ethapi.PublicBlockChainAPI
-
 	server        *p2p.Server
 	exit          bool
 
 	enode         string
 	rewardTxGas   uint64
+	snapSync      uint32
 }
 
 // New creates a Spos SAFE-proof-of-stack consensus engine with the initial
@@ -301,6 +302,10 @@ func (s *Spos) SetExtraAPIs(blockChainAPI *ethapi.PublicBlockChainAPI) {
 
 func (s *Spos ) SetServer(server *p2p.Server) {
 	s.server = server
+}
+
+func (s *Spos) SetSnapSync(snap uint32) {
+	atomic.StoreUint32(&s.snapSync, snap)
 }
 
 // Author implements consensus.Engine, returning the Ethereum address recovered

@@ -260,6 +260,7 @@ func (h *handler) doSync(op *chainSyncOp) error {
 	if atomic.LoadUint32(&h.snapSync) == 1 {
 		log.Info("Snap sync complete, auto disabling")
 		atomic.StoreUint32(&h.snapSync, 0)
+		h.engine.SetSnapSync(0)
 	}
 	// If we've successfully finished a sync cycle and passed any required checkpoint,
 	// enable accepting transactions from the network.

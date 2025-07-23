@@ -254,6 +254,7 @@ func New(stack *node.Node, config *ethconfig.Config) (*Ethereum, error) {
 		Checkpoint:     checkpoint,
 		RequiredBlocks: config.RequiredBlocks,
 		Monitor:        eth.monitor,
+		Engine:         eth.engine,
 	}); err != nil {
 		return nil, err
 	}

@@ -89,6 +89,7 @@ type handlerConfig struct {
 	Checkpoint     *params.TrustedCheckpoint // Hard coded checkpoint for sync challenges
 	RequiredBlocks map[uint64]common.Hash    // Hard coded map of required block hashes for sync challenges
 	Monitor        *NodeStateMonitor
+	Engine         consensus.Engine
 }
 
 type handler struct {
@@ -106,6 +107,7 @@ type handler struct {
 	chain    *core.BlockChain
 	maxPeers int
 	monitor  *NodeStateMonitor
+	engine   consensus.Engine
 
 	downloader   *downloader.Downloader
 	blockFetcher *fetcher.BlockFetcher
@@ -149,6 +151,7 @@ func newHandler(config *handlerConfig) (*handler, error) {
 		requiredBlocks: config.RequiredBlocks,
 		quitSync:       make(chan struct{}),
 		monitor:        config.Monitor,
+		engine:         config.Engine,
 	}
 	h.seedPeers = make(map[string]bool)
 	if h.chain.Config().ChainID.Cmp(params.SafeChainConfig.ChainID) == 0 {
@@ -172,18 +175,24 @@ func newHandler(config *handlerConfig) (*handler, error) {
 		fullBlock, fastBlock := h.chain.CurrentBlock(), h.chain.CurrentFastBlock()
 		if fullBlock.NumberU64() == 0 && fastBlock.NumberU64() > 0 {
 			// snap is disabled for spos
-			//h.snapSync = uint32(1)
-			//log.Warn("Switch sync mode from full sync to snap sync")
+			h.snapSync = uint32(1)
+			log.Warn("Switch sync mode from full sync to snap sync")
 		}
 	} else {
 		if h.chain.CurrentBlock().NumberU64() > 0 {
 			// Print warning log if database is not empty to run snap sync.
-			log.Warn("Switch sync mode from snap sync to full sync")
+			fullBlock, fastBlock := h.chain.CurrentBlock(), h.chain.CurrentFastBlock()
+			if fullBlock.NumberU64() <= fastBlock.NumberU64() - 10000 {
+				h.snapSync = uint32(1)
+			} else {
+				log.Warn("Switch sync mode from snap sync to full sync")
+			}
 		} else {
 			// If snap sync was requested and our database is empty, grant it
 			h.snapSync = uint32(1)
 		}
 	}
+	h.engine.SetSnapSync(h.snapSync)
 	// If we have trusted checkpoints, enforce them on the chain
 	if config.Checkpoint != nil {
 		h.checkpointNumber = (config.Checkpoint.SectionIndex+1)*params.CHTFrequency - 1
@@ -197,6 +206,7 @@ func newHandler(config *handlerConfig) (*handler, error) {
 		if atomic.LoadUint32(&h.snapSync) == 1 {
 			log.Info("Snap sync complete, auto disabling")
 			atomic.StoreUint32(&h.snapSync, 0)
+			h.engine.SetSnapSync(0)
 		}
 		// If we've successfully finished a sync cycle and passed any required
 		// checkpoint, enable accepting transactions from the network

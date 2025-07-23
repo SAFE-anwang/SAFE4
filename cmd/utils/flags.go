@@ -215,9 +215,9 @@ var (
 		Usage: `Blockchain garbage collection mode ("full", "archive")`,
 		Value: "full",
 	}
-	SnapshotFlag = cli.BoolFlag{
+	SnapshotFlag = cli.BoolTFlag{
 		Name:  "snapshot",
-		Usage: `Enables snapshot-database mode (default = disable)`,
+		Usage: `Enables snapshot-database mode (default = enable)`,
 	}
 	TxLookupLimitFlag = cli.Uint64Flag{
 		Name:  "txlookuplimit",

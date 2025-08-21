@@ -182,7 +182,7 @@ func newHandler(config *handlerConfig) (*handler, error) {
 		if h.chain.CurrentBlock().NumberU64() > 0 {
 			// Print warning log if database is not empty to run snap sync.
 			fullBlock, fastBlock := h.chain.CurrentBlock(), h.chain.CurrentFastBlock()
-			if fullBlock.NumberU64() <= fastBlock.NumberU64() - 10000 {
+			if fullBlock.NumberU64() <= fastBlock.NumberU64() - 86400 {
 				h.snapSync = uint32(1)
 			} else {
 				log.Warn("Switch sync mode from snap sync to full sync")

@@ -18,6 +18,7 @@
 package core
 
 import (
+	"encoding/binary"
 	"errors"
 	"fmt"
 	"io"
@@ -83,6 +84,15 @@ var (
 	errChainStopped         = errors.New("blockchain is stopped")
 )
 
+var (
+	HeaderPrefix       = []byte("h") // header
+	HeaderTDSuffix     = []byte("t") // total difficulty
+	HeaderHashSuffix   = []byte("n") // header hash
+	BlockBodyPrefix    = []byte("b") // block body
+	BlockReceiptsPrefix = []byte("r") // block receipts
+	HeaderNumberPrefix = []byte("H") // hash -> number
+)
+
 const (
 	bodyCacheLimit      = 256
 	blockCacheLimit     = 256
@@ -116,6 +126,10 @@ const (
 	//  The following incompatible database changes were added:
 	//    * New scheme for contract code in order to separate the codes and trie nodes
 	BlockChainVersion uint64 = 8
+
+	cleanupLag       = 4096
+	sidechainBatch   = 256
+	cleanupStateKey  = "cleanup-state"
 )
 
 // CacheConfig contains the configuration values for the trie caching/pruning
@@ -211,6 +225,14 @@ type BlockChain struct {
 	processor  Processor // Block transaction processor interface
 	forker     *ForkChoice
 	vmConfig   vm.Config
+
+	lastSidechainCleanHeight uint64
+	tailAccumulated          uint64
+	targetCleanHeight 		 uint64
+	compacting int32
+	compactFrom uint64
+	compactTo   uint64
+	compactMu   sync.Mutex
 }
 
 // NewBlockChain returns a fully initialised block chain using information
@@ -406,6 +428,18 @@ func NewBlockChain(db ethdb.Database, cacheConfig *CacheConfig, chainConfig *par
 			triedb.SaveCachePeriodically(bc.cacheConfig.TrieCleanJournal, bc.cacheConfig.TrieCleanRejournal, bc.quit)
 		}()
 	}
+
+	bc.wg.Add(1)
+	go bc.compactRangeHeaderNumber()
+
+	state := loadCleanupState(db)
+
+	bc.lastSidechainCleanHeight = state.LastSidechainCleanHeight
+	bc.tailAccumulated = state.TailAccumulated
+	log.Info("Loaded cleanup state",
+		"lastCleanHeight", bc.lastSidechainCleanHeight,
+		"tailAccumulated", bc.tailAccumulated)
+
 	return bc, nil
 }
 
@@ -1754,6 +1788,8 @@ func (bc *BlockChain) insertChain(chain types.Blocks, verifySeals, setHead bool)
 	}
 	stats.ignored += it.remaining()
 
+	bc.maybeCleanupSidechains()
+
 	return it.index, err
 }
 
@@ -2389,4 +2425,242 @@ func (bc *BlockChain) InsertHeaderChain(chain []*types.Header, checkFreq int) (i
 	defer bc.chainmu.Unlock()
 	_, err := bc.hc.InsertHeaderChain(chain, start, bc.forker)
 	return 0, err
+}
+
+type CleanupState struct {
+	LastSidechainCleanHeight uint64
+	TailAccumulated          uint64
+}
+
+func encodeCleanupState(state CleanupState) []byte {
+	buf := make([]byte, 16)
+	binary.BigEndian.PutUint64(buf[:8], state.LastSidechainCleanHeight)
+	binary.BigEndian.PutUint64(buf[8:], state.TailAccumulated)
+	return buf
+}
+
+func decodeCleanupState(b []byte) CleanupState {
+	if len(b) < 16 {
+		return CleanupState{}
+	}
+	return CleanupState{
+		LastSidechainCleanHeight: binary.BigEndian.Uint64(b[:8]),
+		TailAccumulated:          binary.BigEndian.Uint64(b[8:16]),
+	}
+}
+
+func storeCleanupState(db ethdb.Database, state CleanupState) {
+	if err := db.Put([]byte(cleanupStateKey), encodeCleanupState(state)); err != nil {
+		log.Error("Failed to store cleanup state", "err", err)
+	}
+}
+
+func loadCleanupState(db ethdb.Database) CleanupState {
+	data, _ := db.Get([]byte(cleanupStateKey))
+	if data == nil {
+		return CleanupState{}
+	}
+	return decodeCleanupState(data)
+}
+
+func (bc *BlockChain) maybeCleanupSidechains() {
+	currentHeight := bc.CurrentBlock().NumberU64()
+	if currentHeight < cleanupLag {
+		return
+	}
+
+	targetHeight := currentHeight - cleanupLag
+
+	if bc.lastSidechainCleanHeight > targetHeight {
+		log.Warn("Cleanup state ahead of safe height, resetting",
+			"last", bc.lastSidechainCleanHeight, "target", targetHeight)
+
+		bc.lastSidechainCleanHeight = targetHeight
+		bc.tailAccumulated = 0
+		bc.targetCleanHeight = targetHeight
+
+		storeCleanupState(bc.db, CleanupState{
+			LastSidechainCleanHeight: bc.lastSidechainCleanHeight,
+			TailAccumulated:          bc.tailAccumulated,
+		})
+		return
+	}
+
+	if targetHeight <= bc.lastSidechainCleanHeight {
+		return
+	}
+
+	from := bc.lastSidechainCleanHeight + 1
+	if targetHeight < from {
+		return
+	}
+
+	available := targetHeight - bc.targetCleanHeight
+	if available <= 0 {
+		return
+	}
+
+	newAccum := bc.tailAccumulated + available
+	if newAccum < sidechainBatch {
+		bc.tailAccumulated = newAccum
+		bc.targetCleanHeight = targetHeight
+
+		storeCleanupState(bc.db, CleanupState{
+			LastSidechainCleanHeight: bc.lastSidechainCleanHeight,
+			TailAccumulated:          bc.tailAccumulated,
+		})
+		log.Debug("Accumulate tail blocks, waiting for enough blocks",
+			"accumulated", bc.tailAccumulated)
+		return
+	}
+
+	to := from + sidechainBatch - 1
+	if to > targetHeight {
+		to = targetHeight
+	}
+
+	for height := from; height <= to; height++ {
+		canonicalHash := rawdb.ReadCanonicalHash(bc.db, height)
+		if (canonicalHash == common.Hash{}) {
+			continue
+		}
+		allHashes := rawdb.ReadAllHashes(bc.db, height)
+		for _, h := range allHashes {
+			if h != canonicalHash {
+				rawdb.DeleteBlock(bc.db, h, height)
+			}
+		}
+	}
+
+	bc.lastSidechainCleanHeight = to
+	bc.tailAccumulated = 0
+	bc.targetCleanHeight = to
+
+	storeCleanupState(bc.db, CleanupState{
+		LastSidechainCleanHeight: bc.lastSidechainCleanHeight,
+		TailAccumulated:          bc.tailAccumulated,
+	})
+
+	log.Debug("Sidechain cleanup finished, starting async compaction",
+		"from", from, "to", to)
+
+	bc.compactRangeAsync(from, to)
+}
+
+func encodeBlockNumber(num uint64) []byte {
+	b := make([]byte, 8)
+	binary.BigEndian.PutUint64(b, num)
+	return b
+}
+
+func (bc *BlockChain) compactRangeAsync(from, to uint64) {
+	bc.compactMu.Lock()
+	if bc.compactFrom != 0 && bc.compactTo != 0 {
+		if from > bc.compactFrom {
+			from = bc.compactFrom
+		}
+		if to < bc.compactTo {
+			to = bc.compactTo
+		}
+		bc.compactFrom, bc.compactTo = 0, 0
+	}
+	bc.compactMu.Unlock()
+
+	if !atomic.CompareAndSwapInt32(&bc.compacting, 0, 1) {
+		bc.compactMu.Lock()
+		if bc.compactFrom == 0 || from < bc.compactFrom {
+			bc.compactFrom = from
+		}
+		if bc.compactTo == 0 || to > bc.compactTo {
+			bc.compactTo = to
+		}
+		bc.compactMu.Unlock()
+		log.Debug("Compaction already running, merge pending range", "from", from, "to", to)
+		return
+	}
+
+	bc.wg.Add(1)
+	go func(from, to uint64) {
+		defer bc.wg.Done()
+		defer atomic.StoreInt32(&bc.compacting, 0)
+
+		prefixes := [][]byte{
+			HeaderPrefix, HeaderTDSuffix, HeaderHashSuffix,
+			BlockBodyPrefix, BlockReceiptsPrefix,
+		}
+
+		for _, prefix := range prefixes {
+			select {
+			case <-bc.quit:
+				log.Info("compaction canceled", "prefix", string(prefix))
+				return
+			default:
+			}
+
+			start := append([]byte{}, prefix...)
+			start = append(start, encodeBlockNumber(from)...)
+
+			limit := append([]byte{}, prefix...)
+			limit = append(limit, encodeBlockNumber(to+1)...)
+			for i := 0; i < 32; i++ {
+				limit = append(limit, 0xff)
+			}
+
+			if err := bc.db.Compact(start, limit); err != nil {
+				log.Warn("LevelDB compaction failed", "prefix", string(prefix), "from", from, "to", to, "err", err)
+			} else {
+				log.Debug("LevelDB compaction finished", "prefix", string(prefix), "from", from, "to", to)
+			}
+		}
+	}(from, to)
+}
+
+func (bc *BlockChain) compactRangeHeaderNumber() {
+	ticker := time.NewTicker(24 * time.Hour)
+	defer ticker.Stop()
+	defer bc.wg.Done()
+
+	for {
+		select {
+		case <-ticker.C:
+			bc.procCompactRangeHeaderNumber()
+		case <-bc.quit:
+			log.Info("compactRangeHeaderNumber stopped")
+			return
+		}
+	}
+}
+
+func (bc *BlockChain) procCompactRangeHeaderNumber() {
+	log.Info("Starting H-prefix compaction...")
+
+	for b := byte(0x00); ; b++ {
+		select {
+		case <-bc.quit:
+			log.Info("H-prefix compaction canceled", "range", fmt.Sprintf("%02X", b))
+			return
+		default:
+		}
+
+		start := append([]byte{HeaderNumberPrefix[0]}, b)
+
+		var limit []byte
+		if b == 0xFF {
+			limit = []byte{HeaderNumberPrefix[0] + 1}
+		} else {
+			limit = append([]byte{HeaderNumberPrefix[0]}, b+1)
+		}
+
+		if err := bc.db.Compact(start, limit); err != nil {
+			log.Warn("LevelDB H-compaction failed", "range", fmt.Sprintf("%02X", b), "err", err)
+		} else {
+			log.Debug("LevelDB H-compaction finished", "range", fmt.Sprintf("%02X", b))
+		}
+
+		if b == 0xFF {
+			break
+		}
+	}
+
+	log.Info("Completed H-prefix compaction")
 }

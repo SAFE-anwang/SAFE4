@@ -86,8 +86,6 @@ var (
 
 var (
 	HeaderPrefix       = []byte("h") // header
-	HeaderTDSuffix     = []byte("t") // total difficulty
-	HeaderHashSuffix   = []byte("n") // header hash
 	BlockBodyPrefix    = []byte("b") // block body
 	BlockReceiptsPrefix = []byte("r") // block receipts
 	HeaderNumberPrefix = []byte("H") // hash -> number
@@ -2585,8 +2583,9 @@ func (bc *BlockChain) compactRangeAsync(from, to uint64) {
 		defer atomic.StoreInt32(&bc.compacting, 0)
 
 		prefixes := [][]byte{
-			HeaderPrefix, HeaderTDSuffix, HeaderHashSuffix,
-			BlockBodyPrefix, BlockReceiptsPrefix,
+			HeaderPrefix,
+			BlockBodyPrefix,
+			BlockReceiptsPrefix,
 		}
 
 		for _, prefix := range prefixes {

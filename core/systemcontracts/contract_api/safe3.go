@@ -24,6 +24,10 @@ func BatchRedeemMasterNode(ctx context.Context, blockChainAPI *ethapi.PublicBloc
 	return CallContract(ctx, blockChainAPI, transactionPoolAPI, from, nil, systemcontracts.Safe3ContractAddr, "batchRedeemMasterNode", getValues(pubkeys, sigs, enodes, targetAddr))
 }
 
+func BatchRedeemPetty(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, transactionPoolAPI *ethapi.PublicTransactionPoolAPI, from common.Address, pubkeys []hexutil.Bytes, sigs []hexutil.Bytes, targetAddr common.Address) (common.Hash, error) {
+	return CallContract(ctx, blockChainAPI, transactionPoolAPI, from, nil, systemcontracts.Safe3ContractAddr, "batchRedeemPetty", getValues(pubkeys, sigs, targetAddr))
+}
+
 func ApplyRedeemSpecial(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, transactionPoolAPI *ethapi.PublicTransactionPoolAPI, from common.Address, pubkey []byte, sig []byte) (common.Hash, error) {
 	return CallContract(ctx, blockChainAPI, transactionPoolAPI, from, nil, systemcontracts.Safe3ContractAddr, "applyRedeemSpecial", getValues(pubkey, sig))
 }
@@ -106,6 +110,26 @@ func GetSpecialInfo(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainA
 	return ret, err
 }
 
+func GetAllPettyNum(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, blockNrOrHash rpc.BlockNumberOrHash) (*big.Int, error) {
+	ret := new(big.Int)
+	err := QueryContract(ctx, blockChainAPI, blockNrOrHash, systemcontracts.Safe3ContractAddr, "getAllPettyNum", nil, &ret)
+	return ret, err
+}
+
+func GetPettyInfos(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, start *big.Int, count *big.Int, blockNrOrHash rpc.BlockNumberOrHash) ([]types.AvailableSafe3Info, error) {
+	ret := new([]types.AvailableSafe3Info)
+	if err := QueryContract(ctx, blockChainAPI, blockNrOrHash, systemcontracts.Safe3ContractAddr, "getPettyInfos", getValues(start, count), &ret); err != nil {
+		return nil, err
+	}
+	return *ret, nil
+}
+
+func GetPettyInfo(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, safe3Addr string, blockNrOrHash rpc.BlockNumberOrHash) (*types.AvailableSafe3Info, error) {
+	ret := new(types.AvailableSafe3Info)
+	err := QueryContract(ctx, blockChainAPI, blockNrOrHash, systemcontracts.Safe3ContractAddr, "getPettyInfo", getValues(safe3Addr), &ret)
+	return ret, err
+}
+
 func ExistAvailableNeedToRedeem(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, safe3Addr string, blockNrOrHash rpc.BlockNumberOrHash) (bool, error) {
 	ret := new(bool)
 	if err := QueryContract(ctx, blockChainAPI, blockNrOrHash, systemcontracts.Safe3ContractAddr, "existAvailableNeedToRedeem", getValues(safe3Addr), &ret); err != nil {
@@ -125,6 +149,14 @@ func ExistLockedNeedToRedeem(ctx context.Context, blockChainAPI *ethapi.PublicBl
 func ExistMasterNodeNeedToRedeem(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, safe3Addr string, blockNrOrHash rpc.BlockNumberOrHash) (bool, error) {
 	ret := new(bool)
 	if err := QueryContract(ctx, blockChainAPI, blockNrOrHash, systemcontracts.Safe3ContractAddr, "existMasterNodeNeedToRedeem", getValues(safe3Addr), &ret); err != nil {
+		return false, err
+	}
+	return *ret, nil
+}
+
+func ExistPettyNeedToRedeem(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, safe3Addr string, blockNrOrHash rpc.BlockNumberOrHash) (bool, error) {
+	ret := new(bool)
+	if err := QueryContract(ctx, blockChainAPI, blockNrOrHash, systemcontracts.Safe3ContractAddr, "existPettyNeedToRedeem", getValues(safe3Addr), &ret); err != nil {
 		return false, err
 	}
 	return *ret, nil

@@ -15078,6 +15078,27 @@ module.exports = XMLHttpRequest;
         inputFormatter: [formatters.formatInputString, formatters.inputDefaultBlockNumberFormatter]
       });
 
+      var getAllPettyNum = new Method({
+        name: 'getAllPettyNum',
+        call: 'safe3_getAllPettyNum',
+        params: 1,
+        inputFormatter: [formatters.inputDefaultBlockNumberFormatter]
+      });
+
+      var getPettyInfos = new Method({
+        name: 'getPettyInfos',
+        call: 'safe3_getPettyInfos',
+        params: 3,
+        inputFormatter: [formatters.formatInputInt, formatters.formatInputInt, formatters.inputDefaultBlockNumberFormatter]
+      });
+
+      var getPettyInfo = new Method({
+        name: 'getPettyInfo',
+        call: 'safe3_getPettyInfo',
+        params: 2,
+        inputFormatter: [formatters.formatInputString, formatters.inputDefaultBlockNumberFormatter]
+      });
+
       var existAvailableNeedToRedeem = new Method({
         name: 'existAvailableNeedToRedeem',
         call: 'safe3_existAvailableNeedToRedeem',
@@ -15099,6 +15120,13 @@ module.exports = XMLHttpRequest;
         inputFormatter: [formatters.formatInputString, formatters.inputDefaultBlockNumberFormatter]
       });
 
+      var existPettyNeedToRedeem = new Method({
+        name: 'existPettyNeedToRedeem',
+        call: 'safe3_existPettyNeedToRedeem',
+        params: 2,
+        inputFormatter: [formatters.formatInputString, formatters.inputDefaultBlockNumberFormatter]
+      });
+
       return [
         redeemWithKeys,
         applyRedeemSpecialWithKey,
@@ -15114,9 +15142,13 @@ module.exports = XMLHttpRequest;
         getAllSpecialNum,
         getSpecialInfos,
         getSpecialInfo,
+        getAllPettyNum,
+        getPettyInfos,
+        getPettyInfo,
         existAvailableNeedToRedeem,
         existLockedNeedToRedeem,
-        existMasterNodeNeedToRedeem
+        existMasterNodeNeedToRedeem,
+        existPettyNeedToRedeem
       ];
     };
 

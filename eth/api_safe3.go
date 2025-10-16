@@ -48,6 +48,8 @@ func (api *PrivateSafe3API) RedeemWithKeys(ctx context.Context, from common.Addr
 	lockedSigs := make([]hexutil.Bytes, 0)
 	mnPubkeys := make([]hexutil.Bytes, 0)
 	mnSigs := make([]hexutil.Bytes, 0)
+	pettyPubkeys := make([]hexutil.Bytes, 0)
+	pettySigs := make([]hexutil.Bytes, 0)
 	blockNrOrHash := rpc.BlockNumberOrHashWithNumber(rpc.PendingBlockNumber)
 	for _, key := range keys {
 		privkey := parseKey(key)
@@ -71,6 +73,11 @@ func (api *PrivateSafe3API) RedeemWithKeys(ctx context.Context, from common.Addr
 			mnPubkeys = append(mnPubkeys, pubkey)
 			mnSigs = append(mnSigs, Sign(safe3Addr, privkey))
 		}
+		flag, err = contract_api.ExistPettyNeedToRedeem(ctx, api.blockChainAPI, safe3Addr, blockNrOrHash)
+		if err == nil && flag {
+			pettyPubkeys = append(pettyPubkeys, pubkey)
+			pettySigs = append(pettySigs, Sign(safe3Addr, privkey))
+		}
 
 		// uncompressed pubkey
 		pubkey = crypto.FromECDSAPub(&priv.PublicKey)
@@ -89,6 +96,11 @@ func (api *PrivateSafe3API) RedeemWithKeys(ctx context.Context, from common.Addr
 		if err == nil && flag {
 			mnPubkeys = append(mnPubkeys, pubkey)
 			mnSigs = append(mnSigs, Sign(safe3Addr, privkey))
+		}
+		flag, err = contract_api.ExistPettyNeedToRedeem(ctx, api.blockChainAPI, safe3Addr, blockNrOrHash)
+		if err == nil && flag {
+			pettyPubkeys = append(pettyPubkeys, pubkey)
+			pettySigs = append(pettySigs, Sign(safe3Addr, privkey))
 		}
 	}
 
@@ -110,6 +122,11 @@ func (api *PrivateSafe3API) RedeemWithKeys(ctx context.Context, from common.Addr
 		}
 		if mnTx, err := contract_api.BatchRedeemMasterNode(ctx, api.blockChainAPI, api.transactionPoolAPI, from, lockedPubkeys, lockedSigs, mnEnodes, targetAddr); err == nil {
 			txs = append(txs, mnTx)
+		}
+	}
+	if len(pettyPubkeys) > 0 {
+		if pettyTx, err := contract_api.BatchRedeemPetty(ctx, api.blockChainAPI, api.transactionPoolAPI, from, pettyPubkeys, pettySigs, targetAddr); err == nil {
+			txs = append(txs, pettyTx)
 		}
 	}
 	return txs, nil
@@ -203,6 +220,18 @@ func (api *PublicSafe3API) GetSpecialInfo(ctx context.Context, safe3Addr string,
 	return contract_api.GetSpecialInfo(ctx, api.blockChainAPI, safe3Addr, blockNrOrHash)
 }
 
+func (api *PublicSafe3API) GetAllPettyNum(ctx context.Context, blockNrOrHash rpc.BlockNumberOrHash) (*big.Int, error) {
+	return contract_api.GetAllPettyNum(ctx, api.blockChainAPI, blockNrOrHash)
+}
+
+func (api *PublicSafe3API) GetPettyInfos(ctx context.Context, start *big.Int, count *big.Int, blockNrOrHash rpc.BlockNumberOrHash) ([]types.AvailableSafe3Info, error) {
+	return contract_api.GetPettyInfos(ctx, api.blockChainAPI, start, count, blockNrOrHash)
+}
+
+func (api *PublicSafe3API) GetPettyInfo(ctx context.Context, safe3Addr string, blockNrOrHash rpc.BlockNumberOrHash) (*types.AvailableSafe3Info, error) {
+	return contract_api.GetPettyInfo(ctx, api.blockChainAPI, safe3Addr, blockNrOrHash)
+}
+
 func (api *PublicSafe3API) ExistAvailableNeedToRedeem(ctx context.Context, safe3Addr string, blockNrOrHash rpc.BlockNumberOrHash) (bool, error) {
 	return contract_api.ExistAvailableNeedToRedeem(ctx, api.blockChainAPI, safe3Addr, blockNrOrHash)
 }
@@ -213,6 +242,10 @@ func (api *PublicSafe3API) ExistLockedNeedToRedeem(ctx context.Context, safe3Add
 
 func (api *PublicSafe3API) ExistMasterNodeNeedToRedeem(ctx context.Context, safe3Addr string, blockNrOrHash rpc.BlockNumberOrHash) (bool, error) {
 	return contract_api.ExistMasterNodeNeedToRedeem(ctx, api.blockChainAPI, safe3Addr, blockNrOrHash)
+}
+
+func (api *PublicSafe3API) ExistPettyNeedToRedeem(ctx context.Context, safe3Addr string, blockNrOrHash rpc.BlockNumberOrHash) (bool, error) {
+	return contract_api.ExistPettyNeedToRedeem(ctx, api.blockChainAPI, safe3Addr, blockNrOrHash)
 }
 
 func getKeyID(pubkey []byte) []byte {

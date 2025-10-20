@@ -1402,6 +1402,26 @@ func setTxPool(ctx *cli.Context, cfg *core.TxPoolConfig) {
 	if ctx.GlobalIsSet(TxPoolLifetimeFlag.Name) {
 		cfg.Lifetime = ctx.GlobalDuration(TxPoolLifetimeFlag.Name)
 	}
+
+	memMB := GetSystemMemoryMB()
+	if memMB > 0 && memMB <= 2048 {
+		log.Info("Low-memory host detected, applying safe txpool defaults", "memMB", memMB)
+
+		if !ctx.GlobalIsSet(TxPoolGlobalSlotsFlag.Name) {
+			ctx.GlobalSet(TxPoolGlobalSlotsFlag.Name, strconv.Itoa(512))
+			cfg.GlobalSlots = 512
+		}
+
+		if !ctx.GlobalIsSet(TxPoolGlobalQueueFlag.Name) {
+			ctx.GlobalSet(TxPoolGlobalQueueFlag.Name, strconv.Itoa(256))
+			cfg.GlobalQueue = 256
+		}
+
+		if !ctx.GlobalIsSet(TxPoolLifetimeFlag.Name) {
+			ctx.GlobalSet(TxPoolLifetimeFlag.Name, "30m")
+			cfg.Lifetime = 30 * time.Minute
+		}
+	}
 }
 
 func setEthash(ctx *cli.Context, cfg *ethconfig.Config) {
@@ -2001,4 +2021,13 @@ func MigrateFlags(action func(ctx *cli.Context) error) func(*cli.Context) error 
 		}
 		return action(ctx)
 	}
+}
+
+func GetSystemMemoryMB() uint64 {
+	mem, err := gopsutil.VirtualMemory()
+	if err != nil {
+		log.Warn("Failed to get system memory: %v", err)
+		return 0
+	}
+	return mem.Total / 1024 / 1024
 }

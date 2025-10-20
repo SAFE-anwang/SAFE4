@@ -300,9 +300,57 @@ func prepare(ctx *cli.Context) {
 		// Make sure we're not on any supported preconfigured testnet either
 		if !ctx.GlobalIsSet(utils.SAFETestFlag.Name) &&
 			!ctx.GlobalIsSet(utils.DeveloperFlag.Name) {
-			// Nope, we're really on mainnet. Bump that cache up!
-			log.Info("Bumping default cache on mainnet", "provided", ctx.GlobalInt(utils.CacheFlag.Name), "updated", 4096)
-			ctx.GlobalSet(utils.CacheFlag.Name, strconv.Itoa(4096))
+			memMB := utils.GetSystemMemoryMB()
+			var cacheMB int
+
+			switch {
+			case memMB > 0 && memMB <= 2048:
+				cacheMB = 256
+				if memMB < 1800 {
+					cacheMB = 128
+				}
+			default:
+				cacheMB = 4096
+			}
+
+			log.Info("Auto-selected cache size", "memMB", memMB, "cacheMB", cacheMB)
+			ctx.GlobalSet(utils.CacheFlag.Name, strconv.Itoa(cacheMB))
+
+			if memMB > 0 && memMB <= 2048 {
+				if !ctx.GlobalIsSet(utils.MaxPeersFlag.Name) {
+					ctx.GlobalSet(utils.MaxPeersFlag.Name, strconv.Itoa(10))
+					log.Info("Auto-set maxpeers due to low memory", "memMB", memMB, "maxpeers", 10)
+				}
+
+				if !ctx.GlobalIsSet(utils.MaxPendingPeersFlag.Name) {
+					ctx.GlobalSet(utils.MaxPendingPeersFlag.Name, strconv.Itoa(20))
+					log.Info("Auto-set maxpendingpeers due to low memory", "memMB", memMB, "maxpendingpeers", 20)
+				}
+
+				if !ctx.GlobalIsSet(utils.SnapshotFlag.Name) {
+					ctx.GlobalSet(utils.SnapshotFlag.Name, "false")
+					log.Info("Low memory host detected, disabling snapshot")
+				}
+
+				if !ctx.IsSet(utils.CacheDatabaseFlag.Name) {
+					ctx.Set(utils.CacheDatabaseFlag.Name, "70")
+				}
+
+				if !ctx.IsSet(utils.CacheTrieFlag.Name) {
+					ctx.Set(utils.CacheTrieFlag.Name, "10")
+				}
+
+				if !ctx.IsSet(utils.CacheGCFlag.Name) {
+					ctx.Set(utils.CacheGCFlag.Name, "10")
+				}
+
+				if !ctx.IsSet(utils.CacheSnapshotFlag.Name) {
+					ctx.Set(utils.CacheSnapshotFlag.Name, "10")
+				}
+
+				log.Info("Low-memory cache percentages set",
+					"database", 70, "trie", 10, "gc", 10, "snapshot", 10)
+			}
 		}
 	}
 	// If we're running a light client on any network, drop the cache to some meaningfully low amount

@@ -494,8 +494,7 @@ func (w *worker) newWorkLoop(recommit time.Duration) {
 			// If sealing is running resubmit a new work cycle periodically to pull in
 			// higher priced transactions. Disable this overhead for pending blocks.
 			//if w.isRunning() && (w.chainConfig.Clique == nil || w.chainConfig.Clique.Period > 0) {
-			if w.isRunning() && ((w.chainConfig.Ethash != nil) || (w.chainConfig.Clique != nil &&
-				w.chainConfig.Clique.Period > 0) || (w.chainConfig.Spos != nil)) {
+			if w.isRunning() && ((w.chainConfig.Spos != nil ) || (w.chainConfig.Ethash != nil) || (w.chainConfig.Clique != nil && w.chainConfig.Clique.Period > 0)) {
 				// Short circuit if no new transaction arrives.
 				if atomic.LoadInt32(&w.newTxs) == 0 {
 					if w.chainConfig.Spos != nil {

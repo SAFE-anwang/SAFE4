@@ -130,6 +130,9 @@ func GetCompleteBlockFlag() bool {
 	return CompleteBlockFlag
 }
 
+var heightBlockLock sync.RWMutex
+var heightBlock = make(map[uint64]common.Hash)
+
 // Various error messages to mark blocks invalid. These should be private to
 // prevent engine specific errors from being referenced in the remainder of the
 // codebase, inherently breaking if the engine is swapped out. Please put common
@@ -787,6 +790,14 @@ func (s *Spos) Finalize(chain consensus.ChainHeaderReader, header *types.Header,
 
 // FinalizeAndAssemble implements consensus.Engine, ensuring no uncles are set, and returns the final block.
 func (s *Spos) FinalizeAndAssemble(chain consensus.ChainHeaderReader, header *types.Header, state *state.StateDB, txs []*types.Transaction, uncles []*types.Header, receipts []*types.Receipt) (*types.Block, error) {
+	height := header.Number.Uint64()
+
+	heightBlockLock.Lock()
+	if v, flag := heightBlock[height]; flag {
+		return nil, fmt.Errorf("try to generate multiple block in same height[%d], u has generated block: %s", height, v.Hex())
+	}
+	heightBlockLock.Unlock()
+
 	if GetCompleteBlockFlag() {
 		blocksSpace, err := s.GetBlockSpace(header.ParentHash)
 		if err != nil {
@@ -806,6 +817,18 @@ func (s *Spos) FinalizeAndAssemble(chain consensus.ChainHeaderReader, header *ty
 
 	header.Root = state.IntermediateRoot(chain.Config().IsEIP158(header.Number))
 	header.UncleHash = types.CalcUncleHash(nil)
+
+	if GetCompleteBlockFlag() {
+		heightBlockLock.Lock()
+		heightBlock[height] = header.Hash()
+		for k := range heightBlock {
+			if k < height - 360 {
+				delete(heightBlock, k)
+			}
+		}
+		heightBlockLock.Unlock()
+	}
+
 	// Assemble and return the final block for sealing
 	return types.NewBlock(header, txs, nil, receipts, trie.NewStackTrie(nil)), nil
 }

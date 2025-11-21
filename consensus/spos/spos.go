@@ -796,6 +796,7 @@ func (s *Spos) FinalizeAndAssemble(chain consensus.ChainHeaderReader, header *ty
 
 	heightBlockLock.Lock()
 	if v, flag := heightBlock[height]; flag {
+		heightBlockLock.Unlock()
 		return nil, fmt.Errorf("try to generate multiple block in same height[%d], u has generated block: %s", height, v.Hex())
 	}
 	heightBlockLock.Unlock()

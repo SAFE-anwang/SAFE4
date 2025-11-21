@@ -255,6 +255,7 @@ type Spos struct {
 
 	chain         *core.BlockChain
 	blockChainAPI *ethapi.PublicBlockChainAPI
+	transactionPoolAPI *ethapi.PublicTransactionPoolAPI
 	server        *p2p.Server
 	exit          bool
 
@@ -299,8 +300,9 @@ func (s *Spos) SetChain(chain *core.BlockChain) {
 	s.chain = chain
 }
 
-func (s *Spos) SetExtraAPIs(blockChainAPI *ethapi.PublicBlockChainAPI) {
+func (s *Spos) SetExtraAPIs(blockChainAPI *ethapi.PublicBlockChainAPI, transactionPoolAPI *ethapi.PublicTransactionPoolAPI) {
 	s.blockChainAPI = blockChainAPI
+	s.transactionPoolAPI = transactionPoolAPI
 }
 
 func (s *Spos ) SetServer(server *p2p.Server) {

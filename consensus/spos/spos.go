@@ -1417,18 +1417,6 @@ func (s *Spos) GetNextMasterNode(hash common.Hash) (common.Address, error) {
 	return contract_api.GetNextMasterNode(s.ctx, s.blockChainAPI, rpc.BlockNumberOrHashWithHash(hash, false))
 }
 
-func selectNext(mns []*types.MasterNodeInfo) common.Address {
-	pos := 0
-	temp := mns[pos].LastRewardHeight.Int64()
-	for i := 1; i < len(mns); i++ {
-		if temp > mns[i].LastRewardHeight.Int64() {
-			pos = i
-			temp = mns[i].LastRewardHeight.Int64()
-		}
-	}
-	return mns[pos].Addr
-}
-
 func (s *Spos) validateBlockBroadcastTime(header *types.Header, prevBlock *types.Header, blockSpace uint64) error {
 	if header.Difficulty.Cmp(diffInTurn) == 0 {
 		return nil

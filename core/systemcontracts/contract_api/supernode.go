@@ -72,6 +72,12 @@ func GetSuperNodeInfoByID(ctx context.Context, blockChainAPI *ethapi.PublicBlock
 	return ret, err
 }
 
+func GetSuperNodeDisableHeight(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, id *big.Int, blockNrOrHash rpc.BlockNumberOrHash) (*big.Int, error) {
+	ret := new(big.Int)
+	err := QueryContract(ctx, blockChainAPI, blockNrOrHash, systemcontracts.SuperNodeStorageContractAddr, "getDisableHeight", getValues(id), &ret)
+	return ret, err
+}
+
 func GetSuperNodeNum(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, blockNrOrHash rpc.BlockNumberOrHash) (*big.Int, error) {
 	ret := new(big.Int)
 	err := QueryContract(ctx, blockChainAPI, blockNrOrHash, systemcontracts.SuperNodeStorageContractAddr, "getNum", nil, &ret)

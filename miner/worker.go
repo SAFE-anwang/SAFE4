@@ -1263,6 +1263,7 @@ func (w *worker) commit(env *environment, interval func(), update bool, start ti
 		env := env.copy()
 		block, err := w.engine.FinalizeAndAssemble(w.chain, env.header, env.state, env.txs, env.unclelist(), env.receipts)
 		if err != nil {
+			log.Info("worker-FinalizeAndAssemble failed", "err", err)
 			return err
 		}
 

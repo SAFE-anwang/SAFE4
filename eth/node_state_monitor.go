@@ -27,6 +27,7 @@ import (
 const (
 	StateRunning = iota + 1
 	StateStop
+	StateDisable
 )
 
 const mnStateBroadcastDuration = 3600 // 60 minute
@@ -221,6 +222,11 @@ func (monitor *NodeStateMonitor) HandlePing(ping *types.NodePing) error {
 
 		if _, err := CheckPublicIP(info.Enode); err != nil {
 			return fmt.Errorf("invalid supernode ping, %s", err.Error())
+		}
+
+		disableHeight, _ := contract_api.GetSuperNodeDisableHeight(monitor.ctx, monitor.blockChainAPI, ping.Id, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber))
+		if info.State.Int64() == StateDisable && (uint64)(monitor.blockChainAPI.BlockNumber()) <= disableHeight.Uint64() + 2880 { // `disable` supernode can't be changed to `running` until 1 day
+			return nil
 		}
 
 		monitor.snLock.Lock()
@@ -652,6 +658,10 @@ func (monitor *NodeStateMonitor) collectSuperNodes(from common.Address) ([]*big.
 		for _, addr := range snAddrs {
 			info, err := contract_api.GetSuperNodeInfo(monitor.ctx, monitor.blockChainAPI, addr, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber))
 			if err != nil || info.Id.Int64() == 0 {
+				continue
+			}
+			disableHeight, _ := contract_api.GetSuperNodeDisableHeight(monitor.ctx, monitor.blockChainAPI, info.Id, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber))
+			if info.State.Int64() == StateDisable && (uint64)(monitor.blockChainAPI.BlockNumber()) <= disableHeight.Uint64() + 2880 { // discard `disable` supernode
 				continue
 			}
 			infos = append(infos, *info)

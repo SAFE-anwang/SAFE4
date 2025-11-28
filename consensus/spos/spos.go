@@ -96,8 +96,8 @@ var (
 	diffNoTurn = big.NewInt(1) // Block difficulty for out-of-turn signatures
 )
 
-var heightBlockLock sync.RWMutex
-var heightBlock = make(map[uint64]common.Hash)
+var heightSealHashLock sync.RWMutex
+var heightSealHash = make(map[uint64]common.Hash)
 
 // Various error messages to mark blocks invalid. These should be private to
 // prevent engine specific errors from being referenced in the remainder of the
@@ -762,12 +762,12 @@ func (s *Spos) Finalize(chain consensus.ChainHeaderReader, header *types.Header,
 func (s *Spos) FinalizeAndAssemble(chain consensus.ChainHeaderReader, header *types.Header, state *state.StateDB, txs []*types.Transaction, uncles []*types.Header, receipts []*types.Receipt, update bool) (*types.Block, []*types.Transaction, []*types.Receipt, error) {
 	height := header.Number.Uint64()
 
-	heightBlockLock.Lock()
-	if v, flag := heightBlock[height]; flag {
-		heightBlockLock.Unlock()
-		return nil, nil, nil, fmt.Errorf("try to generate multiple block in same height[%d], u has generated block: %s", height, v.Hex())
+	heightSealHashLock.Lock()
+	if v, flag := heightSealHash[height]; flag {
+		heightSealHashLock.Unlock()
+		return nil, nil, nil, fmt.Errorf("try to generate multiple block in same height[%d], u has generated block, sealhash: %s", height, v)
 	}
-	heightBlockLock.Unlock()
+	heightSealHashLock.Unlock()
 
 	if update {
 		blocksSpace, err := s.GetBlockSpace(header.ParentHash)
@@ -790,14 +790,14 @@ func (s *Spos) FinalizeAndAssemble(chain consensus.ChainHeaderReader, header *ty
 	header.UncleHash = types.CalcUncleHash(nil)
 
 	if update {
-		heightBlockLock.Lock()
-		heightBlock[height] = header.Hash()
-		for k := range heightBlock {
+		heightSealHashLock.Lock()
+		heightSealHash[height] = SealHash(header)
+		for k := range heightSealHash {
 			if k < height - 360 {
-				delete(heightBlock, k)
+				delete(heightSealHash, k)
 			}
 		}
-		heightBlockLock.Unlock()
+		heightSealHashLock.Unlock()
 	}
 
 	// Assemble and return the final block for sealing

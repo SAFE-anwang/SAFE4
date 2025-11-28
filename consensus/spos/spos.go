@@ -96,40 +96,6 @@ var (
 	diffNoTurn = big.NewInt(1) // Block difficulty for out-of-turn signatures
 )
 
-var rewardLock  sync.RWMutex
-var retReceipts []*types.Receipt
-var retTxs      []*types.Transaction
-
-func SetReceiptTxs(receipts []*types.Receipt, txs []*types.Transaction) {
-	rewardLock.Lock()
-	defer rewardLock.Unlock()
-	retReceipts = make([]*types.Receipt, len(receipts))
-	copy(retReceipts, receipts)
-	retTxs = make([]*types.Transaction, len(txs))
-	copy(retTxs, txs)
-}
-
-func GetReceiptTxs() ([]*types.Receipt, []*types.Transaction) {
-	rewardLock.Lock()
-	defer rewardLock.Unlock()
-	return retReceipts, retTxs
-}
-
-var CompleteBlockLock sync.RWMutex
-var CompleteBlockFlag bool
-
-func SetCompleteBlockFlag(flag bool) {
-	CompleteBlockLock.Lock()
-	defer CompleteBlockLock.Unlock()
-	CompleteBlockFlag = flag
-}
-
-func GetCompleteBlockFlag() bool {
-	CompleteBlockLock.Lock()
-	defer CompleteBlockLock.Unlock()
-	return CompleteBlockFlag
-}
-
 var heightBlockLock sync.RWMutex
 var heightBlock = make(map[uint64]common.Hash)
 
@@ -791,17 +757,17 @@ func (s *Spos) Finalize(chain consensus.ChainHeaderReader, header *types.Header,
 }
 
 // FinalizeAndAssemble implements consensus.Engine, ensuring no uncles are set, and returns the final block.
-func (s *Spos) FinalizeAndAssemble(chain consensus.ChainHeaderReader, header *types.Header, state *state.StateDB, txs []*types.Transaction, uncles []*types.Header, receipts []*types.Receipt) (*types.Block, error) {
+func (s *Spos) FinalizeAndAssemble(chain consensus.ChainHeaderReader, header *types.Header, state *state.StateDB, txs []*types.Transaction, uncles []*types.Header, receipts []*types.Receipt, update bool) (*types.Block, []*types.Transaction, []*types.Receipt, error) {
 	height := header.Number.Uint64()
 
 	heightBlockLock.Lock()
 	if v, flag := heightBlock[height]; flag {
 		heightBlockLock.Unlock()
-		return nil, fmt.Errorf("try to generate multiple block in same height[%d], u has generated block: %s", height, v.Hex())
+		return nil, nil, nil, fmt.Errorf("try to generate multiple block in same height[%d], u has generated block: %s", height, v.Hex())
 	}
 	heightBlockLock.Unlock()
 
-	if GetCompleteBlockFlag() {
+	if update {
 		blocksSpace, err := s.GetBlockSpace(header.ParentHash)
 		if err != nil {
 			blocksSpace = defaultBlockSpaceSeconds
@@ -809,19 +775,19 @@ func (s *Spos) FinalizeAndAssemble(chain consensus.ChainHeaderReader, header *ty
 
 		s.accumulateRewards(state, header, blocksSpace)
 		if err := s.distributeReward(header, state, &txs, &receipts); err != nil {
-			return nil, err
+			return nil, nil, nil, err
 		}
 	}
 
 	// should not happen. Once happen, stop the node is better than broadcast the block
 	if header.GasLimit < header.GasUsed {
-		return nil, errors.New("gas consumption of system txs exceed the gas limit")
+		return nil, nil, nil, errors.New("gas consumption of system txs exceed the gas limit")
 	}
 
 	header.Root = state.IntermediateRoot(chain.Config().IsEIP158(header.Number))
 	header.UncleHash = types.CalcUncleHash(nil)
 
-	if GetCompleteBlockFlag() {
+	if update {
 		heightBlockLock.Lock()
 		heightBlock[height] = header.Hash()
 		for k := range heightBlock {
@@ -833,7 +799,7 @@ func (s *Spos) FinalizeAndAssemble(chain consensus.ChainHeaderReader, header *ty
 	}
 
 	// Assemble and return the final block for sealing
-	return types.NewBlock(header, txs, nil, receipts, trie.NewStackTrie(nil)), nil
+	return types.NewBlock(header, txs, nil, receipts, trie.NewStackTrie(nil)), txs, receipts, nil
 }
 
 // Authorize injects a private key into the consensus engine to mint new blocks
@@ -1262,7 +1228,6 @@ func (s *Spos) Reward(snAddr common.Address, snCount *big.Int, mnAddr common.Add
 
 	*txs = append(*txs, tx)
 	*receipts = append(*receipts, receipt)
-	SetReceiptTxs(*receipts, *txs)
 	return err
 }
 

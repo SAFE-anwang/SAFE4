@@ -1186,7 +1186,8 @@ func (w *worker) generateWork(params *generateParams) (*types.Block, error) {
 	if !params.noTxs {
 		w.fillTransactions(nil, work)
 	}
-	return w.engine.FinalizeAndAssemble(w.chain, work.header, work.state, work.txs, work.unclelist(), work.receipts)
+	block, _, _, err := w.engine.FinalizeAndAssemble(w.chain, work.header, work.state, work.txs, work.unclelist(), work.receipts, true)
+	return block, err
 }
 
 // commitWork generates several new sealing tasks based on the parent block
@@ -1254,24 +1255,17 @@ func (w *worker) commit(env *environment, interval func(), update bool, start ti
 		}
 		// Create a local environment copy, avoid the data race with snapshot state.
 		// https://github.com/ethereum/go-ethereum/issues/24299
-		if update {
-			spos.SetCompleteBlockFlag(true)
-		}else {
-			spos.SetCompleteBlockFlag(false)
-		}
-
 		env := env.copy()
-		block, err := w.engine.FinalizeAndAssemble(w.chain, env.header, env.state, env.txs, env.unclelist(), env.receipts)
+		block, txs, receipts, err := w.engine.FinalizeAndAssemble(w.chain, env.header, env.state, env.txs, env.unclelist(), env.receipts, update)
 		if err != nil {
 			log.Info("worker-FinalizeAndAssemble failed", "err", err)
 			return err
 		}
 
-		if _, ok := w.engine.(*spos.Spos); ok {
-			if update {
-				env.receipts, env.txs = spos.GetReceiptTxs()
-				env.tcount = len(env.txs)
-			}
+		if update {
+			env.txs = txs
+			env.receipts = receipts
+			env.tcount = len(env.txs)
 		}
 
 		// If we're post merge, just ignore

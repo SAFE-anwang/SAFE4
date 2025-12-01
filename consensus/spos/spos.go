@@ -789,9 +789,10 @@ func (s *Spos) FinalizeAndAssemble(chain consensus.ChainHeaderReader, header *ty
 	header.Root = state.IntermediateRoot(chain.Config().IsEIP158(header.Number))
 	header.UncleHash = types.CalcUncleHash(nil)
 
+	b := types.NewBlock(header, txs, nil, receipts, trie.NewStackTrie(nil))
 	if update {
 		heightSealHashLock.Lock()
-		heightSealHash[height] = SealHash(header)
+		heightSealHash[height] = SealHash(b.Header())
 		for k := range heightSealHash {
 			if k < height - 360 {
 				delete(heightSealHash, k)
@@ -801,7 +802,7 @@ func (s *Spos) FinalizeAndAssemble(chain consensus.ChainHeaderReader, header *ty
 	}
 
 	// Assemble and return the final block for sealing
-	return types.NewBlock(header, txs, nil, receipts, trie.NewStackTrie(nil)), txs, receipts, nil
+	return b, txs, receipts, nil
 }
 
 // Authorize injects a private key into the consensus engine to mint new blocks

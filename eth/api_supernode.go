@@ -111,6 +111,10 @@ func (api *PublicSuperNodeAPI) GetInfoByID(ctx context.Context, id *big.Int, blo
 	return contract_api.GetSuperNodeInfoByID(ctx, api.blockChainAPI, id, blockNrOrHash)
 }
 
+func (api *PublicSuperNodeAPI) GetDisableHeight(ctx context.Context, id *big.Int, blockNrOrHash rpc.BlockNumberOrHash) (*big.Int, error) {
+	return contract_api.GetSuperNodeDisableHeight(ctx, api.blockChainAPI, id, blockNrOrHash)
+}
+
 func (api *PublicSuperNodeAPI) GetNum(ctx context.Context, blockNrOrHash rpc.BlockNumberOrHash) (*big.Int, error) {
 	return contract_api.GetSuperNodeNum(ctx, api.blockChainAPI, blockNrOrHash)
 }

@@ -14373,6 +14373,13 @@ module.exports = XMLHttpRequest;
       inputFormatter: [formatters.formatInputInt, formatters.inputDefaultBlockNumberFormatter]
     });
 
+    var getDisableHeight = new Method({
+      name: 'getDisableHeight',
+      call: 'supernode_getDisableHeight',
+      params: 2,
+      inputFormatter: [formatters.formatInputInt, formatters.inputDefaultBlockNumberFormatter]
+    });
+
     var getNum = new Method({
       name: 'getNum',
       call: 'supernode_getNum',
@@ -14529,6 +14536,7 @@ module.exports = XMLHttpRequest;
       changeIsOfficial,
       getInfo,
       getInfoByID,
+      getDisableHeight,
       getNum,
       getAll,
       getAddrNum4Creator,

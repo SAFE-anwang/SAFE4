@@ -783,22 +783,28 @@ func (w *worker) resultLoop() {
 				}
 				logs = append(logs, receipt.Logs...)
 			}
+			w.heightBlockMu.Lock()
 			// Commit block and state to database.
 			_, err := w.chain.WriteBlockAndSetHead(block, receipts, logs, task.state, true)
 			if err != nil {
+				w.heightBlockMu.Unlock()
 				log.Error("Failed writing block to chain", "err", err)
 				continue
 			}
 
-			w.heightBlockMu.Lock()
 			height := block.NumberU64()
+			if v, flag := w.heightBlock[height]; flag {
+				w.heightBlockMu.Unlock()
+				log.Error("Failed sealed new block, generate multiple block", "height", height, "existent block", v)
+				continue
+			}
+
 			w.heightBlock[height] = hash
 			for k := range w.heightBlock {
-				if k < height - 360 {
+				if k < height - 30 {
 					delete(w.heightBlock, k)
 				}
 			}
-			w.heightBlockMu.Unlock()
 
 			log.Info("Successfully sealed new block", "number", block.Number(), "sealhash", sealhash, "hash", hash,
 				"parent", block.ParentHash(),
@@ -809,6 +815,7 @@ func (w *worker) resultLoop() {
 
 			// Insert the block into the set of pending ones to resultLoop for confirmations
 			w.unconfirmed.Insert(block.NumberU64(), block.Hash())
+			w.heightBlockMu.Unlock()
 
 		case <-w.exitCh:
 			return
@@ -1270,20 +1277,10 @@ func (w *worker) commit(env *environment, interval func(), update bool, start ti
 		}
 		// Create a local environment copy, avoid the data race with snapshot state.
 		// https://github.com/ethereum/go-ethereum/issues/24299
-		w.heightBlockMu.Lock()
-		height := env.header.Number.Uint64()
-		if v, flag := w.heightBlock[height]; flag {
-			w.heightBlockMu.Unlock()
-			err := fmt.Errorf("generate multiple block, height: %v, existent block: %v", height, v)
-			log.Debug("worker-commit failed", "err", err)
-			return err
-		}
-		w.heightBlockMu.Unlock()
-
 		env := env.copy()
 		block, txs, receipts, err := w.engine.FinalizeAndAssemble(w.chain, env.header, env.state, env.txs, env.unclelist(), env.receipts, update)
 		if err != nil {
-			log.Debug("worker-FinalizeAndAssemble failed", "err", err)
+			log.Error("worker-FinalizeAndAssemble failed", "err", err)
 			return err
 		}
 

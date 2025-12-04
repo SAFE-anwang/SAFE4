@@ -1501,10 +1501,6 @@ func NewPublicTransactionPoolAPI(b Backend, nonceLock *AddrLocker) *PublicTransa
 	return &PublicTransactionPoolAPI{b, nonceLock, signer}
 }
 
-func (s *PublicTransactionPoolAPI) GetNonceLock() *AddrLocker {
-	return s.nonceLock
-}
-
 // GetBlockTransactionCountByNumber returns the number of transactions in the block with the given block number.
 func (s *PublicTransactionPoolAPI) GetBlockTransactionCountByNumber(ctx context.Context, blockNr rpc.BlockNumber) *hexutil.Uint {
 	if block, _ := s.b.BlockByNumber(ctx, blockNr); block != nil {

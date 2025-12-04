@@ -219,7 +219,6 @@ type Spos struct {
 	chain         *core.BlockChain
 	blockChainAPI *ethapi.PublicBlockChainAPI
 	transactionPoolAPI *ethapi.PublicTransactionPoolAPI
-	nonceLock     *ethapi.AddrLocker
 	server        *p2p.Server
 	exit          bool
 
@@ -267,7 +266,6 @@ func (s *Spos) SetChain(chain *core.BlockChain) {
 func (s *Spos) SetExtraAPIs(blockChainAPI *ethapi.PublicBlockChainAPI, transactionPoolAPI *ethapi.PublicTransactionPoolAPI) {
 	s.blockChainAPI = blockChainAPI
 	s.transactionPoolAPI = transactionPoolAPI
-	s.nonceLock = transactionPoolAPI.GetNonceLock()
 }
 
 func (s *Spos ) SetServer(server *p2p.Server) {
@@ -1164,14 +1162,7 @@ func (s *Spos) Reward(snAddr common.Address, snCount *big.Int, mnAddr common.Add
 	value.Add(snCount, mnCount)
 	value.Add(value, ppCount)
 	msgData := (hexutil.Bytes)(data)
-
-	s.nonceLock.LockAddr(snAddr)
-	defer s.nonceLock.UnlockAddr(snAddr)
-	nonce, err := s.transactionPoolAPI.GetTransactionCount(s.ctx, snAddr, rpc.BlockNumberOrHashWithNumber(rpc.PendingBlockNumber))
-	if err != nil {
-		tempNonce := state.GetNonce(snAddr)
-		nonce = (*hexutil.Uint64)(&tempNonce)
-	}
+	nonce := state.GetNonce(snAddr)
 
 	// estimate gas first
 	args := ethapi.TransactionArgs{
@@ -1180,7 +1171,7 @@ func (s *Spos) Reward(snAddr common.Address, snCount *big.Int, mnAddr common.Add
 		Data:     &msgData,
 		Value:    (*hexutil.Big)(value),
 		GasPrice: (*hexutil.Big)(common.Big0),
-		Nonce:    nonce,
+		Nonce:    (*hexutil.Uint64)(&nonce),
 	}
 	blockNrOrHash := rpc.BlockNumberOrHashWithNumber(rpc.BlockNumber(header.Number.Uint64() - 1))
 	tempGas, _ := s.blockChainAPI.EstimateGas(s.ctx, args, &blockNrOrHash)
@@ -1195,7 +1186,7 @@ func (s *Spos) Reward(snAddr common.Address, snCount *big.Int, mnAddr common.Add
 		Value:    (*hexutil.Big)(value),
 		Gas:      (*hexutil.Uint64)(&s.rewardTxGas),
 		GasPrice: (*hexutil.Big)(common.Big0),
-		Nonce:    nonce,
+		Nonce:    (*hexutil.Uint64)(&nonce),
 	}
 	rawTx := args.ToTransaction()
 	tx, err := s.signTxFn(accounts.Account{Address: snAddr}, rawTx, s.chainConfig.ChainID)

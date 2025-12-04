@@ -784,18 +784,18 @@ func (w *worker) resultLoop() {
 				logs = append(logs, receipt.Logs...)
 			}
 			w.heightBlockMu.Lock()
+			height := block.NumberU64()
+			if v, flag := w.heightBlock[height]; flag {
+				w.heightBlockMu.Unlock()
+				log.Error("Failed sealed new block, generate multiple block", "height", height, "existent block", v)
+				continue
+			}
+
 			// Commit block and state to database.
 			_, err := w.chain.WriteBlockAndSetHead(block, receipts, logs, task.state, true)
 			if err != nil {
 				w.heightBlockMu.Unlock()
 				log.Error("Failed writing block to chain", "err", err)
-				continue
-			}
-
-			height := block.NumberU64()
-			if v, flag := w.heightBlock[height]; flag {
-				w.heightBlockMu.Unlock()
-				log.Error("Failed sealed new block, generate multiple block", "height", height, "existent block", v)
 				continue
 			}
 

@@ -252,6 +252,9 @@ type worker struct {
 	skipSealHook func(*task) bool                   // Method to decide whether skipping the sealing.
 	fullTaskHook func()                             // Method to call before pushing the full sealing task.
 	resubmitHook func(time.Duration, time.Duration) // Method to call upon updating resubmitting interval.
+
+	heightBlockMu  sync.Mutex
+	heightBlock    map[uint64]common.Hash
 }
 
 func newWorker(config *Config, chainConfig *params.ChainConfig, engine consensus.Engine, eth Backend, mux *event.TypeMux, isLocalBlock func(header *types.Header) bool, init bool) *worker {
@@ -278,6 +281,7 @@ func newWorker(config *Config, chainConfig *params.ChainConfig, engine consensus
 		startCh:            make(chan struct{}, 1),
 		resubmitIntervalCh: make(chan time.Duration),
 		resubmitAdjustCh:   make(chan *intervalAdjust, resubmitAdjustChanSize),
+		heightBlock:        make(map[uint64]common.Hash),
 	}
 	// Subscribe NewTxsEvent for tx pool
 	worker.txsSub = eth.TxPool().SubscribeNewTxsEvent(worker.txsCh)
@@ -785,6 +789,17 @@ func (w *worker) resultLoop() {
 				log.Error("Failed writing block to chain", "err", err)
 				continue
 			}
+
+			w.heightBlockMu.Lock()
+			height := block.NumberU64()
+			w.heightBlock[height] = hash
+			for k := range w.heightBlock {
+				if k < height - 360 {
+					delete(w.heightBlock, k)
+				}
+			}
+			w.heightBlockMu.Unlock()
+
 			log.Info("Successfully sealed new block", "number", block.Number(), "sealhash", sealhash, "hash", hash,
 				"parent", block.ParentHash(),
 				"elapsed", common.PrettyDuration(time.Since(task.createdAt)))
@@ -1255,10 +1270,20 @@ func (w *worker) commit(env *environment, interval func(), update bool, start ti
 		}
 		// Create a local environment copy, avoid the data race with snapshot state.
 		// https://github.com/ethereum/go-ethereum/issues/24299
+		w.heightBlockMu.Lock()
+		height := env.header.Number.Uint64()
+		if v, flag := w.heightBlock[height]; flag {
+			w.heightBlockMu.Unlock()
+			err := fmt.Errorf("generate multiple block, height: %v, existent block: %v", height, v)
+			log.Debug("worker-commit failed", "err", err)
+			return err
+		}
+		w.heightBlockMu.Unlock()
+
 		env := env.copy()
 		block, txs, receipts, err := w.engine.FinalizeAndAssemble(w.chain, env.header, env.state, env.txs, env.unclelist(), env.receipts, update)
 		if err != nil {
-			log.Info("worker-FinalizeAndAssemble failed", "err", err)
+			log.Debug("worker-FinalizeAndAssemble failed", "err", err)
 			return err
 		}
 

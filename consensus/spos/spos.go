@@ -96,9 +96,6 @@ var (
 	diffNoTurn = big.NewInt(1) // Block difficulty for out-of-turn signatures
 )
 
-var heightSealHashLock sync.RWMutex
-var heightSealHash = make(map[uint64]common.Hash)
-
 // Various error messages to mark blocks invalid. These should be private to
 // prevent engine specific errors from being referenced in the remainder of the
 // codebase, inherently breaking if the engine is swapped out. Please put common
@@ -760,15 +757,6 @@ func (s *Spos) Finalize(chain consensus.ChainHeaderReader, header *types.Header,
 
 // FinalizeAndAssemble implements consensus.Engine, ensuring no uncles are set, and returns the final block.
 func (s *Spos) FinalizeAndAssemble(chain consensus.ChainHeaderReader, header *types.Header, state *state.StateDB, txs []*types.Transaction, uncles []*types.Header, receipts []*types.Receipt, update bool) (*types.Block, []*types.Transaction, []*types.Receipt, error) {
-	height := header.Number.Uint64()
-
-	heightSealHashLock.Lock()
-	if v, flag := heightSealHash[height]; flag {
-		heightSealHashLock.Unlock()
-		return nil, nil, nil, fmt.Errorf("try to generate multiple block in same height[%d], u has generated block, sealhash: %s", height, v)
-	}
-	heightSealHashLock.Unlock()
-
 	if update {
 		blocksSpace, err := s.GetBlockSpace(header.ParentHash)
 		if err != nil {
@@ -789,20 +777,8 @@ func (s *Spos) FinalizeAndAssemble(chain consensus.ChainHeaderReader, header *ty
 	header.Root = state.IntermediateRoot(chain.Config().IsEIP158(header.Number))
 	header.UncleHash = types.CalcUncleHash(nil)
 
-	b := types.NewBlock(header, txs, nil, receipts, trie.NewStackTrie(nil))
-	if update {
-		heightSealHashLock.Lock()
-		heightSealHash[height] = SealHash(b.Header())
-		for k := range heightSealHash {
-			if k < height - 360 {
-				delete(heightSealHash, k)
-			}
-		}
-		heightSealHashLock.Unlock()
-	}
-
 	// Assemble and return the final block for sealing
-	return b, txs, receipts, nil
+	return types.NewBlock(header, txs, nil, receipts, trie.NewStackTrie(nil)), txs, receipts, nil
 }
 
 // Authorize injects a private key into the consensus engine to mint new blocks

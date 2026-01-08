@@ -24,16 +24,8 @@ func BatchDeposit4Multi(ctx context.Context, blockChainAPI *ethapi.PublicBlockCh
 	return CallContract(ctx, blockChainAPI, transactionPoolAPI, from, value, systemcontracts.AccountManagerContractAddr, "batchDeposit4Multi", getValues(addrs, times, spaceDay, startDay))
 }
 
-func WithdrawAccount(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, transactionPoolAPI *ethapi.PublicTransactionPoolAPI, from common.Address) (common.Hash, error) {
-	return CallContract(ctx, blockChainAPI, transactionPoolAPI, from, nil, systemcontracts.AccountManagerContractAddr, "withdraw", nil)
-}
-
 func WithdrawAccountByID(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, transactionPoolAPI *ethapi.PublicTransactionPoolAPI, from common.Address, ids []*big.Int) (common.Hash, error) {
 	return CallContract(ctx, blockChainAPI, transactionPoolAPI, from, nil, systemcontracts.AccountManagerContractAddr, "withdrawByID", getValues(ids))
-}
-
-func TransferAccount(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, transactionPoolAPI *ethapi.PublicTransactionPoolAPI, from common.Address, to common.Address, amount *hexutil.Big, lockDay *big.Int) (common.Hash, error) {
-	return CallContract(ctx, blockChainAPI, transactionPoolAPI, from, nil, systemcontracts.AccountManagerContractAddr, "transfer", getValues(to, amount, lockDay))
 }
 
 func AddAccountLockDay(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, transactionPoolAPI *ethapi.PublicTransactionPoolAPI, from common.Address, id *big.Int, day *big.Int) (common.Hash, error) {

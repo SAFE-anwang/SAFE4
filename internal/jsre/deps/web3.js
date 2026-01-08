@@ -13841,25 +13841,11 @@ module.exports = XMLHttpRequest;
         inputFormatter: [formatters.inputAddressFormatter, formatters.inputBigNumberFormatter, formatters.inputArrayFormatter, formatters.formatInputInt, formatters.formatInputInt, formatters.formatInputInt]
       });
 
-      var withdraw = new Method({
-        name: 'withdraw',
-        call: 'account_withdraw',
-        params: 1,
-        inputFormatter: [formatters.inputAddressFormatter]
-      });
-
       var withdrawByID = new Method({
         name: 'withdrawByID',
         call: 'account_withdrawByID',
         params: 2,
         inputFormatter: [formatters.inputAddressFormatter, formatters.inputArrayFormatter]
-      });
-
-      var transfer = new Method({
-        name: 'transfer',
-        call: 'account_transfer',
-        params: 4,
-        inputFormatter: [formatters.inputAddressFormatter, formatters.inputAddressFormatter, formatters.inputBigNumberFormatter, formatters.formatInputInt]
       });
 
       var addLockDay = new Method({
@@ -13957,9 +13943,7 @@ module.exports = XMLHttpRequest;
         deposit,
         batchDeposit4One,
         batchDeposit4Multi,
-        withdraw,
         withdrawByID,
-        transfer,
         addLockDay,
         getImmatureAmount,
         getTotalAmount,

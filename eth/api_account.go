@@ -33,16 +33,8 @@ func (api *PrivateAccountManagerAPI) BatchDeposit4Multi(ctx context.Context, fro
 	return contract_api.BatchDeposit4Multi(ctx, api.blockChainAPI, api.transactionPoolAPI, from, value, addrs, times, spaceDay, startDay)
 }
 
-func (api *PrivateAccountManagerAPI) Withdraw(ctx context.Context, from common.Address) (common.Hash, error) {
-	return contract_api.WithdrawAccount(ctx, api.blockChainAPI, api.transactionPoolAPI, from)
-}
-
 func (api *PrivateAccountManagerAPI) WithdrawByID(ctx context.Context, from common.Address, ids []*big.Int) (common.Hash, error) {
 	return contract_api.WithdrawAccountByID(ctx, api.blockChainAPI, api.transactionPoolAPI, from, ids)
-}
-
-func (api *PrivateAccountManagerAPI) Transfer(ctx context.Context, from common.Address, to common.Address, amount *hexutil.Big, lockDay *big.Int) (common.Hash, error) {
-	return contract_api.TransferAccount(ctx, api.blockChainAPI, api.transactionPoolAPI, from, to, amount, lockDay)
 }
 
 func (api *PrivateAccountManagerAPI) AddLockDay(ctx context.Context, from common.Address, id *big.Int, day *big.Int) (common.Hash, error) {

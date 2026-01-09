@@ -46,12 +46,20 @@ func NewPublicSNVoteAPI(e *Ethereum) *PublicSNVoteAPI {
 	return &PublicSNVoteAPI{e, e.GetPublicBlockChainAPI()}
 }
 
+func (api *PublicSNVoteAPI) GetRecrodByID(ctx context.Context, id *big.Int, blockNrOrHash rpc.BlockNumberOrHash) (*types.VoteRecord, error) {
+	return contract_api.GetVoteRecordByID(ctx, api.blockChainAPI, id, blockNrOrHash)
+}
+
 func (api *PublicSNVoteAPI) GetAmount4Voter(ctx context.Context, voterAddr common.Address, blockNrOrHash rpc.BlockNumberOrHash) (*big.Int, error) {
 	return contract_api.GetAmount4Voter(ctx, api.blockChainAPI, voterAddr, blockNrOrHash)
 }
 
 func (api *PublicSNVoteAPI) GetVoteNum4Voter(ctx context.Context, voterAddr common.Address, blockNrOrHash rpc.BlockNumberOrHash) (*big.Int, error) {
 	return contract_api.GetVoteNum4Voter(ctx, api.blockChainAPI, voterAddr, blockNrOrHash)
+}
+
+func (api *PublicSNVoteAPI) GetVoteNum4VoterWithDst(ctx context.Context, voterAddr common.Address, dstAddr common.Address, blockNrOrHash rpc.BlockNumberOrHash) (*big.Int, error) {
+	return contract_api.GetVoteNum4VoterWithDst(ctx, api.blockChainAPI, voterAddr, dstAddr, blockNrOrHash)
 }
 
 func (api *PublicSNVoteAPI) GetSNNum4Voter(ctx context.Context, voterAddr common.Address, blockNrOrHash rpc.BlockNumberOrHash) (*big.Int, error) {

@@ -14568,6 +14568,13 @@ module.exports = XMLHttpRequest;
         inputFormatter: [formatters.inputAddressFormatter, formatters.inputAddressFormatter]
       });
 
+      var getRecordByID = new Method({
+        name: 'getRecordByID',
+        call: 'snvote_getRecordByID',
+        params: 2,
+        inputFormatter: [formatters.formatInputInt, formatters.inputDefaultBlockNumberFormatter]
+      });
+
       var getAmount4Voter = new Method({
         name: 'getAmount4Voter',
         call: 'snvote_getAmount4Voter',
@@ -14580,6 +14587,13 @@ module.exports = XMLHttpRequest;
         call: 'snvote_getVoteNum4Voter',
         params: 2,
         inputFormatter: [formatters.inputAddressFormatter, formatters.inputDefaultBlockNumberFormatter]
+      });
+
+      var getVoteNum4VoterWithDst = new Method({
+        name: 'getVoteNum4VoterWithDst',
+        call: 'snvote_getVoteNum4VoterWithDst',
+        params: 3,
+        inputFormatter: [formatters.inputAddressFormatter, formatters.inputAddressFormatter, formatters.inputDefaultBlockNumberFormatter]
       });
 
       var getSNNum4Voter = new Method({
@@ -14713,8 +14727,10 @@ module.exports = XMLHttpRequest;
         voteOrApprovalWithAmount,
         removeVoteOrApproval,
         proxyVote,
+        getRecordByID,
         getAmount4Voter,
         getVoteNum4Voter,
+        getVoteNum4VoterWithDst,
         getSNNum4Voter,
         getSNs4Voter,
         getProxyNum4Voter,

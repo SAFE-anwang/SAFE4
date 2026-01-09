@@ -28,6 +28,12 @@ func ProxyVote(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, t
 	return CallContract(ctx, blockChainAPI, transactionPoolAPI, from, nil, systemcontracts.SNVoteContractAddr, "proxyVote", getValues(snAddr))
 }
 
+func GetVoteRecordByID(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, id *big.Int, blockNrOrHash rpc.BlockNumberOrHash) (*types.VoteRecord, error) {
+	ret := new(types.VoteRecord)
+	err := QueryContract(ctx, blockChainAPI, blockNrOrHash, systemcontracts.SNVoteContractAddr, "getRecordByID", getValues(id), &ret)
+	return ret, err
+}
+
 func GetAmount4Voter(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, voterAddr common.Address, blockNrOrHash rpc.BlockNumberOrHash) (*big.Int, error) {
 	ret := new(big.Int)
 	err := QueryContract(ctx, blockChainAPI, blockNrOrHash, systemcontracts.SNVoteContractAddr, "getAmount4Voter", getValues(voterAddr), &ret)
@@ -37,6 +43,12 @@ func GetAmount4Voter(ctx context.Context, blockChainAPI *ethapi.PublicBlockChain
 func GetVoteNum4Voter(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, voterAddr common.Address, blockNrOrHash rpc.BlockNumberOrHash) (*big.Int, error) {
 	ret := new(big.Int)
 	err := QueryContract(ctx, blockChainAPI, blockNrOrHash, systemcontracts.SNVoteContractAddr, "getVoteNum4Voter", getValues(voterAddr), &ret)
+	return ret, err
+}
+
+func GetVoteNum4VoterWithDst(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, voterAddr common.Address, dstAddr common.Address, blockNrOrHash rpc.BlockNumberOrHash) (*big.Int, error) {
+	ret := new(big.Int)
+	err := QueryContract(ctx, blockChainAPI, blockNrOrHash, systemcontracts.SNVoteContractAddr, "getVoteNum4Voter", getValues(voterAddr, dstAddr), &ret)
 	return ret, err
 }
 

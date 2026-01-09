@@ -62,6 +62,14 @@ func GetProposalInfo(ctx context.Context, blockChainAPI *ethapi.PublicBlockChain
 	return ret, err
 }
 
+func GetProposalRewardIDs(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, id *big.Int, blockNrOrHash rpc.BlockNumberOrHash) ([]*big.Int, error) {
+	ret := new([]*big.Int)
+	if err := QueryContract(ctx, blockChainAPI, blockNrOrHash, systemcontracts.ProposalContractAddr, "getRewardIDs", getValues(id), &ret); err != nil {
+		return nil, err
+	}
+	return *ret, nil
+}
+
 func GetProposalVoterNum(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, id *big.Int, blockNrOrHash rpc.BlockNumberOrHash) (*big.Int, error) {
 	ret := new(big.Int)
 	err := QueryContract(ctx, blockChainAPI, blockNrOrHash, systemcontracts.ProposalContractAddr, "getVoterNum", getValues(id), &ret)

@@ -14871,6 +14871,13 @@ module.exports = XMLHttpRequest;
         inputFormatter: [formatters.formatInputInt, formatters.formatInputInt, formatters.formatInputInt, formatters.inputDefaultBlockNumberFormatter]
       });
 
+      var getRewardIDs = new Method({
+        name: 'getRewardIDs',
+        call: 'proposal_getRewardIDs',
+        params: 2,
+        inputFormatter: [formatters.formatInputInt, formatters.inputDefaultBlockNumberFormatter]
+      });
+
       var getNum = new Method({
         name: 'getNum',
         call: 'proposal_getNum',
@@ -14920,6 +14927,7 @@ module.exports = XMLHttpRequest;
         getInfo,
         getVoterNum,
         getVoteInfo,
+        getRewardIDs,
         getNum,
         getAll,
         getMineNum,

@@ -74,6 +74,10 @@ func (api *PublicProposalAPI) GetInfo(ctx context.Context, id *big.Int, blockNrO
 	return contract_api.GetProposalInfo(ctx, api.blockChainAPI, id, blockNrOrHash)
 }
 
+func (api *PublicProposalAPI) GetRewardIDs(ctx context.Context, id *big.Int, blockNrOrHash rpc.BlockNumberOrHash) ([]*big.Int, error) {
+	return contract_api.GetProposalRewardIDs(ctx, api.blockChainAPI, id, blockNrOrHash)
+}
+
 func (api *PublicProposalAPI) GetVoterNum(ctx context.Context, id *big.Int, blockNrOrHash rpc.BlockNumberOrHash) (*big.Int, error) {
 	return contract_api.GetProposalVoterNum(ctx, api.blockChainAPI, id, blockNrOrHash)
 }

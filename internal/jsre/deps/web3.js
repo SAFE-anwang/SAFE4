@@ -14156,6 +14156,13 @@ module.exports = XMLHttpRequest;
       inputFormatter: [formatters.inputAddressFormatter, formatters.inputDefaultBlockNumberFormatter]
     });
 
+    var isUnion = new Method({
+      name: 'isUnion',
+      call: 'masternode_isUnion',
+      params: 2,
+      inputFormatter: [formatters.inputAddressFormatter, formatters.inputDefaultBlockNumberFormatter]
+    });
+
     var existNodeAddress = new Method({
       name: 'existNodeAddress',
       call: 'masternode_existNodeAddress',
@@ -14195,6 +14202,7 @@ module.exports = XMLHttpRequest;
       existEnode,
       existLockID,
       isValid,
+      isUnion,
       existNodeAddress,
       existNodeEnode
     ];
@@ -14445,6 +14453,13 @@ module.exports = XMLHttpRequest;
       inputFormatter: [formatters.inputAddressFormatter, formatters.inputDefaultBlockNumberFormatter]
     });
 
+    var isUnion = new Method({
+      name: 'isUnion',
+      call: 'supernode_isUnion',
+      params: 2,
+      inputFormatter: [formatters.inputAddressFormatter, formatters.inputDefaultBlockNumberFormatter]
+    });
+
     var existNodeAddress = new Method({
       name: 'existNodeAddress',
       call: 'supernode_existNodeAddress',
@@ -14491,6 +14506,7 @@ module.exports = XMLHttpRequest;
       existLockID,
       isValid,
       isFormal,
+      isUnion,
       existNodeAddress,
       existNodeEnode
     ];

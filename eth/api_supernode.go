@@ -175,6 +175,10 @@ func (api *PublicSuperNodeAPI) IsFormal(ctx context.Context, addr common.Address
 	return contract_api.IsFormalSuperNode(ctx, api.blockChainAPI, addr, blockNrOrHash)
 }
 
+func (api *PublicSuperNodeAPI) IsUnion(ctx context.Context, addr common.Address, blockNrOrHash rpc.BlockNumberOrHash) (bool, error) {
+	return contract_api.IsUnionSuperNode(ctx, api.blockChainAPI, addr, blockNrOrHash)
+}
+
 func (api *PublicSuperNodeAPI) ExistNodeAddress(ctx context.Context, addr common.Address, blockNrOrHash rpc.BlockNumberOrHash) (bool, error) {
 	return contract_api.ExistNodeAddress(ctx, api.blockChainAPI, addr, blockNrOrHash)
 }

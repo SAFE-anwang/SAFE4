@@ -147,6 +147,10 @@ func (api *PublicMasterNodeAPI) IsValid(ctx context.Context, addr common.Address
 	return contract_api.IsValidMasterNode(ctx, api.blockChainAPI, addr, blockNrOrHash)
 }
 
+func (api *PublicMasterNodeAPI) IsUnion(ctx context.Context, addr common.Address, blockNrOrHash rpc.BlockNumberOrHash) (bool, error) {
+	return contract_api.IsUnionMasterNode(ctx, api.blockChainAPI, addr, blockNrOrHash)
+}
+
 func (api *PublicMasterNodeAPI) ExistNodeAddress(ctx context.Context, addr common.Address, blockNrOrHash rpc.BlockNumberOrHash) (bool, error) {
 	return contract_api.ExistNodeAddress(ctx, api.blockChainAPI, addr, blockNrOrHash)
 }

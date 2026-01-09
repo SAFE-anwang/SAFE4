@@ -195,3 +195,11 @@ func IsFormalSuperNode(ctx context.Context, blockChainAPI *ethapi.PublicBlockCha
 	}
 	return *ret, nil
 }
+
+func IsUnionSuperNode(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, addr common.Address, blockNrOrHash rpc.BlockNumberOrHash) (bool, error) {
+	ret := new(bool)
+	if err := QueryContract(ctx, blockChainAPI, blockNrOrHash, systemcontracts.SuperNodeStorageContractAddr, "isUnion", getValues(addr), &ret); err != nil {
+		return false, err
+	}
+	return *ret, nil
+}

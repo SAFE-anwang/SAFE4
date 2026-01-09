@@ -154,6 +154,14 @@ func IsValidMasterNode(ctx context.Context, blockChainAPI *ethapi.PublicBlockCha
 	return *ret, nil
 }
 
+func IsUnionMasterNode(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, addr common.Address, blockNrOrHash rpc.BlockNumberOrHash) (bool, error) {
+	ret := new(bool)
+	if err := QueryContract(ctx, blockChainAPI, blockNrOrHash, systemcontracts.MasterNodeStorageContractAddr, "isUnion", getValues(addr), &ret); err != nil {
+		return false, err
+	}
+	return *ret, nil
+}
+
 func ExistNodeAddress(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, addr common.Address, blockNrOrHash rpc.BlockNumberOrHash) (bool, error) {
 	ret := new(bool)
 	if err := QueryContract(ctx, blockChainAPI, blockNrOrHash, systemcontracts.MasterNodeStorageContractAddr, "existNodeAddress", getValues(addr), &ret); err != nil {

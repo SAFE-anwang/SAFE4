@@ -56,10 +56,6 @@ func ChangeSuperNodeIncentivePlan(ctx context.Context, blockChainAPI *ethapi.Pub
 	return CallContract(ctx, blockChainAPI, transactionPoolAPI, from, nil, systemcontracts.SuperNodeLogicContractAddr, "changeIncentivePlan", getValues(id, creatorIncentive, partnerIncentive, voterIncentive))
 }
 
-func ChangeSuperNodeIsOfficial(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, transactionPoolAPI *ethapi.PublicTransactionPoolAPI, from common.Address, addr common.Address, flag bool) (common.Hash, error) {
-	return CallContract(ctx, blockChainAPI, transactionPoolAPI, from, nil, systemcontracts.SuperNodeLogicContractAddr, "changeIsOfficial", getValues(addr, flag))
-}
-
 func GetSuperNodeInfo(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, addr common.Address, blockNrOrHash rpc.BlockNumberOrHash) (*types.SuperNodeInfo, error) {
 	ret := new(types.SuperNodeInfo)
 	err := QueryContract(ctx, blockChainAPI, blockNrOrHash, systemcontracts.SuperNodeStorageContractAddr, "getInfo", getValues(addr), &ret)

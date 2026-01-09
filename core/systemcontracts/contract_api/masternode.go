@@ -44,10 +44,6 @@ func ChangeMasterNodeDescriptionByID(ctx context.Context, blockChainAPI *ethapi.
 	return CallContract(ctx, blockChainAPI, transactionPoolAPI, from, nil, systemcontracts.MasterNodeLogicContractAddr, "changeDescriptionByID", getValues(id, description))
 }
 
-func ChangeMasterNodeIsOfficial(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, transactionPoolAPI *ethapi.PublicTransactionPoolAPI, from common.Address, addr common.Address, flag bool) (common.Hash, error) {
-	return CallContract(ctx, blockChainAPI, transactionPoolAPI, from, nil, systemcontracts.MasterNodeLogicContractAddr, "changeIsOfficial", getValues(addr, flag))
-}
-
 func GetMasterNodeInfo(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, addr common.Address, blockNrOrHash rpc.BlockNumberOrHash) (*types.MasterNodeInfo, error) {
 	ret := new(types.MasterNodeInfo)
 	err := QueryContract(ctx, blockChainAPI, blockNrOrHash, systemcontracts.MasterNodeStorageContractAddr, "getInfo", getValues(addr), &ret)

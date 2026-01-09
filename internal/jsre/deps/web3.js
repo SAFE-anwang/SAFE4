@@ -14051,13 +14051,6 @@ module.exports = XMLHttpRequest;
       inputFormatter: [formatters.inputAddressFormatter, formatters.formatInputInt, formatters.formatInputString]
     });
 
-    var changeIsOfficial = new Method({
-      name: 'changeIsOfficial',
-      call: 'masternode_changeIsOfficial',
-      params: 3,
-      inputFormatter: [formatters.inputAddressFormatter, formatters.inputAddressFormatter, formatters.formatInputBool]
-    });
-
     var getInfo = new Method({
       name: 'getInfo',
       call: 'masternode_getInfo',
@@ -14201,7 +14194,6 @@ module.exports = XMLHttpRequest;
       changeEnodeByID,
       changeDescription,
       changeDescriptionByID,
-      changeIsOfficial,
       getInfo,
       getInfoByID,
       getNext,
@@ -14334,13 +14326,6 @@ module.exports = XMLHttpRequest;
       call: 'supernode_changeIncentivePlan',
       params: 5,
       inputFormatter: [formatters.inputAddressFormatter, formatters.formatInputInt, formatters.formatInputInt, formatters.formatInputInt, formatters.formatInputInt]
-    });
-
-    var changeIsOfficial = new Method({
-      name: 'changeIsOfficial',
-      call: 'supernode_changeIsOfficial',
-      params: 3,
-      inputFormatter: [formatters.inputAddressFormatter, formatters.inputAddressFormatter, formatters.formatInputBool]
     });
 
     var getInfo = new Method({
@@ -14517,7 +14502,6 @@ module.exports = XMLHttpRequest;
       changeDescription,
       changeDescriptionByID,
       changeIncentivePlan,
-      changeIsOfficial,
       getInfo,
       getInfoByID,
       getDisableHeight,

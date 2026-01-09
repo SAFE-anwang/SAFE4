@@ -90,10 +90,6 @@ func (api *PrivateSuperNodeAPI) ChangeIncentivePlan(ctx context.Context, from co
 	return contract_api.ChangeSuperNodeIncentivePlan(ctx, api.blockChainAPI, api.transactionPoolAPI, from, id, creatorIncentive, partnerIncentive, voterIncentive)
 }
 
-func (api *PrivateSuperNodeAPI) ChangeIsOfficial(ctx context.Context, from common.Address, addr common.Address, flag bool) (common.Hash, error) {
-	return contract_api.ChangeSuperNodeIsOfficial(ctx, api.blockChainAPI, api.transactionPoolAPI, from, addr, flag)
-}
-
 type PublicSuperNodeAPI struct {
 	e             *Ethereum
 	blockChainAPI *ethapi.PublicBlockChainAPI

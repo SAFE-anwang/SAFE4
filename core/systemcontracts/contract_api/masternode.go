@@ -146,14 +146,6 @@ func ExistMasterNodeLockID(ctx context.Context, blockChainAPI *ethapi.PublicBloc
 	return *ret, nil
 }
 
-func ExistMasterNodeFounder(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, founder common.Address, blockNrOrHash rpc.BlockNumberOrHash) (bool, error) {
-	ret := new(bool)
-	if err := QueryContract(ctx, blockChainAPI, blockNrOrHash, systemcontracts.MasterNodeStorageContractAddr, "existFounder", getValues(founder), &ret); err != nil {
-		return false, err
-	}
-	return *ret, nil
-}
-
 func IsValidMasterNode(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, addr common.Address, blockNrOrHash rpc.BlockNumberOrHash) (bool, error) {
 	ret := new(bool)
 	if err := QueryContract(ctx, blockChainAPI, blockNrOrHash, systemcontracts.MasterNodeStorageContractAddr, "isValid", getValues(addr), &ret); err != nil {
@@ -173,14 +165,6 @@ func ExistNodeAddress(ctx context.Context, blockChainAPI *ethapi.PublicBlockChai
 func ExistNodeEnode(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, enode string, blockNrOrHash rpc.BlockNumberOrHash) (bool, error) {
 	ret := new(bool)
 	if err := QueryContract(ctx, blockChainAPI, blockNrOrHash, systemcontracts.MasterNodeStorageContractAddr, "existNodeEnode", getValues(CompressEnode(enode)), &ret); err != nil {
-		return false, err
-	}
-	return *ret, nil
-}
-
-func ExistNodeFounder(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, founder common.Address, blockNrOrHash rpc.BlockNumberOrHash) (bool, error) {
-	ret := new(bool)
-	if err := QueryContract(ctx, blockChainAPI, blockNrOrHash, systemcontracts.MasterNodeStorageContractAddr, "existNodeFounder", getValues(founder), &ret); err != nil {
 		return false, err
 	}
 	return *ret, nil

@@ -14149,13 +14149,6 @@ module.exports = XMLHttpRequest;
       inputFormatter: [formatters.inputAddressFormatter, formatters.formatInputInt, formatters.inputDefaultBlockNumberFormatter]
     });
 
-    var existFounder = new Method({
-      name: 'existFounder',
-      call: 'masternode_existFounder',
-      params: 2,
-      inputFormatter: [formatters.inputAddressFormatter, formatters.inputDefaultBlockNumberFormatter]
-    });
-
     var isValid = new Method({
       name: 'isValid',
       call: 'masternode_isValid',
@@ -14175,13 +14168,6 @@ module.exports = XMLHttpRequest;
       call: 'masternode_existNodeEnode',
       params: 2,
       inputFormatter: [formatters.formatInputString, formatters.inputDefaultBlockNumberFormatter]
-    });
-
-    var existNodeFounder = new Method({
-      name: 'existNodeFounder',
-      call: 'masternode_existNodeFounder',
-      params: 2,
-      inputFormatter: [formatters.inputAddressFormatter, formatters.inputDefaultBlockNumberFormatter]
     });
 
     return [
@@ -14208,11 +14194,9 @@ module.exports = XMLHttpRequest;
       existID,
       existEnode,
       existLockID,
-      existFounder,
       isValid,
       existNodeAddress,
-      existNodeEnode,
-      existNodeFounder
+      existNodeEnode
     ];
   };
 
@@ -14447,13 +14431,6 @@ module.exports = XMLHttpRequest;
       inputFormatter: [formatters.inputAddressFormatter, formatters.formatInputInt, formatters.inputDefaultBlockNumberFormatter]
     });
 
-    var existFounder = new Method({
-      name: 'existFounder',
-      call: 'supernode_existFounder',
-      params: 2,
-      inputFormatter: [formatters.inputAddressFormatter, formatters.inputDefaultBlockNumberFormatter]
-    });
-
     var isValid = new Method({
       name: 'isValid',
       call: 'supernode_isValid',
@@ -14480,13 +14457,6 @@ module.exports = XMLHttpRequest;
       call: 'supernode_existNodeEnode',
       params: 2,
       inputFormatter: [formatters.formatInputString, formatters.inputDefaultBlockNumberFormatter]
-    });
-
-    var existNodeFounder = new Method({
-      name: 'existNodeFounder',
-      call: 'supernode_existNodeFounder',
-      params: 2,
-      inputFormatter: [formatters.inputAddressFormatter, formatters.inputDefaultBlockNumberFormatter]
     });
 
     return [
@@ -14519,12 +14489,10 @@ module.exports = XMLHttpRequest;
       existName,
       existEnode,
       existLockID,
-      existFounder,
       isValid,
       isFormal,
       existNodeAddress,
-      existNodeEnode,
-      existNodeFounder
+      existNodeEnode
     ];
   };
 

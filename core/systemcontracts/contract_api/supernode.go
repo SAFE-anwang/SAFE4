@@ -180,14 +180,6 @@ func ExistSuperNodeLockID(ctx context.Context, blockChainAPI *ethapi.PublicBlock
 	return *ret, nil
 }
 
-func ExistSuperNodeFounder(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, founder common.Address, blockNrOrHash rpc.BlockNumberOrHash) (bool, error) {
-	ret := new(bool)
-	if err := QueryContract(ctx, blockChainAPI, blockNrOrHash, systemcontracts.SuperNodeStorageContractAddr, "existFounder", getValues(founder), &ret); err != nil {
-		return false, err
-	}
-	return *ret, nil
-}
-
 func IsValidSuperNode(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, addr common.Address, blockNrOrHash rpc.BlockNumberOrHash) (bool, error) {
 	ret := new(bool)
 	if err := QueryContract(ctx, blockChainAPI, blockNrOrHash, systemcontracts.SuperNodeStorageContractAddr, "isValid", getValues(addr), &ret); err != nil {

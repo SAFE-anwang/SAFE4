@@ -167,10 +167,6 @@ func (api *PublicSuperNodeAPI) ExistLockID(ctx context.Context, addr common.Addr
 	return contract_api.ExistSuperNodeLockID(ctx, api.blockChainAPI, addr, lockID, blockNrOrHash)
 }
 
-func (api *PublicSuperNodeAPI) ExistFounder(ctx context.Context, founder common.Address, blockNrOrHash rpc.BlockNumberOrHash) (bool, error) {
-	return contract_api.ExistSuperNodeFounder(ctx, api.blockChainAPI, founder, blockNrOrHash)
-}
-
 func (api *PublicSuperNodeAPI) IsValid(ctx context.Context, addr common.Address, blockNrOrHash rpc.BlockNumberOrHash) (bool, error) {
 	return contract_api.IsValidSuperNode(ctx, api.blockChainAPI, addr, blockNrOrHash)
 }
@@ -185,8 +181,4 @@ func (api *PublicSuperNodeAPI) ExistNodeAddress(ctx context.Context, addr common
 
 func (api *PublicSuperNodeAPI) ExistNodeEnode(ctx context.Context, enode string, blockNrOrHash rpc.BlockNumberOrHash) (bool, error) {
 	return contract_api.ExistNodeEnode(ctx, api.blockChainAPI, enode, blockNrOrHash)
-}
-
-func (api *PublicSuperNodeAPI) ExistNodeFounder(ctx context.Context, founder common.Address, blockNrOrHash rpc.BlockNumberOrHash) (bool, error) {
-	return contract_api.ExistNodeFounder(ctx, api.blockChainAPI, founder, blockNrOrHash)
 }

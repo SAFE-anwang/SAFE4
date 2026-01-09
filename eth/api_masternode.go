@@ -143,10 +143,6 @@ func (api *PublicMasterNodeAPI) ExistLockID(ctx context.Context, addr common.Add
 	return contract_api.ExistMasterNodeLockID(ctx, api.blockChainAPI, addr, lockID, blockNrOrHash)
 }
 
-func (api *PublicMasterNodeAPI) ExistFounder(ctx context.Context, founder common.Address, blockNrOrHash rpc.BlockNumberOrHash) (bool, error) {
-	return contract_api.ExistMasterNodeFounder(ctx, api.blockChainAPI, founder, blockNrOrHash)
-}
-
 func (api *PublicMasterNodeAPI) IsValid(ctx context.Context, addr common.Address, blockNrOrHash rpc.BlockNumberOrHash) (bool, error) {
 	return contract_api.IsValidMasterNode(ctx, api.blockChainAPI, addr, blockNrOrHash)
 }
@@ -157,8 +153,4 @@ func (api *PublicMasterNodeAPI) ExistNodeAddress(ctx context.Context, addr commo
 
 func (api *PublicMasterNodeAPI) ExistNodeEnode(ctx context.Context, enode string, blockNrOrHash rpc.BlockNumberOrHash) (bool, error) {
 	return contract_api.ExistNodeEnode(ctx, api.blockChainAPI, enode, blockNrOrHash)
-}
-
-func (api *PublicMasterNodeAPI) ExistNodeFounder(ctx context.Context, founder common.Address, blockNrOrHash rpc.BlockNumberOrHash) (bool, error) {
-	return contract_api.ExistNodeFounder(ctx, api.blockChainAPI, founder, blockNrOrHash)
 }

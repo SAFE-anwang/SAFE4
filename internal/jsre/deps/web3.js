@@ -14065,6 +14065,13 @@ module.exports = XMLHttpRequest;
       inputFormatter: [formatters.formatInputInt, formatters.inputDefaultBlockNumberFormatter]
     });
 
+    var getIDsByEnode = new Method({
+      name: 'getIDsByEnode',
+      call: 'masternode_getIDsByEnode',
+      params: 2,
+      inputFormatter: [formatters.formatInputString, formatters.inputDefaultBlockNumberFormatter]
+    });
+
     var getNext = new Method({
       name: 'getNext',
       call: 'masternode_getNext',
@@ -14177,6 +14184,20 @@ module.exports = XMLHttpRequest;
       inputFormatter: [formatters.formatInputString, formatters.inputDefaultBlockNumberFormatter]
     });
 
+    var isBindEnode = new Method({
+      name: 'isBindEnode',
+      call: 'masternode_isBindEnode',
+      params: 2,
+      inputFormatter: [formatters.formatInputString, formatters.inputDefaultBlockNumberFormatter]
+    });
+
+    var isValidEnode = new Method({
+      name: 'isValidEnode',
+      call: 'masternode_isValidEnode',
+      params: 2,
+      inputFormatter: [formatters.formatInputString, formatters.inputDefaultBlockNumberFormatter]
+    });
+
     return [
       start,
       register,
@@ -14189,6 +14210,7 @@ module.exports = XMLHttpRequest;
       changeDescriptionByID,
       getInfo,
       getInfoByID,
+      getIDsByEnode,
       getNext,
       getNum,
       getAll,
@@ -14204,7 +14226,9 @@ module.exports = XMLHttpRequest;
       isValid,
       isUnion,
       existNodeAddress,
-      existNodeEnode
+      existNodeEnode,
+      isBindEnode,
+      isValidEnode
     ];
   };
 

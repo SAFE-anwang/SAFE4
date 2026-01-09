@@ -95,6 +95,10 @@ func (api *PublicMasterNodeAPI) GetInfoByID(ctx context.Context, id *big.Int, bl
 	return contract_api.GetMasterNodeInfoByID(ctx, api.blockChainAPI, id, blockNrOrHash)
 }
 
+func (api *PublicMasterNodeAPI) GetIDsByEnode(ctx context.Context, enode string, blockNrOrHash rpc.BlockNumberOrHash) ([]*big.Int, error) {
+	return contract_api.GetMasterNodeIDSByEnode(ctx, api.blockChainAPI, enode, blockNrOrHash)
+}
+
 func (api *PublicMasterNodeAPI) GetNext(ctx context.Context, blockNrOrHash rpc.BlockNumberOrHash) (common.Address, error) {
 	return contract_api.GetNextMasterNode(ctx, api.blockChainAPI, blockNrOrHash)
 }
@@ -157,4 +161,12 @@ func (api *PublicMasterNodeAPI) ExistNodeAddress(ctx context.Context, addr commo
 
 func (api *PublicMasterNodeAPI) ExistNodeEnode(ctx context.Context, enode string, blockNrOrHash rpc.BlockNumberOrHash) (bool, error) {
 	return contract_api.ExistNodeEnode(ctx, api.blockChainAPI, enode, blockNrOrHash)
+}
+
+func (api *PublicMasterNodeAPI) IsBindEnode(ctx context.Context, id *big.Int, enode string, blockNrOrHash rpc.BlockNumberOrHash) (bool, error) {
+	return contract_api.IsBindEnode4MasterNode(ctx, api.blockChainAPI, id, enode, blockNrOrHash)
+}
+
+func (api *PublicMasterNodeAPI) IsValidEnode(ctx context.Context, enode string, blockNrOrHash rpc.BlockNumberOrHash) (bool, error) {
+	return contract_api.IsValidEnode4MasterNode(ctx, api.blockChainAPI, enode, blockNrOrHash)
 }

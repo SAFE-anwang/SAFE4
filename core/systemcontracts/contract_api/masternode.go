@@ -56,6 +56,14 @@ func GetMasterNodeInfoByID(ctx context.Context, blockChainAPI *ethapi.PublicBloc
 	return ret, err
 }
 
+func GetMasterNodeIDSByEnode(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, enode string, blockNrOrHash rpc.BlockNumberOrHash) ([]*big.Int, error) {
+	ret := new([]*big.Int)
+	if err := QueryContract(ctx, blockChainAPI, blockNrOrHash, systemcontracts.MasterNodeStorageContractAddr, "getIDSByEnode", getValues(enode), &ret); err != nil {
+		return nil, err
+	}
+	return *ret, nil
+}
+
 func GetNextMasterNode(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, blockNrOrHash rpc.BlockNumberOrHash) (common.Address, error) {
 	ret := new(common.Address)
 	if err := QueryContract(ctx, blockChainAPI, blockNrOrHash, systemcontracts.MasterNodeStorageContractAddr, "getNext", nil, ret); err != nil {
@@ -173,6 +181,22 @@ func ExistNodeAddress(ctx context.Context, blockChainAPI *ethapi.PublicBlockChai
 func ExistNodeEnode(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, enode string, blockNrOrHash rpc.BlockNumberOrHash) (bool, error) {
 	ret := new(bool)
 	if err := QueryContract(ctx, blockChainAPI, blockNrOrHash, systemcontracts.MasterNodeStorageContractAddr, "existNodeEnode", getValues(CompressEnode(enode)), &ret); err != nil {
+		return false, err
+	}
+	return *ret, nil
+}
+
+func IsBindEnode4MasterNode(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, id *big.Int, enode string, blockNrOrHash rpc.BlockNumberOrHash) (bool, error) {
+	ret := new(bool)
+	if err := QueryContract(ctx, blockChainAPI, blockNrOrHash, systemcontracts.MasterNodeStorageContractAddr, "isBindEnode", getValues(id, enode), &ret); err != nil {
+		return false, err
+	}
+	return *ret, nil
+}
+
+func IsValidEnode4MasterNode(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, enode string, blockNrOrHash rpc.BlockNumberOrHash) (bool, error) {
+	ret := new(bool)
+	if err := QueryContract(ctx, blockChainAPI, blockNrOrHash, systemcontracts.MasterNodeStorageContractAddr, "isValidEnode", getValues(enode), &ret); err != nil {
 		return false, err
 	}
 	return *ret, nil

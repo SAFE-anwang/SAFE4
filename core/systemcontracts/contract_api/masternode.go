@@ -58,7 +58,7 @@ func GetMasterNodeInfoByID(ctx context.Context, blockChainAPI *ethapi.PublicBloc
 
 func GetMasterNodeIDSByEnode(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, enode string, blockNrOrHash rpc.BlockNumberOrHash) ([]*big.Int, error) {
 	ret := new([]*big.Int)
-	if err := QueryContract(ctx, blockChainAPI, blockNrOrHash, systemcontracts.MasterNodeStorageContractAddr, "getIDSByEnode", getValues(enode), &ret); err != nil {
+	if err := QueryContract(ctx, blockChainAPI, blockNrOrHash, systemcontracts.MasterNodeStorageContractAddr, "getIDsByEnode", getValues(enode), &ret); err != nil {
 		return nil, err
 	}
 	return *ret, nil

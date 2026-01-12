@@ -392,40 +392,33 @@ func (monitor *NodeStateMonitor) snBroadcastPing() {
 }
 
 func (monitor *NodeStateMonitor) mnBroadcastPing() {
-	addr, err := monitor.e.Etherbase()
-	if err != nil {
+	mnIDs, err := contract_api.GetMasterNodeIDSByEnode(monitor.ctx, monitor.blockChainAPI, monitor.enode, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber))
+	if err != nil || len(mnIDs) == 0 {
 		return
 	}
 
-	info, err := contract_api.GetMasterNodeInfo(monitor.ctx, monitor.blockChainAPI, addr, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber))
-	if err != nil || info.Id.Int64() == 0 {
-		return
-	}
-
-	if !contract_api.CompareEnode(monitor.enode, info.Enode) {
-		if lastAddr != addr {
-			log.Error("Broadcast masternode ping failed, incompatible enode", "local-enode", monitor.enode, "node-enode", info.Enode)
-			lastAddr = addr
+	localAddrs := monitor.e.AccountManager().Accounts()
+	for _, id := range mnIDs {
+		info, err := contract_api.GetMasterNodeInfoByID(monitor.ctx, monitor.blockChainAPI, id, rpc.BlockNumberOrHashWithNumber(rpc.LatestBlockNumber))
+		if err != nil || info.Id.Int64() == 0 {
+			continue
 		}
-		return
-	}
-
-	curBlock := monitor.e.blockchain.CurrentBlock()
-	ping, err := types.NewNodePing(info.Id, types.MasterNodeType, curBlock.Hash(), curBlock.Number(), monitor.e.p2pServer.Config.PrivateKey)
-	if err != nil {
-		if lastAddr != addr {
-			log.Error("Broadcast masternode ping failed", "error", err)
-			lastAddr = addr
+		for _, v := range localAddrs {
+			if v == info.Addr {
+				curBlock := monitor.e.blockchain.CurrentBlock()
+				if ping, err := types.NewNodePing(info.Id, types.MasterNodeType, curBlock.Hash(), curBlock.Number(), monitor.e.p2pServer.Config.PrivateKey); err == nil {
+					monitor.e.handler.BroadcastNodePing(ping)
+					monitor.mnLock.Lock()
+					monitor.mnMonitorInfos[ping.Id.Int64()] = MonitorInfo{StateRunning, 0, time.Now().Unix()}
+					monitor.lastMnPingHeights[ping.Id.Int64()] = curBlock.Number().Int64()
+					monitor.mnLock.Unlock()
+					log.Info("Broadcast masternode ping", "id", ping.Id, "height", ping.CurHeight)
+				}
+				break
+			}
 		}
-		return
 	}
 
-	monitor.e.handler.BroadcastNodePing(ping)
-	monitor.mnLock.Lock()
-	monitor.mnMonitorInfos[ping.Id.Int64()] = MonitorInfo{StateRunning, 0, time.Now().Unix()}
-	monitor.lastMnPingHeights[ping.Id.Int64()] = curBlock.Number().Int64()
-	monitor.mnLock.Unlock()
-	log.Info("Broadcast masternode ping", "id", ping.Id, "height", ping.CurHeight)
 }
 
 func (monitor *NodeStateMonitor) coinbaseLoop() {

@@ -14187,8 +14187,8 @@ module.exports = XMLHttpRequest;
     var isBindEnode = new Method({
       name: 'isBindEnode',
       call: 'masternode_isBindEnode',
-      params: 2,
-      inputFormatter: [formatters.formatInputString, formatters.inputDefaultBlockNumberFormatter]
+      params: 3,
+      inputFormatter: [formatters.formatInputString, formatters.formatInputString, formatters.inputDefaultBlockNumberFormatter]
     });
 
     var isValidEnode = new Method({

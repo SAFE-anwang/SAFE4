@@ -231,6 +231,9 @@ type BlockChain struct {
 	compactFrom uint64
 	compactTo   uint64
 	compactMu   sync.Mutex
+
+	compactLock    sync.Mutex
+	compactRunning bool
 }
 
 // NewBlockChain returns a fully initialised block chain using information
@@ -429,6 +432,9 @@ func NewBlockChain(db ethdb.Database, cacheConfig *CacheConfig, chainConfig *par
 
 	bc.wg.Add(1)
 	go bc.compactRangeHeaderNumber()
+
+	bc.wg.Add(1)
+	go bc.startStateTrieCompactor()
 
 	state := loadCleanupState(db)
 
@@ -2465,7 +2471,17 @@ func loadCleanupState(db ethdb.Database) CleanupState {
 }
 
 func (bc *BlockChain) maybeCleanupSidechains() {
-	currentHeight := bc.CurrentBlock().NumberU64()
+	if bc.cacheConfig.TrieDirtyDisabled {
+		log.Debug("Archive node detected, skip compaction")
+		return
+	}
+
+	currentBlock := bc.CurrentBlock()
+	if currentBlock == nil {
+		return
+	}
+
+	currentHeight := currentBlock.NumberU64()
 	if currentHeight < cleanupLag {
 		return
 	}
@@ -2527,9 +2543,28 @@ func (bc *BlockChain) maybeCleanupSidechains() {
 		}
 		allHashes := rawdb.ReadAllHashes(bc.db, height)
 		for _, h := range allHashes {
-			if h != canonicalHash {
-				rawdb.DeleteBlock(bc.db, h, height)
+			if h == canonicalHash {
+				continue
 			}
+
+			header := rawdb.ReadHeader(bc.db, h, height)
+			if header == nil || header.Root == (common.Hash{}) {
+				continue
+			}
+
+			if bc.isCanonicalStateRoot(header.Root, height) {
+				continue
+			}
+
+			if bc.stateCache != nil && bc.stateCache.TrieDB() != nil {
+				bc.stateCache.TrieDB().Dereference(header.Root)
+			}
+
+			if bc.triegc != nil {
+				bc.triegc.Push(header.Root, -int64(height))
+			}
+
+			rawdb.DeleteBlock(bc.db, h, height)
 		}
 	}
 
@@ -2544,6 +2579,8 @@ func (bc *BlockChain) maybeCleanupSidechains() {
 
 	log.Debug("Sidechain cleanup finished, starting async compaction",
 		"from", from, "to", to)
+
+	bc.runTrieGC()
 
 	bc.compactRangeAsync(from, to)
 }
@@ -2618,6 +2655,11 @@ func (bc *BlockChain) compactRangeAsync(from, to uint64) {
 }
 
 func (bc *BlockChain) compactRangeHeaderNumber() {
+	if bc.cacheConfig.TrieDirtyDisabled {
+		log.Debug("Archive node detected, skip H-prefix compaction")
+		return
+	}
+
 	ticker := time.NewTicker(24 * time.Hour)
 	defer ticker.Stop()
 	defer bc.wg.Done()
@@ -2666,3 +2708,88 @@ func (bc *BlockChain) procCompactRangeHeaderNumber() {
 
 	log.Info("Completed H-prefix compaction")
 }
+
+func (bc *BlockChain) isCanonicalStateRoot(root common.Hash, height uint64) bool {
+	canonicalHash := rawdb.ReadCanonicalHash(bc.db, height)
+	if canonicalHash == (common.Hash{}) {
+		return false
+	}
+	header := rawdb.ReadHeader(bc.db, canonicalHash, height)
+	if header == nil {
+		return false
+	}
+	return header.Root == root
+}
+
+func (bc *BlockChain) runTrieGC() {
+	triedb := bc.stateCache.TrieDB()
+	if triedb == nil {
+		return
+	}
+	nodes, imgs := triedb.Size()
+	limit := common.StorageSize(bc.cacheConfig.TrieDirtyLimit) * 1024 * 1024
+	if nodes > limit || imgs > 4*1024*1024 {
+		triedb.Cap(limit - ethdb.IdealBatchSize)
+	}
+}
+
+func (bc *BlockChain) startStateTrieCompactor() {
+	if bc.cacheConfig.TrieDirtyDisabled {
+		log.Debug("Archive node detected, skip state trie compaction")
+		return
+	}
+
+	ticker := time.NewTicker(24 * time.Hour)
+	defer ticker.Stop()
+	defer bc.wg.Done()
+
+	for {
+		select {
+		case <-ticker.C:
+			bc.compactStateTrie()
+		case <-bc.quit:
+			log.Info("StartStateTrieCompactor stopped")
+			return
+		}
+	}
+}
+
+func (bc *BlockChain) compactStateTrie() {
+	bc.compactLock.Lock()
+	if bc.compactRunning {
+		bc.compactLock.Unlock()
+		return
+	}
+	bc.compactRunning = true
+	bc.compactLock.Unlock()
+
+	defer func() {
+		bc.compactLock.Lock()
+		bc.compactRunning = false
+		bc.compactLock.Unlock()
+	}()
+
+	for b := byte(0x00); b <= 0xFF; b++ {
+		select {
+		case <-bc.quit:
+			log.Info("State trie compaction canceled", "prefix", fmt.Sprintf("%02X", b))
+			return
+		default:
+		}
+
+		start := []byte{b}
+		var limit []byte
+		if b == 0xFF {
+			limit = nil
+		} else {
+			limit = []byte{b + 1}
+		}
+
+		if err := bc.db.Compact(start, limit); err != nil {
+			log.Warn("LevelDB state trie compaction failed", "prefix", fmt.Sprintf("%02X", b), "err", err)
+		} else {
+			log.Debug("LevelDB state trie compaction finished", "prefix", fmt.Sprintf("%02X", b))
+		}
+	}
+}
+

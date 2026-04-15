@@ -2560,10 +2560,6 @@ func (bc *BlockChain) maybeCleanupSidechains() {
 				bc.stateCache.TrieDB().Dereference(header.Root)
 			}
 
-			if bc.triegc != nil {
-				bc.triegc.Push(header.Root, -int64(height))
-			}
-
 			rawdb.DeleteBlock(bc.db, h, height)
 		}
 	}

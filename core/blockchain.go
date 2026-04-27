@@ -2536,6 +2536,11 @@ func (bc *BlockChain) maybeCleanupSidechains() {
 		to = targetHeight
 	}
 
+	var (
+		rootsBatch []common.Hash
+		deleted    int
+	)
+
 	for height := from; height <= to; height++ {
 		canonicalHash := rawdb.ReadCanonicalHash(bc.db, height)
 		if (canonicalHash == common.Hash{}) {
@@ -2552,15 +2557,18 @@ func (bc *BlockChain) maybeCleanupSidechains() {
 				continue
 			}
 
-			if bc.isCanonicalStateRoot(header.Root, height) {
-				continue
-			}
-
-			if bc.stateCache != nil && bc.stateCache.TrieDB() != nil {
-				bc.stateCache.TrieDB().Dereference(header.Root)
-			}
+			rootsBatch = append(rootsBatch, header.Root)
 
 			rawdb.DeleteBlock(bc.db, h, height)
+			deleted++
+		}
+	}
+
+	if bc.stateCache != nil && bc.stateCache.TrieDB() != nil {
+		triedb := bc.stateCache.TrieDB()
+
+		for _, root := range rootsBatch {
+			triedb.Dereference(root)
 		}
 	}
 
@@ -2705,18 +2713,6 @@ func (bc *BlockChain) procCompactRangeHeaderNumber() {
 	log.Info("Completed H-prefix compaction")
 }
 
-func (bc *BlockChain) isCanonicalStateRoot(root common.Hash, height uint64) bool {
-	canonicalHash := rawdb.ReadCanonicalHash(bc.db, height)
-	if canonicalHash == (common.Hash{}) {
-		return false
-	}
-	header := rawdb.ReadHeader(bc.db, canonicalHash, height)
-	if header == nil {
-		return false
-	}
-	return header.Root == root
-}
-
 func (bc *BlockChain) runTrieGC() {
 	triedb := bc.stateCache.TrieDB()
 	if triedb == nil {
@@ -2756,6 +2752,9 @@ func (bc *BlockChain) compactStateTrie() {
 		bc.compactLock.Unlock()
 		return
 	}
+
+	log.Info("Starting state trie compaction...")
+
 	bc.compactRunning = true
 	bc.compactLock.Unlock()
 
@@ -2787,5 +2786,7 @@ func (bc *BlockChain) compactStateTrie() {
 			log.Debug("LevelDB state trie compaction finished", "prefix", fmt.Sprintf("%02X", b))
 		}
 	}
+
+	log.Info("Completed state trie compaction")
 }
 

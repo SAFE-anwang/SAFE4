@@ -433,9 +433,6 @@ func NewBlockChain(db ethdb.Database, cacheConfig *CacheConfig, chainConfig *par
 	bc.wg.Add(1)
 	go bc.compactRangeHeaderNumber()
 
-	bc.wg.Add(1)
-	go bc.startStateTrieCompactor()
-
 	state := loadCleanupState(db)
 
 	bc.lastSidechainCleanHeight = state.LastSidechainCleanHeight
@@ -2724,69 +2721,3 @@ func (bc *BlockChain) runTrieGC() {
 		triedb.Cap(limit - ethdb.IdealBatchSize)
 	}
 }
-
-func (bc *BlockChain) startStateTrieCompactor() {
-	if bc.cacheConfig.TrieDirtyDisabled {
-		log.Debug("Archive node detected, skip state trie compaction")
-		return
-	}
-
-	ticker := time.NewTicker(24 * time.Hour)
-	defer ticker.Stop()
-	defer bc.wg.Done()
-
-	for {
-		select {
-		case <-ticker.C:
-			bc.compactStateTrie()
-		case <-bc.quit:
-			log.Info("StartStateTrieCompactor stopped")
-			return
-		}
-	}
-}
-
-func (bc *BlockChain) compactStateTrie() {
-	bc.compactLock.Lock()
-	if bc.compactRunning {
-		bc.compactLock.Unlock()
-		return
-	}
-
-	log.Info("Starting state trie compaction...")
-
-	bc.compactRunning = true
-	bc.compactLock.Unlock()
-
-	defer func() {
-		bc.compactLock.Lock()
-		bc.compactRunning = false
-		bc.compactLock.Unlock()
-	}()
-
-	for b := byte(0x00); b <= 0xFF; b++ {
-		select {
-		case <-bc.quit:
-			log.Info("State trie compaction canceled", "prefix", fmt.Sprintf("%02X", b))
-			return
-		default:
-		}
-
-		start := []byte{b}
-		var limit []byte
-		if b == 0xFF {
-			limit = nil
-		} else {
-			limit = []byte{b + 1}
-		}
-
-		if err := bc.db.Compact(start, limit); err != nil {
-			log.Warn("LevelDB state trie compaction failed", "prefix", fmt.Sprintf("%02X", b), "err", err)
-		} else {
-			log.Debug("LevelDB state trie compaction finished", "prefix", fmt.Sprintf("%02X", b))
-		}
-	}
-
-	log.Info("Completed state trie compaction")
-}
-

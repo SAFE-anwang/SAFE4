@@ -231,9 +231,6 @@ type BlockChain struct {
 	compactFrom uint64
 	compactTo   uint64
 	compactMu   sync.Mutex
-
-	compactLock    sync.Mutex
-	compactRunning bool
 }
 
 // NewBlockChain returns a fully initialised block chain using information

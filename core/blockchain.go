@@ -2537,9 +2537,15 @@ func (bc *BlockChain) maybeCleanupSidechains() {
 
 	for height := from; height <= to; height++ {
 		canonicalHash := rawdb.ReadCanonicalHash(bc.db, height)
-		if (canonicalHash == common.Hash{}) {
+		if canonicalHash == (common.Hash{}) {
 			continue
 		}
+
+		canonicalHeader := rawdb.ReadHeader(bc.db, canonicalHash, height)
+		if canonicalHeader == nil {
+			continue
+		}
+
 		allHashes := rawdb.ReadAllHashes(bc.db, height)
 		for _, h := range allHashes {
 			if h == canonicalHash {
@@ -2548,6 +2554,10 @@ func (bc *BlockChain) maybeCleanupSidechains() {
 
 			header := rawdb.ReadHeader(bc.db, h, height)
 			if header == nil || header.Root == (common.Hash{}) {
+				continue
+			}
+
+			if canonicalHeader.Root == header.Root {
 				continue
 			}
 

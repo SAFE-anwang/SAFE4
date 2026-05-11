@@ -2530,10 +2530,8 @@ func (bc *BlockChain) maybeCleanupSidechains() {
 		to = targetHeight
 	}
 
-	var (
-		rootsBatch []common.Hash
-		deleted    int
-	)
+	rootsMap := make(map[common.Hash]struct{})
+	deleted := 0
 
 	for height := from; height <= to; height++ {
 		canonicalHash := rawdb.ReadCanonicalHash(bc.db, height)
@@ -2561,19 +2559,21 @@ func (bc *BlockChain) maybeCleanupSidechains() {
 				continue
 			}
 
-			rootsBatch = append(rootsBatch, header.Root)
+			rootsMap[header.Root] = struct{}{}
 
 			rawdb.DeleteBlock(bc.db, h, height)
 			deleted++
 		}
 	}
 
-	if bc.stateCache != nil && bc.stateCache.TrieDB() != nil {
+	if len(rootsMap) > 0 && bc.stateCache != nil && bc.stateCache.TrieDB() != nil {
 		triedb := bc.stateCache.TrieDB()
 
-		for _, root := range rootsBatch {
-			triedb.Dereference(root)
+		for r := range rootsMap {
+			triedb.Dereference(r)
 		}
+
+		bc.runTrieGC()
 	}
 
 	bc.lastSidechainCleanHeight = to
@@ -2586,9 +2586,7 @@ func (bc *BlockChain) maybeCleanupSidechains() {
 	})
 
 	log.Debug("Sidechain cleanup finished, starting async compaction",
-		"from", from, "to", to)
-
-	bc.runTrieGC()
+		"from", from, "to", to, "deleted", deleted, "roots", len(rootsMap))
 
 	bc.compactRangeAsync(from, to)
 }

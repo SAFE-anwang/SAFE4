@@ -2666,8 +2666,6 @@ func (bc *BlockChain) compactRangeAsync(from, to uint64) {
 }
 
 func (bc *BlockChain) compactRangeHeaderNumber() {
-
-
 	ticker := time.NewTicker(24 * time.Hour)
 	defer ticker.Stop()
 	defer bc.wg.Done()

@@ -427,6 +427,11 @@ func NewBlockChain(db ethdb.Database, cacheConfig *CacheConfig, chainConfig *par
 		}()
 	}
 
+	if bc.cacheConfig.TrieDirtyDisabled {
+		log.Debug("Archive node detected, skip H-prefix compaction")
+		return bc, nil
+	}
+
 	bc.wg.Add(1)
 	go bc.compactRangeHeaderNumber()
 
@@ -2661,10 +2666,7 @@ func (bc *BlockChain) compactRangeAsync(from, to uint64) {
 }
 
 func (bc *BlockChain) compactRangeHeaderNumber() {
-	if bc.cacheConfig.TrieDirtyDisabled {
-		log.Debug("Archive node detected, skip H-prefix compaction")
-		return
-	}
+
 
 	ticker := time.NewTicker(24 * time.Hour)
 	defer ticker.Stop()

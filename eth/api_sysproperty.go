@@ -76,3 +76,19 @@ func (api *PublicSysPropertyAPI) Exist(ctx context.Context, name string, blockNr
 func (api *PublicSysPropertyAPI) ExistUnconfirmed(ctx context.Context, name string, blockNrOrHash rpc.BlockNumberOrHash) (bool, error) {
 	return contract_api.ExistUnconfirmedProperty(ctx, api.blockChainAPI, name, blockNrOrHash)
 }
+
+func (api *PublicSysPropertyAPI) GetOfficialInfo(ctx context.Context, name string, blockNrOrHash rpc.BlockNumberOrHash) (*types.PropertyInfo, error) {
+	return contract_api.GetOfficialPropertyInfo(ctx, api.blockChainAPI, name, blockNrOrHash)
+}
+
+func (api *PublicSysPropertyAPI) GetOfficialValue(ctx context.Context, name string, blockNrOrHash rpc.BlockNumberOrHash) (*big.Int, error) {
+	return contract_api.GetOfficialPropertyValue(ctx, api.blockChainAPI, name, blockNrOrHash)
+}
+
+func (api *PublicSysPropertyAPI) GetOfficialNum(ctx context.Context, blockNrOrHash rpc.BlockNumberOrHash) (*big.Int, error) {
+	return contract_api.GetOfficialPropertyNum(ctx, api.blockChainAPI, blockNrOrHash)
+}
+
+func (api *PublicSysPropertyAPI) GetAllOfficial(ctx context.Context, start *big.Int, count *big.Int, blockNrOrHash rpc.BlockNumberOrHash) ([]string, error) {
+	return contract_api.GetAllOfficialProperties(ctx, api.blockChainAPI, start, count, blockNrOrHash)
+}

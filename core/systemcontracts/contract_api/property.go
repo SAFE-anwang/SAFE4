@@ -84,3 +84,29 @@ func ExistUnconfirmedProperty(ctx context.Context, blockChainAPI *ethapi.PublicB
 	}
 	return *ret, nil
 }
+
+func GetOfficialPropertyInfo(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, name string, blockNrOrHash rpc.BlockNumberOrHash) (*types.PropertyInfo, error) {
+	ret := new(types.PropertyInfo)
+	err := QueryContract(ctx, blockChainAPI, blockNrOrHash, systemcontracts.PropertyContractAddr, "getOfficialInfo", getValues(name), &ret)
+	return ret, err
+}
+
+func GetOfficialPropertyValue(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, name string, blockNrOrHash rpc.BlockNumberOrHash) (*big.Int, error) {
+	ret := new(big.Int)
+	err := QueryContract(ctx, blockChainAPI, blockNrOrHash, systemcontracts.PropertyContractAddr, "getOfficialValue", getValues(name), &ret)
+	return ret, err
+}
+
+func GetOfficialPropertyNum(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, blockNrOrHash rpc.BlockNumberOrHash) (*big.Int, error) {
+	ret := new(big.Int)
+	err := QueryContract(ctx, blockChainAPI, blockNrOrHash, systemcontracts.PropertyContractAddr, "getOfficialNum", nil, &ret)
+	return ret, err
+}
+
+func GetAllOfficialProperties(ctx context.Context, blockChainAPI *ethapi.PublicBlockChainAPI, start *big.Int, count *big.Int, blockNrOrHash rpc.BlockNumberOrHash) ([]string, error) {
+	ret := new([]string)
+	if err := QueryContract(ctx, blockChainAPI, blockNrOrHash, systemcontracts.PropertyContractAddr, "getAllOfficial", getValues(start, count), &ret); err != nil {
+		return nil, err
+	}
+	return *ret, nil
+}

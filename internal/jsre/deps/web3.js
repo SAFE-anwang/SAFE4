@@ -13776,6 +13776,34 @@ module.exports = XMLHttpRequest;
       inputFormatter: [formatters.formatInputString, formatters.inputDefaultBlockNumberFormatter]
     });
 
+    var getOfficialInfo = new Method({
+      name: 'getOfficialInfo',
+      call: 'sysproperty_getOfficialInfo',
+      params: 2,
+      inputFormatter: [formatters.formatInputString, formatters.inputDefaultBlockNumberFormatter]
+    });
+
+    var getOfficialValue = new Method({
+      name: 'getOfficialValue',
+      call: 'sysproperty_getOfficialValue',
+      params: 2,
+      inputFormatter: [formatters.formatInputString, formatters.inputDefaultBlockNumberFormatter]
+    });
+
+    var getOfficialNum = new Method({
+      name: 'getOfficialNum',
+      call: 'sysproperty_getOfficialNum',
+      params: 1,
+      inputFormatter: [formatters.inputDefaultBlockNumberFormatter]
+    });
+
+    var getAllOfficial = new Method({
+      name: 'getAllOfficial',
+      call: 'sysproperty_getAllOfficial',
+      params: 3,
+      inputFormatter: [formatters.formatInputInt, formatters.formatInputInt, formatters.inputDefaultBlockNumberFormatter]
+    });
+
     return [
       add,
       applyUpdate,
@@ -13788,7 +13816,11 @@ module.exports = XMLHttpRequest;
       getUnconfirmedNum,
       getAllUnconfirmed,
       exist,
-      existUnconfirmed
+      existUnconfirmed,
+      getOfficialInfo,
+      getOfficialValue,
+      getOfficialNum,
+      getAllOfficial
     ];
   };
 

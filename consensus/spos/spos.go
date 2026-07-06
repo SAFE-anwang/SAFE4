@@ -1196,7 +1196,7 @@ func (s *Spos) Reward(snAddr common.Address, snCount *big.Int, mnAddr common.Add
 
 	state.Prepare(tx.Hash(), len(*txs))
 	snap := state.Snapshot()
-	gasPool := new(core.GasPool).AddGas(header.GasLimit)
+	gasPool := new(core.GasPool).AddGas(s.rewardTxGas)
 	receipt, err := core.ApplyTransaction(s.chainConfig, s.chain, &header.Coinbase, gasPool, state, header, tx, &header.GasUsed, *s.chain.GetVMConfig())
 	if err != nil {
 		state.RevertToSnapshot(snap)

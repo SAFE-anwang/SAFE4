@@ -1280,7 +1280,7 @@ func (w *worker) commit(env *environment, interval func(), update bool, start ti
 		env := env.copy()
 		block, txs, receipts, err := w.engine.FinalizeAndAssemble(w.chain, env.header, env.state, env.txs, env.unclelist(), env.receipts, update)
 		if err != nil {
-			log.Error("worker-FinalizeAndAssemble failed", "err", err)
+			log.Error("worker-FinalizeAndAssemble failed", "err", err, "number", env.header.Number, "parent", env.header.ParentHash, "txs", len(env.txs), "gas", env.header.GasUsed)
 			return err
 		}
 

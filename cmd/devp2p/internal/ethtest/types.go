@@ -124,6 +124,10 @@ type PooledTransactions eth.PooledTransactionsPacket
 
 func (pt PooledTransactions) Code() int { return 26 }
 
+type NodePing eth.NodePingPacket
+
+func (np NodePing) Code() int { return 16 + int(eth.NodePingMsg) }
+
 // Conn represents an individual connection with a peer
 type Conn struct {
 	*rlpx.Conn
@@ -174,6 +178,8 @@ func (c *Conn) Read() Message {
 		msg = new(GetPooledTransactions)
 	case (PooledTransactions{}.Code()):
 		msg = new(PooledTransactions)
+	case (NodePing{}.Code()):
+		msg = new(NodePing)
 	default:
 		return errorf("invalid message code: %d", code)
 	}
@@ -247,6 +253,8 @@ func (c *Conn) Read66() (uint64, Message) {
 			return 0, errorf("could not rlp decode message: %v", err)
 		}
 		return ethMsg.RequestId, PooledTransactions(ethMsg.PooledTransactionsPacket)
+	case (NodePing{}.Code()):
+		msg = new(NodePing)
 	default:
 		msg = errorf("invalid message code: %d", code)
 	}

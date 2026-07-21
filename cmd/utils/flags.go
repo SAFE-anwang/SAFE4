@@ -921,10 +921,10 @@ func setBootstrapNodes(ctx *cli.Context, cfg *p2p.Config) {
 	}
 }
 
-// setBootstrapNodesV5 creates a list of bootstrap nodes from the command line
-// flags, reverting to pre-configured ones if none have been specified.
+// setBootstrapNodesV5 creates a list of discovery v5 bootstrap nodes from the
+// command line flags, preserving pre-configured nodes when none are specified.
 func setBootstrapNodesV5(ctx *cli.Context, cfg *p2p.Config) {
-	urls := params.V5Bootnodes
+	var urls []string
 	switch {
 	case ctx.GlobalIsSet(BootnodesFlag.Name):
 		urls = SplitAndTrim(ctx.GlobalString(BootnodesFlag.Name))

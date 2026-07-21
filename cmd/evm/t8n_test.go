@@ -245,7 +245,7 @@ func TestT8n(t *testing.T) {
 		},
 	} {
 
-		args := []string{"t8n"}
+		args := []string{"t8n", "--state.chainid", "1"}
 		args = append(args, tc.output.get()...)
 		args = append(args, tc.input.get(tc.base)...)
 		var qArgs []string // quoted args for debugging purposes
@@ -356,7 +356,7 @@ func TestT9n(t *testing.T) {
 		},
 	} {
 
-		args := []string{"t9n"}
+		args := []string{"t9n", "--state.chainid", "1"}
 		args = append(args, tc.input.get(tc.base)...)
 
 		tt.Run("evm-test", args...)

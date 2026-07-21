@@ -21,6 +21,7 @@ import (
 	"strings"
 
 	"github.com/ethereum/go-ethereum/core/vm"
+	"github.com/ethereum/go-ethereum/params"
 	"github.com/ethereum/go-ethereum/tests"
 	"gopkg.in/urfave/cli.v1"
 )
@@ -140,7 +141,7 @@ var (
 	ChainIDFlag = cli.Int64Flag{
 		Name:  "state.chainid",
 		Usage: "ChainID to use",
-		Value: 1,
+		Value: params.SafeChainConfig.ChainID.Int64(),
 	}
 	ForknameFlag = cli.StringFlag{
 		Name: "state.fork",

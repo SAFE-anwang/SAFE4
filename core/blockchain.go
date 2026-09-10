@@ -85,10 +85,10 @@ var (
 )
 
 var (
-	HeaderPrefix       = []byte("h") // header
-	BlockBodyPrefix    = []byte("b") // block body
+	HeaderPrefix        = []byte("h") // header
+	BlockBodyPrefix     = []byte("b") // block body
 	BlockReceiptsPrefix = []byte("r") // block receipts
-	HeaderNumberPrefix = []byte("H") // hash -> number
+	HeaderNumberPrefix  = []byte("H") // hash -> number
 )
 
 const (
@@ -125,9 +125,9 @@ const (
 	//    * New scheme for contract code in order to separate the codes and trie nodes
 	BlockChainVersion uint64 = 8
 
-	cleanupLag       = 4096
-	sidechainBatch   = 256
-	cleanupStateKey  = "cleanup-state"
+	cleanupLag      = 4096
+	sidechainBatch  = 256
+	cleanupStateKey = "cleanup-state"
 )
 
 // CacheConfig contains the configuration values for the trie caching/pruning
@@ -226,11 +226,11 @@ type BlockChain struct {
 
 	lastSidechainCleanHeight uint64
 	tailAccumulated          uint64
-	targetCleanHeight 		 uint64
-	compacting int32
-	compactFrom uint64
-	compactTo   uint64
-	compactMu   sync.Mutex
+	targetCleanHeight        uint64
+	compacting               int32
+	compactFrom              uint64
+	compactTo                uint64
+	compactMu                sync.Mutex
 }
 
 // NewBlockChain returns a fully initialised block chain using information
@@ -2535,7 +2535,8 @@ func (bc *BlockChain) maybeCleanupSidechains() {
 		to = targetHeight
 	}
 
-	rootsMap := make(map[common.Hash]struct{})
+	start := time.Now()
+	scanned := 0
 	deleted := 0
 
 	for height := from; height <= to; height++ {
@@ -2550,6 +2551,7 @@ func (bc *BlockChain) maybeCleanupSidechains() {
 		}
 
 		allHashes := rawdb.ReadAllHashes(bc.db, height)
+		scanned += len(allHashes)
 		for _, h := range allHashes {
 			if h == canonicalHash {
 				continue
@@ -2564,20 +2566,14 @@ func (bc *BlockChain) maybeCleanupSidechains() {
 				continue
 			}
 
-			rootsMap[header.Root] = struct{}{}
-
 			rawdb.DeleteBlock(bc.db, h, height)
 			deleted++
 		}
 	}
 
-	if len(rootsMap) > 0 && bc.stateCache != nil && bc.stateCache.TrieDB() != nil {
-		triedb := bc.stateCache.TrieDB()
-
-		for r := range rootsMap {
-			triedb.Dereference(r)
-		}
-
+	// Trie references belong to triegc, not to the deleted block headers.
+	// Dereferencing historical roots here can release references still in use.
+	if deleted > 0 && bc.stateCache != nil && bc.stateCache.TrieDB() != nil {
 		bc.runTrieGC()
 	}
 
@@ -2590,8 +2586,11 @@ func (bc *BlockChain) maybeCleanupSidechains() {
 		TailAccumulated:          bc.tailAccumulated,
 	})
 
-	log.Debug("Sidechain cleanup finished, starting async compaction",
-		"from", from, "to", to, "deleted", deleted, "roots", len(rootsMap))
+	log.Debug("Sidechain cleanup finished",
+		"from", from, "to", to, "scanned", scanned, "deleted", deleted, "elapsed", common.PrettyDuration(time.Since(start)))
+	if deleted == 0 {
+		return
+	}
 
 	bc.compactRangeAsync(from, to)
 }
@@ -2613,10 +2612,7 @@ func (bc *BlockChain) compactRangeAsync(from, to uint64) {
 		}
 		bc.compactFrom, bc.compactTo = 0, 0
 	}
-	bc.compactMu.Unlock()
-
 	if !atomic.CompareAndSwapInt32(&bc.compacting, 0, 1) {
-		bc.compactMu.Lock()
 		if bc.compactFrom == 0 || from < bc.compactFrom {
 			bc.compactFrom = from
 		}
@@ -2627,11 +2623,11 @@ func (bc *BlockChain) compactRangeAsync(from, to uint64) {
 		log.Debug("Compaction already running, merge pending range", "from", from, "to", to)
 		return
 	}
+	bc.compactMu.Unlock()
 
 	bc.wg.Add(1)
 	go func(from, to uint64) {
 		defer bc.wg.Done()
-		defer atomic.StoreInt32(&bc.compacting, 0)
 
 		prefixes := [][]byte{
 			HeaderPrefix,
@@ -2639,28 +2635,42 @@ func (bc *BlockChain) compactRangeAsync(from, to uint64) {
 			BlockReceiptsPrefix,
 		}
 
-		for _, prefix := range prefixes {
-			select {
-			case <-bc.quit:
-				log.Info("compaction canceled", "prefix", string(prefix))
+		for {
+			for _, prefix := range prefixes {
+				select {
+				case <-bc.quit:
+					log.Info("compaction canceled", "prefix", string(prefix))
+					bc.compactMu.Lock()
+					atomic.StoreInt32(&bc.compacting, 0)
+					bc.compactMu.Unlock()
+					return
+				default:
+				}
+
+				start := append([]byte{}, prefix...)
+				start = append(start, encodeBlockNumber(from)...)
+
+				limit := append([]byte{}, prefix...)
+				limit = append(limit, encodeBlockNumber(to+1)...)
+
+				started := time.Now()
+				if err := bc.db.Compact(start, limit); err != nil {
+					log.Warn("LevelDB compaction failed", "prefix", string(prefix), "from", from, "to", to, "elapsed", common.PrettyDuration(time.Since(started)), "err", err)
+				} else {
+					log.Debug("LevelDB compaction finished", "prefix", string(prefix), "from", from, "to", to, "elapsed", common.PrettyDuration(time.Since(started)))
+				}
+			}
+			// Check pending work and become idle under the same lock used by
+			// enqueuers, so a range cannot be stranded as this worker exits.
+			bc.compactMu.Lock()
+			if bc.compactFrom == 0 || bc.compactTo == 0 {
+				atomic.StoreInt32(&bc.compacting, 0)
+				bc.compactMu.Unlock()
 				return
-			default:
 			}
-
-			start := append([]byte{}, prefix...)
-			start = append(start, encodeBlockNumber(from)...)
-
-			limit := append([]byte{}, prefix...)
-			limit = append(limit, encodeBlockNumber(to+1)...)
-			for i := 0; i < 32; i++ {
-				limit = append(limit, 0xff)
-			}
-
-			if err := bc.db.Compact(start, limit); err != nil {
-				log.Warn("LevelDB compaction failed", "prefix", string(prefix), "from", from, "to", to, "err", err)
-			} else {
-				log.Debug("LevelDB compaction finished", "prefix", string(prefix), "from", from, "to", to)
-			}
+			from, to = bc.compactFrom, bc.compactTo
+			bc.compactFrom, bc.compactTo = 0, 0
+			bc.compactMu.Unlock()
 		}
 	}(from, to)
 }
@@ -2701,10 +2711,11 @@ func (bc *BlockChain) procCompactRangeHeaderNumber() {
 			limit = append([]byte{HeaderNumberPrefix[0]}, b+1)
 		}
 
+		started := time.Now()
 		if err := bc.db.Compact(start, limit); err != nil {
-			log.Warn("LevelDB H-compaction failed", "range", fmt.Sprintf("%02X", b), "err", err)
+			log.Warn("LevelDB H-compaction failed", "range", fmt.Sprintf("%02X", b), "elapsed", common.PrettyDuration(time.Since(started)), "err", err)
 		} else {
-			log.Debug("LevelDB H-compaction finished", "range", fmt.Sprintf("%02X", b))
+			log.Debug("LevelDB H-compaction finished", "range", fmt.Sprintf("%02X", b), "elapsed", common.PrettyDuration(time.Since(started)))
 		}
 
 		if b == 0xFF {
@@ -2723,6 +2734,8 @@ func (bc *BlockChain) runTrieGC() {
 	nodes, imgs := triedb.Size()
 	limit := common.StorageSize(bc.cacheConfig.TrieDirtyLimit) * 1024 * 1024
 	if nodes > limit || imgs > 4*1024*1024 {
-		triedb.Cap(limit - ethdb.IdealBatchSize)
+		if err := triedb.Cap(limit - ethdb.IdealBatchSize); err != nil {
+			log.Warn("Failed to cap trie cache during sidechain cleanup", "err", err)
+		}
 	}
 }

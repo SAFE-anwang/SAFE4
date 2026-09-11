@@ -2571,12 +2571,6 @@ func (bc *BlockChain) maybeCleanupSidechains() {
 		}
 	}
 
-	// Trie references belong to triegc, not to the deleted block headers.
-	// Dereferencing historical roots here can release references still in use.
-	if deleted > 0 && bc.stateCache != nil && bc.stateCache.TrieDB() != nil {
-		bc.runTrieGC()
-	}
-
 	bc.lastSidechainCleanHeight = to
 	bc.tailAccumulated = 0
 	bc.targetCleanHeight = to
@@ -2588,6 +2582,7 @@ func (bc *BlockChain) maybeCleanupSidechains() {
 
 	log.Debug("Sidechain cleanup finished",
 		"from", from, "to", to, "scanned", scanned, "deleted", deleted, "elapsed", common.PrettyDuration(time.Since(start)))
+
 	if deleted == 0 {
 		return
 	}
@@ -2724,18 +2719,4 @@ func (bc *BlockChain) procCompactRangeHeaderNumber() {
 	}
 
 	log.Info("Completed H-prefix compaction")
-}
-
-func (bc *BlockChain) runTrieGC() {
-	triedb := bc.stateCache.TrieDB()
-	if triedb == nil {
-		return
-	}
-	nodes, imgs := triedb.Size()
-	limit := common.StorageSize(bc.cacheConfig.TrieDirtyLimit) * 1024 * 1024
-	if nodes > limit || imgs > 4*1024*1024 {
-		if err := triedb.Cap(limit - ethdb.IdealBatchSize); err != nil {
-			log.Warn("Failed to cap trie cache during sidechain cleanup", "err", err)
-		}
-	}
 }
